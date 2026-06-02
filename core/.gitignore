@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Generated
+backups/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# 本番データは Studio で管理（リポジトリで追跡しない）
+seeds/production-initial.sql
+
+# Claude Code（ローカル設定・状態は無視、rules のみ追跡）
+.claude/*
+!.claude/rules/
