@@ -1,0 +1,23 @@
+# 依存
+node_modules/
+
+# ビルド出力（mkdocs）
+site/
+
+# 環境変数（秘密値は絶対にコミットしない）
+.env
+.env.local
+.env.*.local
+
+# ログ
+*.log
+npm-debug.log*
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code（rules のみ追跡し、その他のローカル設定は除外）
+.claude/*
+!.claude/rules/

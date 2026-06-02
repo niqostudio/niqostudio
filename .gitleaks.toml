@@ -1,0 +1,19 @@
+# gitleaks 設定。既定ルールに加え、公開してよい既知の値を allowlist して誤検知を抑える。
+title = "niqostudio-infra"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "公開可能な定数・雛形（秘密ではない）"
+# docs は除外しない（公開するので実シークレット誤貼りを検出したい）。
+# 既知の placeholder は下の regexes で個別に許可する。
+paths = [
+  '''.*\.example$''', # tfvars/backend の雛形（プレースホルダのみ）
+]
+regexes = [
+  '''niqostudio\.com''',
+  '''niqo\.studio''',
+  '''192\.0\.2\.\d+''', # RFC 5737 のプレースホルダ IP
+  '''p=MIGf[A-Za-z0-9+/]*''', # DKIM は公開鍵
+]
