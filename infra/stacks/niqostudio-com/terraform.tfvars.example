@@ -1,0 +1,23 @@
+# コピーして terraform.tfvars を作成（terraform.tfvars はコミットしない）。
+# 定数（ドメイン・SPF/DMARC・Pages 等）は ../../../config.<env>.json に集約。ここには機微値だけ。
+# API トークンは tfvars に書かず、環境変数 CLOUDFLARE_API_TOKEN で渡す。
+
+forward_to = "you@example.com" # Cloudflare で検証済みの既定転送先（個人受信箱）
+
+# 受信を増やす場合のみ指定（キー=@より前、値=転送先）。未指定なら hi@ を forward_to へ。
+# inbound_forwards = { hi = "you@example.com", support = "support-inbox@example.com" }
+
+# zone_id / account_id は通常ドメイン名（config.<env>.json の primary）から自動導出されるので不要。
+# 導出が効かない時だけ明示上書き:
+# zone_id               = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# cloudflare_account_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Resend ダッシュボードが表示する DNS を貼る。name は FQDN で書く（相対名は使わない）。
+# 詳しい混ぜ方は docs/email.md を参照。region/値はダッシュボード表示に従う。
+resend_dns_records = [
+  # 送信のバウンス(Return-Path)用サブドメイン send.niqostudio.com。値はダッシュボード表示に従う。
+  # { name = "send.niqostudio.com",            type = "MX",  content = "feedback-smtp.<region>.amazonses.com", priority = 10 },
+  # { name = "send.niqostudio.com",            type = "TXT", content = "v=spf1 include:_spf.resend.com ~all" },
+  # DKIM 署名鍵（apex の niqostudio.com に対する d= 整列用）
+  # { name = "resend._domainkey.niqostudio.com", type = "TXT", content = "p=MIGfMA0GCSqGSIb3DQEB...（ダッシュボード値）" },
+]
