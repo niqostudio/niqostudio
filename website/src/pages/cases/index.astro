@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCases } from '../../lib/content';
+import { PAGES } from '../../config/site';
+import { CaseCard, PageHeader } from '../../components';
+
+const cases = await getCases();
+---
+
+<BaseLayout title={PAGES.cases.title} description={PAGES.cases.description} width="wide">
+  <PageHeader title={PAGES.cases.title} />
+
+  {
+    cases.length > 0 && (
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+        {cases.map((caseItem) => (
+          <CaseCard caseItem={caseItem} />
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>

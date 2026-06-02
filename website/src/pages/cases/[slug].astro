@@ -1,0 +1,115 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCases, getCase } from '../../lib/content';
+import { SITE, PAGES } from '../../config/site';
+import { SectionLabel, ArrowLink, Jp } from '../../components';
+
+export async function getStaticPaths() {
+  const cases = await getCases();
+  return cases.map((caseItem) => ({ params: { slug: caseItem.slug } }));
+}
+
+const { slug } = Astro.params;
+const caseItem = await getCase(slug!);
+
+if (!caseItem) {
+  return Astro.redirect('/cases');
+}
+
+const caseDesc = caseItem.summary ?? caseItem.problem;
+const caseImage = caseItem.images[0] ?? caseItem.thumbnail;
+const caseSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: caseItem.title,
+  ...(caseDesc ? { description: caseDesc } : {}),
+  ...(caseImage ? { image: new URL(caseImage, Astro.site).href } : {}),
+  ...(caseItem.client ? { about: caseItem.client.industry } : {}),
+  creator: { '@type': 'ProfessionalService', name: SITE.name },
+};
+---
+
+<BaseLayout title={caseItem.title} description={caseDesc ?? undefined} structuredData={caseSchema}>
+  <ArrowLink
+    href={PAGES.cases.href}
+    arrow="before"
+    class="text-sm text-muted hover:text-accent transition-colors"
+  >
+    {PAGES.cases.title}
+  </ArrowLink>
+
+  <h1 class="text-3xl font-semibold tracking-tight mt-4">{caseItem.title}</h1>
+  {caseItem.client && <p class="text-muted mt-2">{caseItem.client.name}</p>}
+
+  {caseItem.summary && <p class="text-lg mt-6"><Jp text={caseItem.summary} /></p>}
+
+  {
+    caseItem.problem && (
+      <section class="mt-8">
+        <SectionLabel as="h2">Problem</SectionLabel>
+        <p class="mt-2"><Jp text={caseItem.problem} /></p>
+      </section>
+    )
+  }
+  {
+    caseItem.solution && (
+      <section class="mt-6">
+        <SectionLabel as="h2">Solution</SectionLabel>
+        <p class="mt-2"><Jp text={caseItem.solution} /></p>
+      </section>
+    )
+  }
+  {
+    caseItem.outcome && (
+      <section class="mt-6">
+        <SectionLabel as="h2">Outcome</SectionLabel>
+        <p class="mt-2"><Jp text={caseItem.outcome} /></p>
+      </section>
+    )
+  }
+
+  {
+    caseItem.metrics.length > 0 && (
+      <section class="mt-8">
+        <SectionLabel as="h2">Metrics</SectionLabel>
+        <table class="w-full mt-3 text-sm border border-border rounded-sm overflow-hidden">
+          <thead>
+            <tr class="text-left text-muted border-b border-border">
+              <th class="px-3 py-2 font-normal">指標</th>
+              <th class="px-3 py-2 font-normal">Before</th>
+              <th class="px-3 py-2 font-normal">After</th>
+            </tr>
+          </thead>
+          <tbody>
+            {caseItem.metrics.map((m) => (
+              <tr class="border-b border-border last:border-0">
+                <td class="px-3 py-2">{m.label}</td>
+                <td class="px-3 py-2 text-muted">{m.before}</td>
+                <td class="px-3 py-2 font-medium text-accent">{m.after}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    )
+  }
+
+  {
+    caseItem.techDetails && (
+      <section class="mt-8">
+        <SectionLabel as="h2">Tech details</SectionLabel>
+        <p class="mt-2 whitespace-pre-wrap">{caseItem.techDetails}</p>
+      </section>
+    )
+  }
+
+  {
+    caseItem.images.length > 0 && (
+      <div class="grid gap-4 mt-8">
+        {caseItem.images.map((url) => (
+          <img src={url} alt={caseItem.title} loading="lazy" class="w-full rounded-sm" />
+        ))}
+      </div>
+    )
+  }
+</BaseLayout>
