@@ -1,0 +1,17 @@
+---
+import { jpHtml, jpHtmlByPeriod } from '../../lib/jp';
+
+// 日本語本文を文節で折り返す（BudouX をビルド時適用）。
+// keep-all で <wbr> の位置のみ改行、overflow-wrap で長い英数字の溢れも回避。
+// breakOnPeriod で句点ごとに改行する。
+interface Props {
+  text: string;
+  class?: string;
+  breakOnPeriod?: boolean;
+}
+
+const { text, class: className, breakOnPeriod = false } = Astro.props;
+const html = breakOnPeriod ? jpHtmlByPeriod(text) : jpHtml(text);
+---
+
+<span class:list={['[word-break:keep-all] [overflow-wrap:anywhere]', className]} set:html={html} />

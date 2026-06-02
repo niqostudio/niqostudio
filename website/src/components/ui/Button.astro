@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// ボタン風リンク。primary=緑塗り / secondary=枠線。href 等は素通し。
+interface Props extends HTMLAttributes<'a'> {
+  variant?: 'primary' | 'secondary';
+  class?: string;
+}
+
+const { variant = 'primary', class: className, ...rest } = Astro.props;
+// 両 variant とも border を持たせて（primary は透明）高さ・ラベル位置を揃える。
+const base = 'inline-block rounded-md border px-5 py-2.5 text-sm';
+const variants = {
+  primary: 'border-transparent bg-accent text-bg hover:opacity-90 transition-opacity',
+  secondary: 'border-border-subtle bg-surface hover:border-border transition-colors',
+};
+---
+
+<a class:list={[base, variants[variant], className]} {...rest}><slot /></a>

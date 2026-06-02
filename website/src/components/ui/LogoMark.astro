@@ -1,0 +1,16 @@
+---
+// ブランドのロゴマーク。profile.logo_svg（CMS）をそのままインライン（fallback は持たない）。
+// 色は currentColor を継承（置いた場所の文字色に追従）。サイズ等は class で指定。
+import { getProfile } from '../../lib/content';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+const profile = await getProfile();
+---
+
+<span
+  class:list={['inline-block [&>svg]:block [&>svg]:w-full [&>svg]:h-full', className]}
+  set:html={profile.logoSvg}
+/>

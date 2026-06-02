@@ -1,0 +1,11 @@
+---
+// ブランドの欧文ロゴタイプ（NIQO STUDIO）。mono・大文字・字間で統一。サイズ・色・太さは継承。
+import { SITE } from '../../config/site';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<span class:list={['font-mono uppercase tracking-wide whitespace-nowrap', className]}>{SITE.name}</span>

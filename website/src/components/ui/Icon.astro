@@ -1,0 +1,95 @@
+---
+// セクションラベル用の小アイコン（線画・currentColor）。視線アンカー用。
+interface Props {
+  name: 'target' | 'grid' | 'yen' | 'clock' | 'package' | 'heart' | 'slash' | 'chevron' | 'list';
+  class?: string;
+}
+
+const { name, class: className } = Astro.props;
+---
+
+<svg
+  class:list={['inline-block shrink-0', className]}
+  viewBox="0 0 24 24"
+  width="15"
+  height="15"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {
+    name === 'target' && (
+      <Fragment>
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" />
+      </Fragment>
+    )
+  }
+  {
+    name === 'grid' && (
+      <Fragment>
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+      </Fragment>
+    )
+  }
+  {
+    name === 'yen' && (
+      <Fragment>
+        <path d="M6 4l6 8 6-8" />
+        <line x1="12" y1="12" x2="12" y2="20" />
+        <line x1="7.5" y1="13.5" x2="16.5" y2="13.5" />
+        <line x1="7.5" y1="17" x2="16.5" y2="17" />
+      </Fragment>
+    )
+  }
+  {
+    name === 'clock' && (
+      <Fragment>
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </Fragment>
+    )
+  }
+  {
+    name === 'package' && (
+      <Fragment>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </Fragment>
+    )
+  }
+  {
+    name === 'heart' && (
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    )
+  }
+  {
+    name === 'slash' && (
+      <Fragment>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      </Fragment>
+    )
+  }
+  {name === 'chevron' && <polyline points="6 9 12 15 18 9" />}
+  {
+    name === 'list' && (
+      <Fragment>
+        <line x1="8" y1="6" x2="21" y2="6" />
+        <line x1="8" y1="12" x2="21" y2="12" />
+        <line x1="8" y1="18" x2="21" y2="18" />
+        <line x1="3" y1="6" x2="3.01" y2="6" />
+        <line x1="3" y1="12" x2="3.01" y2="12" />
+        <line x1="3" y1="18" x2="3.01" y2="18" />
+      </Fragment>
+    )
+  }
+</svg>

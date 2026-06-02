@@ -1,0 +1,14 @@
+---
+// ページ見出し（中央寄せ）。title プロップ、または title スロットで見出しを指定。
+// 既定スロットに lead（説明文）を渡すと h1 の下に表示。本文との余白は呼び出し側で付ける。
+interface Props {
+  title?: string;
+  class?: string;
+}
+const { title, class: className } = Astro.props;
+---
+
+<header class:list={['max-w-readable mx-auto text-center', className]}>
+  <h1 class="text-3xl font-semibold tracking-wide"><slot name="title">{title}</slot></h1>
+  <slot />
+</header>

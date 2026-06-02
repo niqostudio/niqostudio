@@ -1,0 +1,18 @@
+---
+// 詳細ページのセクションラベル（mono 小見出し）。先頭の緑ティックでブランド色を通す。
+interface Props {
+  as?: 'h2' | 'p' | 'dt';
+  class?: string;
+}
+const { as: Tag = 'p', class: className } = Astro.props;
+---
+
+<Tag
+  class:list={[
+    'flex items-center gap-2 text-sm font-mono uppercase tracking-wide text-muted',
+    className,
+  ]}
+>
+  <span class="inline-block h-3.5 w-0.5 bg-accent" aria-hidden="true"></span>
+  <slot />
+</Tag>

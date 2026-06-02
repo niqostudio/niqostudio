@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+// 矢印つきテキストリンク。arrow で矢印の前後を指定（before=← / after=→）。ホバーで矢印が進む。
+// underline=true で本文に link-rich の下線。色・サイズは class で指定（継承）。href 等は素通し。
+interface Props extends HTMLAttributes<'a'> {
+  arrow?: 'before' | 'after';
+  underline?: boolean;
+}
+
+const { arrow = 'after', underline = false, class: className, ...rest } = Astro.props;
+const before = arrow === 'before';
+---
+
+<a class:list={['group inline-flex items-center gap-1.5', className]} {...rest}>
+  {before && <span class="relative -top-px transition-transform group-hover:-translate-x-0.5" aria-hidden="true">←</span>}
+  <span class:list={[underline && 'link-rich']}><slot /></span>
+  {!before && <span class="relative -top-px transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>}
+</a>

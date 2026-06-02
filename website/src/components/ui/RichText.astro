@@ -1,0 +1,71 @@
+---
+import { jpHtml } from '../../lib/jp';
+
+// 軽量フォーマットを描画する: 「見出し:」/ 「- 箇条書き」/ プレーン段落。
+// 本文は BudouX で文節折り返し。色・サイズは継承（呼び出し側が class で指定）。
+interface Props {
+  text: string;
+  class?: string;
+}
+
+type Block =
+  | { kind: 'heading'; value: string }
+  | { kind: 'list'; items: string[] }
+  | { kind: 'para'; value: string };
+
+function parse(src: string): Block[] {
+  const blocks: Block[] = [];
+  let list: string[] = [];
+  let para: string[] = [];
+  const flushList = () => {
+    if (list.length) blocks.push({ kind: 'list', items: list });
+    list = [];
+  };
+  const flushPara = () => {
+    if (para.length) blocks.push({ kind: 'para', value: para.join(' ') });
+    para = [];
+  };
+
+  for (const raw of src.split('\n')) {
+    const line = raw.trim();
+    if (!line) {
+      flushList();
+      flushPara();
+    } else if (/^-\s+/.test(line)) {
+      flushPara();
+      list.push(line.replace(/^-\s+/, ''));
+    } else if (/[:：]$/.test(line)) {
+      flushList();
+      flushPara();
+      blocks.push({ kind: 'heading', value: line.replace(/[:：]$/, '') });
+    } else {
+      flushList();
+      para.push(line);
+    }
+  }
+  flushList();
+  flushPara();
+  return blocks;
+}
+
+const { text, class: className } = Astro.props;
+const blocks = parse(text);
+---
+
+<div class:list={[className, '[word-break:keep-all] [overflow-wrap:anywhere]']}>
+  {
+    blocks.map((block) =>
+      block.kind === 'heading' ? (
+        <p class="font-medium mt-4 first:mt-0" set:html={jpHtml(block.value)} />
+      ) : block.kind === 'list' ? (
+        <ul class="bullet-list mt-1">
+          {block.items.map((item) => (
+            <li set:html={jpHtml(item)} />
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-2 first:mt-0" set:html={jpHtml(block.value)} />
+      )
+    )
+  }
+</div>

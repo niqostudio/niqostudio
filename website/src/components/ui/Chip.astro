@@ -1,0 +1,18 @@
+---
+// タグ/チップ（<ul> 内の <li> として使う）。
+// mono=技術スタック・スキル等のコード系（既定）/ soft=日本語の対応領域など柔らかいタグ。
+interface Props {
+  variant?: 'mono' | 'soft';
+  class?: string;
+}
+const { variant = 'mono', class: className } = Astro.props;
+const base = 'text-xs text-muted border rounded-sm';
+const variants = {
+  mono: 'font-mono border-border px-2 py-0.5',
+  soft: 'border-border-subtle px-2 py-1',
+};
+---
+
+<li class:list={[base, variants[variant], className]}>
+  <slot />
+</li>
