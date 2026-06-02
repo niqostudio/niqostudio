@@ -1,0 +1,48 @@
+site_name: NIQO STUDIO docs
+site_description: NIQO STUDIO システム（website / core / infra）のドキュメント
+site_url: https://niqostudio.github.io/niqostudio/
+docs_dir: docs
+
+theme:
+  name: material
+  language: ja
+  palette:
+    - scheme: default
+      toggle: { icon: material/weather-night, name: ダークに切替 }
+    - scheme: slate
+      toggle: { icon: material/weather-sunny, name: ライトに切替 }
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+      # 日本語見出しのアンカーを保持する（既定 slugify は非 ASCII を落とすため）。
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds: { case: lower }
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - はじめに: index.md
+  - アーキテクチャ: architecture.md
+  - 変数の配置: variables.md
+  - core:
+      - スキーマ: core/schema.md
+      - 運用: core/operations.md
+  - infra:
+      - セットアップ: infra/setup.md
+      - メール設計: infra/email.md
+      - 復旧手順: infra/recovery.md
+      - 用語集: infra/glossary.md
+  - ADR:
+      - 0001 モノリポ構成: adr/0001-monorepo.md
+      - 0002 config domain-centric: adr/0002-config-domain-centric.md
+      - 0003 環境モデル: adr/0003-environment-per-module.md
