@@ -1,0 +1,19 @@
+packages:
+  - "website"
+  - "core"
+  - "packages/*"
+# これらは prebuilt バイナリで動作するためビルドスクリプトは実行しない（postinstall 不要）。
+allowBuilds:
+  esbuild: false
+  sharp: false
+  workerd: false
+minimumReleaseAgeExclude:
+  - '@supabase/cli-darwin-arm64@2.104.0'
+  - '@supabase/cli-darwin-x64@2.104.0'
+  - '@supabase/cli-linux-arm64-musl@2.104.0'
+  - '@supabase/cli-linux-arm64@2.104.0'
+  - '@supabase/cli-linux-x64-musl@2.104.0'
+  - '@supabase/cli-linux-x64@2.104.0'
+  - '@supabase/cli-windows-arm64@2.104.0'
+  - '@supabase/cli-windows-x64@2.104.0'
+  - supabase@2.104.0
