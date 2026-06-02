@@ -1,0 +1,29 @@
+---
+import { CONTRACT_FLOW, ENTRY_SERVICE_SLUG } from '../../config/site';
+import { getServices } from '../../lib/content';
+import Jp from '../ui/Jp.astro';
+
+const discovery = (await getServices()).find((s) => s.slug === ENTRY_SERVICE_SLUG);
+const price = discovery?.pricing?.base_price ?? '5〜10万円';
+
+const steps = CONTRACT_FLOW.map((step) => ({
+  title: step.title,
+  detail: step.detail.replace('{price}', price),
+}));
+---
+
+<ol class="space-y-4">
+  {
+    steps.map((step, i) => (
+      <li class="flex gap-3">
+        <span class="font-mono text-sm text-accent shrink-0">{i + 1}</span>
+        <div class="text-sm">
+          <span class="font-medium">{step.title}</span>
+          <span class="text-muted block mt-0.5">
+            <Jp text={step.detail} />
+          </span>
+        </div>
+      </li>
+    ))
+  }
+</ol>

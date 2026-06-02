@@ -1,0 +1,30 @@
+---
+import SocialIcon from './SocialIcon.astro';
+
+interface Props {
+  links: { label: string; url: string }[];
+  class?: string;
+  // 指定すると末尾にメール（お問い合わせ）アイコンを追加し、このリンク先へ繋ぐ。
+  contactHref?: string;
+}
+
+const { links, class: className, contactHref } = Astro.props;
+const linkClass = 'opacity-70 hover:opacity-100 transition-opacity';
+---
+
+<div class:list={['flex items-center gap-4', className]}>
+  {
+    links.map((link) => (
+      <a href={link.url} target="_blank" rel="noopener" aria-label={link.label} class={linkClass}>
+        <SocialIcon name={link.label} />
+      </a>
+    ))
+  }
+  {
+    contactHref && (
+      <a href={contactHref} aria-label="お問い合わせ" class={linkClass}>
+        <SocialIcon name="mail" />
+      </a>
+    )
+  }
+</div>

@@ -1,0 +1,90 @@
+---
+import { NAV } from '../../config/site';
+import Wordmark from '../ui/Wordmark.astro';
+import LogoMark from '../ui/LogoMark.astro';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href + '/');
+// アクティブのゴールドは英字側のみ。<a> 自体は地の色のみを持つ。
+const linkClass = (href: string) =>
+  isActive(href) ? 'text-on-dark' : 'text-on-dark-muted hover:text-on-dark';
+---
+
+<header class="bg-surface-dark text-on-dark relative border-t-2 border-gold">
+  <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 h-[4.5rem] flex items-center justify-between">
+    <a href="/" class="inline-flex items-center gap-2.5 text-lg">
+      <LogoMark class="w-7 h-7" />
+      <Wordmark />
+    </a>
+
+    <nav class="hidden sm:flex gap-6 text-xs uppercase tracking-widest">
+      {
+        NAV.map((item) => (
+          <a
+            href={isActive(item.href) ? undefined : item.href}
+            aria-current={isActive(item.href) ? 'page' : undefined}
+            class:list={['flex flex-col items-center leading-tight transition-colors', linkClass(item.href)]}
+          >
+            <span class:list={[isActive(item.href) && 'text-gold']}>{item.label}</span>
+            <span class="mt-0.5 text-[10px] normal-case tracking-normal opacity-70">{item.navJa}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    <button
+      id="menu-toggle"
+      class="sm:hidden -mr-1 p-1"
+      aria-label="メニュー"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <svg data-icon="open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="4" y1="7" x2="20" y2="7"></line>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="17" x2="20" y2="17"></line>
+      </svg>
+      <svg data-icon="close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <nav id="mobile-menu" class="hidden sm:hidden absolute inset-x-0 top-full z-50 bg-surface-dark border-t border-border-dark">
+    <ul class="max-w-page mx-auto px-4 py-2 flex flex-col text-sm uppercase tracking-widest">
+      {
+        NAV.map((item) => (
+          <li>
+            <a
+              href={isActive(item.href) ? undefined : item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              class:list={['flex items-baseline gap-2 py-3 transition-colors', linkClass(item.href)]}
+            >
+              <span class:list={[isActive(item.href) && 'text-gold']}>{item.label}</span>
+              <span class="text-[11px] normal-case tracking-normal opacity-60">{item.navJa}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<script>
+  // ClientRouter 遷移後も効くよう astro:page-load で初期化（初回ロードでも発火）。
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    const open = btn?.querySelector('[data-icon="open"]');
+    const close = btn?.querySelector('[data-icon="close"]');
+
+    btn?.addEventListener('click', () => {
+      if (!menu) return;
+      const isOpen = !menu.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', String(isOpen));
+      open?.classList.toggle('hidden', isOpen);
+      close?.classList.toggle('hidden', !isOpen);
+    });
+  });
+</script>

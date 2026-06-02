@@ -1,0 +1,69 @@
+---
+import { NAV, SITE, PAGES } from '../../config/site';
+import { getProfile } from '../../lib/content';
+import SocialLinks from './SocialLinks.astro';
+import Wordmark from '../ui/Wordmark.astro';
+import LogoMark from '../ui/LogoMark.astro';
+
+const profile = await getProfile();
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-surface-dark text-on-dark border-t-2 border-gold">
+  <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center gap-10 sm:grid sm:grid-cols-3 sm:items-start sm:gap-10">
+    <div class="flex flex-col items-center text-center sm:items-start sm:text-left">
+      <a
+        href="/"
+        aria-label={SITE.name}
+        class="inline-flex items-center gap-3 text-on-dark hover:opacity-80 transition-opacity"
+      >
+        <LogoMark class="w-12 h-12 [--logo-accent:var(--color-gold)]" />
+        <Wordmark class="text-base" />
+      </a>
+
+      {profile?.tagline && <p class="text-sm text-on-dark-muted mt-4 max-w-xs">{profile.tagline}</p>}
+
+      <p class="flex items-center gap-2 text-xs text-on-dark-muted mt-4">
+        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+        お仕事受付中
+      </p>
+    </div>
+
+    {/* スマホは Site/Connect を中央の枠内で両端に。sm 以上は contents で 3 カラムグリッドへ展開 */}
+    <div class="flex w-full max-w-xs justify-between gap-8 sm:contents sm:w-auto sm:max-w-none">
+      <nav>
+        <p class="text-xs uppercase tracking-widest text-gold">Site</p>
+        <ul class="mt-4 flex flex-col gap-2.5 text-sm text-on-dark-muted">
+          {
+            NAV.map((item) => (
+              <li>
+                <a href={item.href} class="hover:text-on-dark transition-colors">
+                  {item.navJa}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gold">Connect</p>
+        {
+          profile && (
+            <SocialLinks links={profile.socialLinks} contactHref="/contact" class="mt-4 text-on-dark" />
+          )
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 pb-10 flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-xs text-on-dark-muted uppercase tracking-wide">&copy; {year} <Wordmark /></p>
+    <a
+      href={PAGES.privacy.href}
+      class="text-xs text-on-dark-muted hover:text-on-dark tracking-wide transition-colors"
+    >
+      {PAGES.privacy.title}
+    </a>
+  </div>
+</footer>

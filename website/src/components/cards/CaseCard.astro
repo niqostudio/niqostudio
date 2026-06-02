@@ -1,0 +1,28 @@
+---
+import type { CaseView } from '../../types/views';
+import Card from '../ui/Card.astro';
+import Jp from '../ui/Jp.astro';
+
+interface Props {
+  caseItem: CaseView;
+}
+
+const { caseItem } = Astro.props;
+const lead = caseItem.summary ?? caseItem.problem;
+---
+
+<Card href={`/cases/${caseItem.slug}`} class="flex flex-col h-full min-h-64 p-7">
+  {
+    caseItem.thumbnail && (
+      <img
+        src={caseItem.thumbnail}
+        alt={caseItem.title}
+        loading="lazy"
+        class="w-full aspect-video object-cover rounded-sm mb-6"
+      />
+    )
+  }
+  <h3 class="font-semibold text-xl tracking-tight">{caseItem.title}</h3>
+  {caseItem.client && <p class="text-sm text-muted mt-2">{caseItem.client.name}</p>}
+  {lead && <p class="text-sm text-muted mt-3 line-clamp-4"><Jp text={lead} /></p>}
+</Card>

@@ -1,0 +1,106 @@
+---
+// Turnstile（ボット対策）。サイトキーは公開値。未設定ならウィジェットを出さない（dev/未導入でも動く）。
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+
+<form id="contact-form" method="POST" action="/api/contact" class="flex flex-col gap-5">
+  <label class="flex flex-col gap-1 text-sm">
+    <span>お名前 <span class="text-muted">*</span></span>
+    <input
+      type="text"
+      name="name"
+      required
+      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
+    />
+    <span class="text-xs text-muted">本名でなくても、お呼びする名前で構いません。</span>
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span>会社名</span>
+    <input
+      type="text"
+      name="company"
+      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
+    />
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span>メールアドレス <span class="text-muted">*</span></span>
+    <input
+      type="email"
+      name="email"
+      required
+      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
+    />
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span>お問い合わせ内容 <span class="text-muted">*</span></span>
+    <textarea
+      name="message"
+      required
+      rows="6"
+      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none resize-y"
+    ></textarea>
+  </label>
+
+  {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="auto"></div>}
+
+  <button
+    type="submit"
+    class="self-start bg-accent text-bg rounded-md px-5 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+  >
+    送信する
+  </button>
+
+  <p id="contact-status" class="text-sm" role="status" aria-live="polite"></p>
+</form>
+
+{
+  turnstileSiteKey && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  )
+}
+
+<script>
+  type Turnstile = { render: (el: Element) => void; reset: () => void };
+
+  // ClientRouter 遷移後も効くよう astro:page-load で初期化（初回ロードでも発火）。
+  document.addEventListener('astro:page-load', () => {
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    if (!form) return;
+    const status = document.getElementById('contact-status');
+    const button = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+
+    // クライアント遷移では Turnstile の自動描画が走らないため、未描画なら明示 render。
+    const turnstile = (window as unknown as { turnstile?: Turnstile }).turnstile;
+    const widget = form.querySelector('.cf-turnstile');
+    if (turnstile && widget && !widget.querySelector('iframe')) turnstile.render(widget);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!status || !button) return;
+
+      button.disabled = true;
+      status.textContent = '送信中…';
+      status.className = 'text-sm text-muted';
+
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          body: new FormData(form),
+        });
+        if (!res.ok) throw new Error('failed');
+        form.reset();
+        turnstile?.reset();
+        status.textContent = '送信しました。折り返しご連絡します。';
+        status.className = 'text-sm';
+      } catch {
+        status.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+        status.className = 'text-sm text-error';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>

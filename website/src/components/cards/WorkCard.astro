@@ -1,0 +1,38 @@
+---
+import type { WorkView } from '../../types/views';
+import Card from '../ui/Card.astro';
+import Chip from '../ui/Chip.astro';
+import Jp from '../ui/Jp.astro';
+
+interface Props {
+  work: WorkView;
+}
+
+const { work } = Astro.props;
+const meta = [work.client?.name, work.client?.industry].filter(Boolean).join(' · ');
+---
+
+<Card href={`/works/${work.slug}`} class="flex flex-col h-full min-h-64 p-7">
+  {
+    work.thumbnail && (
+      <img
+        src={work.thumbnail}
+        alt={work.title}
+        loading="lazy"
+        class="w-full aspect-video object-cover rounded-sm mb-6"
+      />
+    )
+  }
+  <h3 class="font-semibold text-xl tracking-tight">{work.title}</h3>
+  {meta && <p class="text-sm text-muted mt-2">{meta}</p>}
+  {work.summary && <p class="text-sm text-muted mt-3 line-clamp-3"><Jp text={work.summary} /></p>}
+  {
+    work.techStack.length > 0 && (
+      <ul class="flex flex-wrap gap-1.5 mt-auto pt-6">
+        {work.techStack.map((t) => (
+          <Chip>{t}</Chip>
+        ))}
+      </ul>
+    )
+  }
+</Card>
