@@ -1,0 +1,33 @@
+name: db-types
+
+# core の migrations から型を生成し、コミット済みの packages/db-types とドリフトしていないか検証する。
+# local Supabase（Docker）で introspection するため live プロジェクト/PAT は不要（型の正本＝migrations）。
+on:
+  pull_request:
+    paths:
+      - "core/supabase/migrations/**"
+      - "packages/db-types/src/database.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/core
+      - name: local Supabase 起動（migrations を適用）
+        working-directory: core
+        run: pnpm exec supabase start
+      - name: migrations から型を生成
+        run: pnpm --filter @niqostudio/core run db:types
+      - name: ドリフト検知（差分があれば fail）
+        run: git diff --exit-code -- packages/db-types/src/database.ts
