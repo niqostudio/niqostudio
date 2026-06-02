@@ -1,0 +1,7 @@
+# コピーして backend.tfbackend を作成（追跡しない）。
+# init: terraform init -backend-config=backend.tfbackend
+# アクセスキーは環境変数 AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY（R2 の S3 互換キー）。
+
+bucket    = "niqostudio-tfstate"
+key       = "niqo-studio/terraform.tfstate"
+endpoints = { s3 = "https://<account-id>.r2.cloudflarestorage.com" }
