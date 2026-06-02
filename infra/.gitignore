@@ -1,0 +1,35 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# 機微値を含む変数ファイルは追跡しない（雛形のみ追跡）
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# backend のアカウント依存値（bucket/endpoints 等）は追跡しない（雛形のみ追跡）
+*.tfbackend
+!*.tfbackend.example
+
+# .terraform.lock.hcl は追跡する（provider 固定のため除外しない）
+
+# Claude: rules のみ追跡し、その他のローカル設定は除外
+.claude/*
+!.claude/rules/
+
+# MkDocs build output（Pages は CI でビルドするので追跡しない）
+site/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
