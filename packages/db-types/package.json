@@ -1,0 +1,10 @@
+{
+  "name": "@niqostudio/db-types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/database.ts"
+  },
+  "types": "./src/database.ts"
+}
