@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* Inter のメトリクス一致フォールバック（Arial 基準）。Astro の optimizedFallbacks は generic
+   family が対象で和文を Noto 前で食うため使わず、欧文専用のこれを手動で先頭に置く。
+   self-host フォント到着までの間、Arial を Inter の字幅・行高に合わせて差し替え時のズレを抑える。 */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  ascent-override: 90.2%;
+  descent-override: 22.48%;
+  line-gap-override: 0%;
+  size-adjust: 107.4%;
+}
+
+/* Noto Sans JP のメトリクス一致フォールバック。self-host フォント到着までの間、
+   system JP（ヒラギノ/游ゴシック等）を Noto の ascent/descent(1160/320‰)に合わせて描画し、
+   差し替え時の和文の縦の飛び・比例詰めのズレを抑える。astro.config の Noto fallbacks 先頭で参照。 */
+@font-face {
+  font-family: "Noto Sans JP Fallback";
+  src: local("Hiragino Sans"), local("Hiragino Kaku Gothic ProN"), local("Yu Gothic Medium"),
+    local("Yu Gothic"), local("YuGothic"), local("Meiryo");
+  ascent-override: 116%;
+  descent-override: 32%;
+  line-gap-override: 0%;
+}
+
+@theme {
+  /* === 既定テーマ: cool（寒色 / slate・navy + blue）===
+     配色は data-theme で切替（下の [data-theme='...'] が値を上書き）。
+     ここはユーティリティ生成元かつ cool の既定値。 */
+  --color-bg: #f7f9fb;
+  /* 寒色寄りの地 */
+  --color-surface: #ffffff;
+  /* カード・入力・ボタン面 */
+  --color-surface-dark: #1e293b;
+  /* ヘッダー/フッターの暗色面（navy slate-800） */
+  --color-fg: #0f172a;
+  /* slate-900 */
+  --color-muted: #475569;
+  /* slate-600 */
+  --color-border: #cbd5e1;
+  /* slate-300 */
+  --color-border-subtle: #e2e8f0;
+  /* slate-200: カード/ボタンの控えめ枠 */
+  --color-border-strong: #0f172a;
+  --color-border-dark: #334155;
+  /* slate-700: 暗色面上の境界 */
+  --color-accent: #2563eb;
+  /* blue-600: 主アクセント（ボタン・リンク・フォーカス） */
+  --color-gold: #d4af37;
+  /* 暗色面のアクセント（navy×gold） */
+  --color-error: #dc2626;
+  --color-on-dark: #f8fafc;
+  /* slate-50 */
+  --color-on-dark-muted: #cbd5e1;
+  /* slate-300 */
+
+  /* Astro Fonts(astro:fonts)が self-host＋メトリクス最適化フォールバックを生成。
+     ラテン=Inter（欧文系フォールバックのみ）→ 和文=Noto Sans JP の順で、
+     和文が手前の system フォントに食われないようにする。 */
+  --font-sans: var(--font-inter), var(--font-noto-jp);
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+
+  /* 角丸はほぼソリッド（全 rounded-sm がこの値を参照） */
+  --radius-sm: 0.125rem;
+
+  /* ページ幅: page=グリッド/シェル, readable=読み物 */
+  --container-page: 80rem;
+  --container-readable: 48rem;
+}
+
+/* === テーマ切替: <html data-theme="warm"> 等で配色セットを差し替え === */
+[data-theme='warm'] {
+  --color-bg: #faf9f8;
+  --color-surface: #ffffff;
+  --color-surface-dark: #211d19;
+  --color-fg: #1c1917;
+  --color-muted: #57534e;
+  --color-border: #d6d3d1;
+  --color-border-subtle: #eae7e3;
+  --color-border-strong: #292524;
+  --color-border-dark: #34302c;
+  --color-accent: #15803d;
+  /* green */
+  --color-gold: #dcb441;
+  --color-on-dark: #faf9f7;
+  --color-on-dark-muted: #d6d3d1;
+}
+
+html {
+  /* スクロールバーの出現/消失でページ遷移時に横ズレしないよう常に gutter を確保 */
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  line-height: 1.8;
+  /* palt は使わない: 和文が比例詰めになると Web フォント差し替え時に行幅が再計算され、
+     fallback→Noto の swap で横ズレ（FOUT）が目立つため。全角1emで揃え、揺れを防ぐ。 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 行末の孤立語を回避（クロスブラウザ）。日本語の文節折り返しは BudouX(<Jp>/RichText)で実施。 */
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+/* 箇条書き: 小さく控えめなドット。文脈に依存しない素直なぶら下げ。em 基準で文字に追従。
+   ServiceCard / RichText（/about 等）で共用。 */
+.bullet-list>li {
+  position: relative;
+  padding-inline-start: 1em;
+}
+
+.bullet-list>li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0.15em;
+  top: 0.7em;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: var(--color-muted);
+}
+
+/* リッチなテキストリンク: accent 色＋オフセット下線。ホバーで下線が締まる。 */
+.link-rich {
+  color: var(--color-accent);
+  text-decoration-line: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-thickness 0.15s ease;
+}
+
+.link-rich:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* View Transitions(ClientRouter) の既定フェードを無効化＝遷移は即時。
+   目的はドキュメント保持によるフォント維持（FOUT 解消）で、演出は不要。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
