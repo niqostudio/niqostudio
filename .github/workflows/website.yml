@@ -1,0 +1,40 @@
+name: website
+
+# website のビルド検証。Pages の箱は infra が config.<env>.json から作成（direct-upload）、
+# deploy は website の `wrangler pages deploy dist`（project 名は config.<env>.json 由来）。
+# deploy step は Pages 有効化時に追加（要 wrangler devDep + CF deploy token）。
+# canonical ドメインは root の config.<env>.json を website が直読する（DEPLOY_ENV で選択・既定 production）。
+on:
+  pull_request:
+    paths: ["website/**", "config.*.json"]
+  push:
+    branches: [main]
+    paths: ["website/**", "config.*.json"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # workspace の root lockfile を使う。website とその workspace 依存（db-types）のみ入れる。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/website...
+      # SSG ビルドは公開値で実データを取得する（公開鍵＝Repository Variable・RLS 準拠）。
+      # ドメインは root の config.<env>.json を直読（DEPLOY_ENV 未設定＝production）。
+      - run: pnpm build
+        env:
+          PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      - run: pnpm check
