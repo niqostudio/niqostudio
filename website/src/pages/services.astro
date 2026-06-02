@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getServices } from '../lib/content';
+import { SITE, PAGES, ENTRY_SERVICE_SLUG } from '../config/site';
+import { ServiceCard, SectionLabel, PageHeader, Jp } from '../components';
+
+const services = await getServices();
+const discovery = services.find((service) => service.slug === ENTRY_SERVICE_SLUG);
+const buildServices = services.filter((service) => service.slug !== ENTRY_SERVICE_SLUG);
+
+const serviceSchemas = services.map((s) => {
+  const desc = s.headline ?? s.summary;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: s.nameJa ?? s.name,
+    serviceType: s.name,
+    ...(desc ? { description: desc } : {}),
+    provider: { '@type': 'ProfessionalService', name: SITE.name },
+    areaServed: 'JP',
+    url: new URL(`/services#${s.slug}`, Astro.site).href,
+  };
+});
+---
+
+<BaseLayout title={PAGES.services.title} description={PAGES.services.description} width="wide" structuredData={serviceSchemas}>
+  <PageHeader title={PAGES.services.title}>
+    <p class="text-lg mt-4">
+      <Jp text="無料相談から始め、設計・実装・運用まで一貫して担当します。" />
+    </p>
+  </PageHeader>
+
+  {
+    discovery && (
+      <section class="mt-14">
+        <div class="max-w-readable">
+          <SectionLabel as="h2">Entry</SectionLabel>
+          <p class="text-muted mt-2">
+            <Jp
+              breakOnPeriod
+              text="まずは無料相談から。案件として進む場合は、すべて Discovery Phase（有償の事前設計）を経て本契約へ。Discovery Phase の費用は本契約金額から差し引かれます。また、サービス一覧にない案件（業務システムの設計コンサル、自動化、データ設計単独など）もこちらで受け付けます。"
+            />
+          </p>
+        </div>
+        <div class="mt-6">
+          <ServiceCard service={discovery} />
+        </div>
+      </section>
+    )
+  }
+
+  {
+    buildServices.length > 0 && (
+      <section class="mt-16">
+        <div class="max-w-readable">
+          <SectionLabel as="h2">Build & Operate</SectionLabel>
+          <p class="text-muted mt-2">
+            <Jp
+              breakOnPeriod
+              text="課題に応じて選ぶ、構築から運用までのサービスです。一覧にない案件もご相談に応じます。"
+            />
+          </p>
+        </div>
+        <div class="flex flex-col gap-8 mt-6">
+          {buildServices.map((service) => (
+            <ServiceCard service={service} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

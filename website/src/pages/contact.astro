@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ContactForm, ContractFlow, PageHeader, Card } from '../components';
+import { PAGES } from '../config/site';
+---
+
+<BaseLayout title={PAGES.contact.title} description={PAGES.contact.description} cta={false}>
+  <div class="max-w-xl mx-auto">
+    <PageHeader title={PAGES.contact.title}>
+      <p class="text-muted mt-3">
+        気になる課題のご相談はもちろん、ちょっとした質問だけでもお気軽にどうぞ。
+      </p>
+    </PageHeader>
+
+    <Card as="section" class="mt-12 p-6">
+      <p class="text-xs font-mono uppercase tracking-widest text-muted">契約フロー</p>
+      <div class="mt-4">
+        <ContractFlow />
+      </div>
+      <p class="text-sm text-muted mt-4">24時間以内にお返事します。</p>
+    </Card>
+
+    <div class="mt-10">
+      <ContactForm />
+    </div>
+  </div>
+</BaseLayout>

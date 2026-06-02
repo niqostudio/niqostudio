@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getProfile } from '../lib/content';
+import { PAGES } from '../config/site';
+import {
+  SocialLinks,
+  RichText,
+  ContractFlow,
+  SectionLabel,
+  Wordmark,
+  ArrowLink,
+  Chip,
+  PageHeader,
+  Jp,
+} from '../components';
+
+const profile = await getProfile();
+
+// 各行: 薄い区切り線で仕切り、見出し(dt)と右カラム(dd)を縦中央で揃える。
+const row =
+  'py-8 border-t border-border-subtle first:border-0 first:pt-0 sm:grid sm:grid-cols-[10rem_1fr] sm:gap-x-10 sm:items-center';
+---
+
+<BaseLayout title={PAGES.about.title} description={PAGES.about.description} cta={false}>
+  {/* 見出しのブランド名は nav と同じロゴタイプ（Wordmark）。meta title は PAGES.about.title。 */}
+  <PageHeader>
+    <Fragment slot="title"><Wordmark /> について</Fragment>
+  </PageHeader>
+
+  {
+    profile && (
+      <dl class="mt-12">
+        {profile.bio && (
+          <div class={row}>
+            <SectionLabel as="dt">Bio</SectionLabel>
+            <dd class="leading-relaxed mt-2 sm:mt-0"><Jp text={profile.bio} /></dd>
+          </div>
+        )}
+
+        {profile.skills.length > 0 && (
+          <div class={row}>
+            <SectionLabel as="dt">Skills</SectionLabel>
+            <dd class="mt-2 sm:mt-0">
+              <ul class="flex flex-wrap gap-1.5">
+                {profile.skills.map((s) => (
+                  <Chip>{s}</Chip>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+
+        <div class={row}>
+          <SectionLabel as="dt">Flow</SectionLabel>
+          <dd class="mt-2 sm:mt-0"><ContractFlow /></dd>
+        </div>
+
+        {profile.operationPolicy && (
+          <div class={row}>
+            <SectionLabel as="dt">Operation Policy</SectionLabel>
+            <dd class="mt-2 sm:mt-0"><RichText text={profile.operationPolicy} class="leading-relaxed" /></dd>
+          </div>
+        )}
+
+        <div class={row}>
+          <SectionLabel as="dt">Contact</SectionLabel>
+          <dd class="mt-2 sm:mt-0">
+            <ArrowLink href={PAGES.contact.href} underline class="text-accent">
+              {PAGES.contact.title}
+            </ArrowLink>
+            {profile.handle && <p class="font-mono text-sm text-muted mt-2">@{profile.handle}</p>}
+            <SocialLinks links={profile.socialLinks} class="mt-3 text-muted" />
+          </dd>
+        </div>
+      </dl>
+    )
+  }
+</BaseLayout>
