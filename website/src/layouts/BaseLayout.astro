@@ -1,0 +1,106 @@
+---
+import '../styles/global.css';
+import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
+import Shell from './Shell.astro';
+import { getProfile } from '../lib/content';
+import { SITE, THEME, PAGES } from '../config/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  width?: 'wide' | 'prose';
+  cta?: boolean;
+  // ページ固有の JSON-LD（Service / CreativeWork など）。組織とパンくずは自動付与。
+  structuredData?: object | object[];
+  // noindex のページ（プライバシー等）。robots noindex を出し、description/OG/JSON-LD は省く。
+  noindex?: boolean;
+}
+
+const { title = SITE.name, description, width = 'prose', cta = true, structuredData, noindex = false } = Astro.props;
+
+// 既にブランド名を含む title（例: 「NIQO STUDIO について」）は重複を避けて suffix を付けない。
+const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+// OG 画像は固定6ページ分のみ生成。詳細は親セクションにフォールバック（/works/<slug> → /og/works.png）。
+const ogKey = Astro.url.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || 'index';
+const ogImage = new URL(`/og/${ogKey}.png`, Astro.site);
+
+// 組織エンティティは全ページ共通。description はページ文ではなく事業の固定説明を使う。
+const profile = await getProfile();
+const sameAs = profile?.socialLinks.map((l) => l.url).filter(Boolean) ?? [];
+const orgLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: SITE.name,
+  url: Astro.site?.href,
+  description: SITE.description,
+  image: new URL('/og/index.png', Astro.site).href,
+  areaServed: 'JP',
+  ...(sameAs.length > 0 ? { sameAs } : {}),
+};
+
+// パンくずは pathname から自動生成（ホーム → セクション → 現在ページ）。
+const segments = Astro.url.pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+const sectionPage = segments[0] ? (PAGES as Record<string, { href: string; title: string }>)[segments[0]] : undefined;
+const crumbs = segments.length === 0
+  ? []
+  : [
+      { name: 'ホーム', item: new URL('/', Astro.site).href },
+      ...(sectionPage ? [{ name: sectionPage.title, item: new URL(sectionPage.href, Astro.site).href }] : []),
+      ...(segments.length > 1 ? [{ name: title, item: canonical.href }] : []),
+    ];
+const breadcrumbLd = crumbs.length > 1
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.item })),
+    }
+  : null;
+
+const extra = structuredData ? (Array.isArray(structuredData) ? structuredData : [structuredData]) : [];
+const schemas = [orgLd, ...(breadcrumbLd ? [breadcrumbLd] : []), ...extra];
+---
+
+<!doctype html>
+<html lang="ja" data-theme={THEME}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* クライアント遷移でドキュメントを保持し、ロード済みフォントを引き継ぐ（遷移時の FOUT 解消）。 */}
+    <ClientRouter />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-noto-jp" />
+    <title>{fullTitle}</title>
+    <link rel="canonical" href={canonical.href} />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex, follow" />
+      ) : (
+        <Fragment>
+          {description && <meta name="description" content={description} />}
+          <meta property="og:title" content={fullTitle} />
+          {description && <meta property="og:description" content={description} />}
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content={SITE.name} />
+          <meta property="og:locale" content="ja_JP" />
+          <meta property="og:url" content={canonical.href} />
+          <meta property="og:image" content={ogImage.href} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta name="twitter:card" content="summary_large_image" />
+          {schemas.map((s) => (
+            <script type="application/ld+json" is:inline set:html={JSON.stringify(s)} />
+          ))}
+        </Fragment>
+      )
+    }
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Shell width={width} cta={cta}>
+      <slot />
+    </Shell>
+  </body>
+</html>

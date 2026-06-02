@@ -1,0 +1,21 @@
+---
+import { Header, Footer, CTA } from '../components';
+
+interface Props {
+  width?: 'wide' | 'prose';
+  cta?: boolean;
+}
+
+// ヘッダー・本文・フッターを共通の max-w-page 幹で揃える。
+// 本文の読み幅(prose)は内側で絞って中央寄せ。main 幹は常に max-w-page なのでナビ位置は不動。
+const { width = 'prose', cta = true } = Astro.props;
+---
+
+<Header />
+<main class="flex-1 w-full max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class:list={['mx-auto', width === 'prose' && 'max-w-readable']}>
+    <slot />
+  </div>
+</main>
+{cta && <CTA />}
+<Footer />
