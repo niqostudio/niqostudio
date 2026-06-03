@@ -72,7 +72,7 @@ mkdirSync('public/og', { recursive: true });
 
 const LOGO_H = 248; // index 中央ロゴの高さ
 const logoW = logo ? Math.round((logo.w / logo.h) * LOGO_H) : 0;
-const MARK_H = 720; // 非 index は右側に大きくはみ出すウォーターマーク
+const MARK_H = 680; // 非 index は右側に大きくはみ出すウォーターマーク
 const markW = logo ? Math.round((logo.w / logo.h) * MARK_H) : 0;
 
 for (const [key, { en, ja }] of Object.entries(pages)) {
@@ -127,7 +127,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
       },
       children: [
         ...(logo
-          ? [{ type: 'img', props: { src: logo.src, width: markW, height: MARK_H, style: { position: 'absolute', right: '-40px', top: '-45px', opacity: 0.6 } } }]
+          ? [{ type: 'img', props: { src: logo.src, width: markW, height: MARK_H, style: { position: 'absolute', right: '-10px', top: '-30px', opacity: 0.6 } } }]
           : []),
         {
           type: 'div',
