@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 import { submitInquiry } from '../../lib/core';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
     const name = formData.get('name')?.toString();
@@ -24,12 +25,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return json({ error: 'Field too long' }, 400);
     }
 
-    // Cloudflare Pages では実行時シークレットは locals.runtime.env、dev では import.meta.env。
-    const runtimeEnv = (locals as { runtime?: { env?: Record<string, string> } })?.runtime?.env;
+    // 実行時の secret/var は Worker の env（cloudflare:workers）から読む。公開値でない（PUBLIC_ なし）
+    // ＝ビルドにインラインされないため。dev は .dev.vars が供給する。未設定の機能は skip。
+    const runtimeEnv = env as Record<string, string | undefined>;
 
     // Turnstile: secret 設定時のみ検証（未設定なら skip＝dev/未導入でも動く）。
     // 変数名は infra コントラクト（docs/variables.md）の TURNSTILE_SECRET_KEY に合わせる。
-    const turnstileSecret = runtimeEnv?.TURNSTILE_SECRET_KEY ?? import.meta.env.TURNSTILE_SECRET_KEY;
+    const turnstileSecret = runtimeEnv.TURNSTILE_SECRET_KEY;
     if (turnstileSecret) {
       const token = formData.get('cf-turnstile-response')?.toString() ?? '';
       const ip = request.headers.get('CF-Connecting-IP') ?? '';
@@ -46,10 +48,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     await submitInquiry({ name, company, email, subject, message });
 
-    const resendApiKey = runtimeEnv?.RESEND_API_KEY ?? import.meta.env.RESEND_API_KEY;
+    const resendApiKey = runtimeEnv.RESEND_API_KEY;
     if (resendApiKey) {
-      const from = runtimeEnv?.CONTACT_FROM ?? import.meta.env.CONTACT_FROM;
-      const to = runtimeEnv?.CONTACT_TO ?? import.meta.env.CONTACT_TO;
+      const from = runtimeEnv.CONTACT_FROM;
+      const to = runtimeEnv.CONTACT_TO;
       const mail = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
