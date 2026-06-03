@@ -49,13 +49,15 @@ const steps = [
 
   <section class="py-12 border-t border-border mt-8">
     <SectionLabel as="h2">Process</SectionLabel>
-    <div class="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mt-8 grid gap-x-6 gap-y-7 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
       {
         steps.map((step, i) => (
-          <div>
+          <div class="flex items-baseline gap-4 sm:block">
             <p class="font-mono text-3xl text-accent">{String(i + 1).padStart(2, '0')}</p>
-            <h3 class="font-semibold text-xl mt-3">{step.name}</h3>
-            <p class="text-sm text-muted mt-2">{step.desc}</p>
+            <div class="sm:mt-3">
+              <h3 class="font-semibold text-xl">{step.name}</h3>
+              <p class="text-sm text-muted mt-1 sm:mt-2">{step.desc}</p>
+            </div>
           </div>
         ))
       }
