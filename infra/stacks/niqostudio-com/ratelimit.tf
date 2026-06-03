@@ -17,7 +17,8 @@ resource "cloudflare_ruleset" "contact_ratelimit" {
       characteristics     = ["ip.src", "cf.colo.id"]
       period              = 10
       requests_per_period = 5
-      mitigation_timeout  = 60
+      # Free プランは mitigation timeout を period と同値（10s）にしか設定できない。
+      mitigation_timeout = 10
     }
   }]
 }
