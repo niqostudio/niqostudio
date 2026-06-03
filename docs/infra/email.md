@@ -73,7 +73,7 @@ v=spf1 include:_spf.mx.cloudflare.net ~all
 3. **Resend にドメイン登録** → 表示される DKIM / `send.` の MX・SPF を控える。
 4. それらを **公開 DNS** として注入する（FQDN・相対名は使わない）：本番は GitHub Variable
    `RESEND_DNS_RECORDS`（JSON 配列）、ローカル検証は `terraform.tfvars` の `resend_dns_records`。
-5. apply：本番は `terraform-apply` を dispatch（Environment `infra-production`・承認ゲート）、ローカルは
+5. apply：本番は `infra: apply` を dispatch（Environment `infra-production`・承認ゲート）、ローカルは
    `terraform plan` → `apply`。`niqostudio.com TXT(SPF)` `_dmarc` `resend._domainkey` `send.*` が入る。
 6. Resend ダッシュボードで verify 完了を確認。`hi@niqostudio.com` から/へ送受信テスト。
 7. 数日 DMARC レポート（`dmarc_rua`）を見て問題なければ、`config.<env>.json` の

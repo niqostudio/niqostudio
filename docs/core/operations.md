@@ -46,9 +46,9 @@ NIQO STUDIO core（Supabase IaC）の運用手順。
 
 ## 本番への適用（db push）
 
-本番 DB への反映は **CI（GitHub Actions の `db push` ワークフロー）** で行う。
+本番 DB への反映は **CI（GitHub Actions の `core: migrate` ワークフロー）** で行う。
 
-- `.github/workflows/db-push.yml` を **workflow_dispatch** で起動（`apply=false` で dry-run、`true` で実適用）。`core/supabase/migrations/` を含む main への push でも dry-run が走る。
+- `.github/workflows/core-migrate.yml` を **workflow_dispatch** で起動（`apply=false` で dry-run、`true` で実適用）。push 自動の dry-run は廃止＝適用は常に明示の dispatch。
 - 実適用ジョブは **Environment `core-production`（承認ゲート付き）** で実行する（infra apply と対称）。接続は同 Environment の Secret **`SUPABASE_DB_URL`**。**CI は IPv4 のみ**なので **Session pooler** の接続文字列を使う（直結 `db.<ref>.supabase.co` は IPv6 で CI からは不達）。値は Supabase ダッシュボード → Database → Connection string → "Session pooler"。
 - ローカルから手動で流す場合：`SUPABASE_DB_URL` を shell で export し `pnpm exec supabase db push --db-url "$SUPABASE_DB_URL" [--dry-run|--yes]`（ローカル host が IPv6 可なら直結文字列でも可）。
 
@@ -76,7 +76,7 @@ NIQO STUDIO core（Supabase IaC）の運用手順。
 ## 型生成（packages/db-types）
 
 - **core が local スキーマから生成**する：`pnpm run db:start`（migrations 適用）→ `pnpm run db:types`（`supabase gen types --local` を `packages/db-types/src/database.ts` に書き出し）。consumer（website 等）は workspace 依存 `@niqostudio/db-types` を参照する。
-- 型の正本は **migrations**（live プロジェクトでなく local の適用結果を introspection）。**CI（`db-types` workflow）が migrations と生成型のドリフトを検知**するので、スキーマ変更時は再生成してコミットする。
+- 型の正本は **migrations**（live プロジェクトでなく local の適用結果を introspection）。**CI（`core: types` workflow）が migrations と生成型のドリフトを検知**するので、スキーマ変更時は再生成してコミットする。
 
 ## keep-alive
 

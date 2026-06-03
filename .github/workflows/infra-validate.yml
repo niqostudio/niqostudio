@@ -1,4 +1,4 @@
-name: terraform
+name: "infra: validate"
 
 # infra の fmt / validate。シークレット不要なので fork PR でも安全に動く。
 on:

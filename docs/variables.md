@@ -12,7 +12,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | infra | 共有 Cloudflare アカウント（単一） | `infra-production` のみ | 共有のため分割しない |
 | core | Supabase プロジェクト単位 | `core-production` のみ | staging は別プロジェクト＝`core-staging`（同名 secret を Environment で出し分け） |
 | website | デプロイ単位 | production のみ | staging サイトを `website-staging` で出し分け |
-| db-types | 環境なし（build 時の型生成） | — | — |
+| core-types | 環境なし（build 時の型生成） | — | — |
 
 ## 凡例と原則
 - **見出し＝置き場**。公開/秘密は置き場で判る（`config.<env>.json` / Variable ＝公開、Secret / wrangler secret ＝秘密）。**配置**＝✋手動 / 🤖自動（CI・Terraform）。**必要とするモジュール**＝消費側（Repository Variable は複数モジュールが参照しうる）。

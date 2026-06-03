@@ -1,4 +1,4 @@
-name: terraform apply
+name: "infra: apply"
 
 # 本番 infra を apply する。シークレットを使うため dispatch のみ（fork PR からは動かない）。
 # 跨ぎ配布（publish-contract）は monorepo では不要なので持たない。

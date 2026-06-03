@@ -1,9 +1,7 @@
-name: db push
+name: "core: migrate"
 
+# 適用は明示の dispatch のみ（push 自動の dry-run は廃止）。dry-run は apply=false で実行。
 on:
-  push:
-    branches: [main]
-    paths: ["core/supabase/migrations/**"]
   workflow_dispatch:
     inputs:
       apply:

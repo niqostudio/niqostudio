@@ -1,4 +1,4 @@
-name: website
+name: "website: build & deploy"
 
 # website のビルド検証＋本番 deploy。@astrojs/cloudflare のネイティブ形式（Worker＝SSR＋静的アセット）を
 # wrangler deploy で配信する。カスタムドメインの束ねは infra が管理（workers.tf）。Worker は本 deploy で

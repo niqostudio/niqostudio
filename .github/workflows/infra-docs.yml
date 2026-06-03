@@ -1,4 +1,4 @@
-name: terraform-docs
+name: "infra: terraform-docs"
 
 # infra の module / stack README が terraform-docs 生成結果と一致するかチェックする。
 # 差分があれば失敗 → ローカルで scripts/gen-docs を実行してコミットする。

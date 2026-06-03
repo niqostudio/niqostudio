@@ -81,7 +81,7 @@ flowchart TB
 ワークフローは root `.github/workflows/` に集約し、**paths で対象モジュールだけ起動**する。
 
 - `website/**` → build / check → `wrangler deploy`（Cloudflare Worker＝SSR+静的）。
-- `core/supabase/migrations/**` → db push（push は dry-run、承認 dispatch で apply）。
-- `infra/**` → fmt / validate（PR）、terraform apply（Environment `infra-production`・承認ゲート）。
-- `docs/**` / `mkdocs.yml` → MkDocs build → GitHub Pages。
+- `core/supabase/migrations/**` → `core: migrate`（dispatch で dry-run / apply・承認ゲート）。
+- `infra/**` → `infra: validate`（fmt / validate・PR）、`infra: apply`（dispatch・Environment `infra-production`・承認ゲート）。
+- `docs/**` / `mkdocs.yml` → `docs: mkdocs`（MkDocs build → GitHub Pages）。
 - 秘密値を使う本番反映は GitHub Environment（モジュール別 `<module>-production`・必須レビュー）でスコープする＝各ジョブは自分のモジュールの secret だけ読む（最小権限）。
