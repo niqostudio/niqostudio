@@ -67,6 +67,9 @@
   /* ページ幅: page=グリッド/シェル, readable=読み物 */
   --container-page: 80rem;
   --container-readable: 48rem;
+
+  /* モバイル↔それ以上の切替を 768px に（sm を既定 640→768）。lg(1024) はグリッド拡張で据え置き。 */
+  --breakpoint-sm: 768px;
 }
 
 /* === テーマ切替: <html data-theme="warm"> 等で配色セットを差し替え === */
