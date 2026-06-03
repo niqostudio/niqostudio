@@ -38,8 +38,8 @@ let logo = null;
     const { data } = await supabase.from('profile').select('logo_svg').eq('id', 'singleton').single();
     const svg = data?.logo_svg;
     if (svg) {
-      // CSS 変数・currentColor は satori/resvg が解決しないため、地に映える金へ一律解決。
-      const resolved = svg.replace(/var\(--[^)]+\)/g, GOLD).replace(/currentColor/g, GOLD);
+      // CSS 変数は satori/resvg が解決しないため、本来の2色（フォールバック値＝pair 緑 / diag 金）に解決する。
+      const resolved = svg.replace(/var\(\s*--[^,)]+,\s*([^)]+)\)/g, '$1').replace(/currentColor/g, GOLD);
       const r = new Resvg(resolved, { fitTo: { mode: 'width', value: 600 } });
       const png = r.render();
       logo = {
@@ -114,7 +114,7 @@ for (const [key, title] of Object.entries(pages)) {
                     width: logoW,
                     height: LOGO_H,
                     // 右にはみ出す大きな薄い金。中央テキストの背面（コードでは末尾＝下層に置けないため低 opacity で干渉を抑える）。
-                    style: { position: 'absolute', right: '-110px', top: `${Math.round((630 - LOGO_H) / 2)}px`, opacity: 0.2 },
+                    style: { position: 'absolute', right: '-150px', top: `${Math.round((630 - LOGO_H) / 2)}px`, opacity: 0.7 },
                   },
                 },
               ]
