@@ -1,15 +1,10 @@
-# Cloudflare Email Routing: ドメイン受信を有効化し、アドレス転送ルールを作る。
-# 受信に必要な MX / SPF は Cloudflare 側が要求する（DNS の実投入は cloudflare-dns-records 側、
-# あるいは Email Routing 有効化時の自動レコードに委ねる構成も可）。
+# Cloudflare Email Routing: アドレス転送ルールと転送先を管理する。
+# 受信の有効化（POST /email/routing/enable）は API トークンでは実行できない（CF の権限制約・
+# Email Routing Rules:Edit でも 403）。初回のみダッシュボードで Email Routing を Enable する
+# 一度きりのブートストラップとする（受信 MX は有効化時に CF が自動投入）。enable 自体は TF 管理外。
 # 注: リソース/属性名は provider のバージョンでスキーマが変わる。docs で要検証。
 
-# v5 ではこのリソースの作成自体が Email Routing 有効化に相当する。
-# enabled / status は read-only（状態を反映するだけ）なので設定しない。
-resource "cloudflare_email_routing_settings" "this" {
-  zone_id = var.zone_id
-}
-
-# 転送先アドレスは Cloudflare 側で検証（確認メール）が必要。
+# 転送先アドレスは Cloudflare 側で検証（確認メール・人手）が必要。
 resource "cloudflare_email_routing_address" "destinations" {
   for_each   = toset(var.destination_addresses)
   account_id = var.account_id
