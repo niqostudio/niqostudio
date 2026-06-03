@@ -34,6 +34,7 @@ nav:
   - はじめに: index.md
   - アーキテクチャ: architecture.md
   - 変数の配置: variables.md
+  - セキュリティ: security.md
   - core:
       - スキーマ: core/schema.md
       - 運用: core/operations.md
