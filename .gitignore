@@ -21,3 +21,6 @@ npm-debug.log*
 # Claude Code（rules のみ追跡し、その他のローカル設定は除外）
 .claude/*
 !.claude/rules/
+
+# ブランドアイコン生成物（gen:icon の出力・手動アップロード用・追跡しない）
+org-icon.png
