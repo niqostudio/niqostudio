@@ -7,6 +7,9 @@ allowBuilds:
   esbuild: false
   sharp: false
   workerd: false
+# 新規公開バージョンの取り込みを 1 日(1440 分)待つ＝サプライチェーン攻撃（乗っ取り即時公開）の窓を狭める。
+# Exclude はこの cooldown を免除する対象。
+minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@supabase/cli-darwin-arm64@2.104.0'
   - '@supabase/cli-darwin-x64@2.104.0'
