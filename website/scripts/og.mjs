@@ -9,7 +9,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { createClient } from '@supabase/supabase-js';
 
-const GOLD = '#d4af37';
+const GOLD = '#dcb441';
 const CREAM = '#faf9f7';
 const BG = '#1a1917';
 // index OG のタグライン（tier1 のみ。tier2 の自己紹介は OG には載せない）。
@@ -31,7 +31,10 @@ let logo = null;
     const svg = data?.logo_svg;
     if (svg) {
       // CSS 変数は satori/resvg が解決しないため、本来の2色（フォールバック値＝pair 緑 / diag 金）へ。
-      const resolved = svg.replace(/var\(\s*--[^,)]+,\s*([^)]+)\)/g, '$1').replace(/currentColor/g, GOLD);
+      const resolved = svg
+        .replace(/var\(\s*--[^,)]+,\s*([^)]+)\)/g, '$1')
+        .replace(/currentColor/g, GOLD)
+        .replace(/#d4af37/gi, GOLD); // ロゴの金（diag フォールバック）も OG の金に揃える
       const png = new Resvg(resolved, { fitTo: { mode: 'width', value: 600 } }).render();
       logo = { src: `data:image/png;base64,${Buffer.from(png.asPng()).toString('base64')}`, w: png.width, h: png.height };
     }
