@@ -32,12 +32,14 @@ jobs:
         working-directory: infra/stacks/niqostudio-com
         # 機微(PII)は Secret、公開DNS(Resend)は Variable に分離して env 経由で渡す。
         env:
-          R2_TFSTATE_BUCKET:         ${{ vars.R2_TFSTATE_BUCKET }}
-          CF_ACCOUNT_ID:             ${{ vars.CF_ACCOUNT_ID }}
-          TF_VAR_forward_to:         ${{ secrets.EMAIL_FORWARD_TO }}
-          TF_VAR_resend_dns_records: ${{ vars.RESEND_DNS_RECORDS }}
+          R2_TFSTATE_BUCKET:   ${{ vars.R2_TFSTATE_BUCKET }}
+          CF_ACCOUNT_ID:       ${{ vars.CF_ACCOUNT_ID }}
+          TF_VAR_forward_to:   ${{ secrets.EMAIL_FORWARD_TO }}
+          RESEND_DNS_RECORDS:  ${{ vars.RESEND_DNS_RECORDS }}
         run: |
-          : "${TF_VAR_resend_dns_records:=[]}"   # 未設定の "" を空リストにして parse エラーを回避
+          # 公開DNS(Resend)は JSON 配列の Variable。TF_VAR は HCL 解釈で JSON object を受けないため、
+          # terraform が native JSON で読む .auto.tfvars.json に包んで渡す（未設定は空リスト）。
+          printf '{"resend_dns_records": %s}' "${RESEND_DNS_RECORDS:-[]}" > resend.auto.tfvars.json
           cat > backend.tfbackend <<EOF
           bucket    = "$R2_TFSTATE_BUCKET"
           key       = "niqostudio-com/terraform.tfstate"

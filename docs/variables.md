@@ -62,7 +62,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
 | `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
-| `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS（JSON・公開）→ `TF_VAR_resend_dns_records` |
+| `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS。**JSON 配列のみ**（`resend_dns_records =` の代入頭は付けない）。CI が `.auto.tfvars.json` に包んで渡す。ローカルは `terraform.tfvars`（HCL）側に書く |
 
 ### `website-production`
 | 値 | 配置 | 必要とするモジュール | 備考 |
