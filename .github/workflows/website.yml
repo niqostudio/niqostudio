@@ -5,10 +5,11 @@ name: website
 # canonical ドメインは root の config.<env>.json を website が直読する（DEPLOY_ENV で選択・既定 production）。
 on:
   pull_request:
-    paths: ["website/**", "config.*.json"]
+    paths: ["website/**", "config.*.json", ".github/workflows/website.yml"]
   push:
     branches: [main]
-    paths: ["website/**", "config.*.json"]
+    paths: ["website/**", "config.*.json", ".github/workflows/website.yml"]
+  workflow_dispatch: # website 変更なしでも手動で build+deploy を回せる
 
 permissions:
   contents: read
@@ -38,18 +39,18 @@ jobs:
       - run: pnpm install --frozen-lockfile --filter @niqostudio/website...
       - run: pnpm build
       - run: pnpm check
-      # 本番 deploy 用に dist を受け渡す（main push のみ。PR ではアップロードしない）。
-      - if: github.event_name == 'push'
+      # 本番 deploy 用に dist を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
+      - if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: website-dist
           path: website/dist
           retention-days: 1
 
-  # main への push 時のみ Cloudflare Pages へ direct-upload。secret は website-production にスコープ。
+  # push / 手動 dispatch で Cloudflare Pages へ direct-upload（PR は除く）。secret は website-production にスコープ。
   deploy:
     needs: build
-    if: github.event_name == 'push' && github.repository == 'niqostudio/niqostudio'
+    if: github.event_name != 'pull_request' && github.repository == 'niqostudio/niqostudio'
     runs-on: ubuntu-latest
     environment: website-production
     steps:
