@@ -33,12 +33,6 @@ export const POST: APIRoute = async ({ request }) => {
     // Turnstile: secret 設定時のみ検証（未設定なら skip＝dev/未導入でも動く）。
     // 変数名は infra コントラクト（docs/variables.md）の TURNSTILE_SECRET_KEY に合わせる。
     const turnstileSecret = runtimeEnv.TURNSTILE_SECRET_KEY;
-    // フェイルクローズ: site key を出している（＝ウィジェット表示中）のに secret が無いのは構成ミス。
-    // 黙って通さず 503。site key 自体が無い（dev/未導入）なら従来どおり検証を skip する。
-    if (import.meta.env.PUBLIC_TURNSTILE_SITE_KEY && !turnstileSecret) {
-      console.error('Turnstile enabled (site key set) but TURNSTILE_SECRET_KEY missing — refusing (fail-closed)');
-      return json({ error: 'Server misconfigured' }, 503);
-    }
     if (turnstileSecret) {
       const token = formData.get('cf-turnstile-response')?.toString() ?? '';
       const ip = request.headers.get('CF-Connecting-IP') ?? '';

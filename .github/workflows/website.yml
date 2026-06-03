@@ -70,6 +70,17 @@ jobs:
         with:
           name: website-dist
           path: website/dist
+      # フェイルクローズ: ウィジェットを出している（site key 設定済み）のに Turnstile secret が空なら
+      # 検証が skip される構成ミス。deploy 前にここで落とす（secret は website-production にしか無いため deploy job で検査）。
+      - name: Turnstile 設定の整合チェック
+        env:
+          SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+          SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        run: |
+          if [ -n "$SITE_KEY" ] && [ -z "$SECRET_KEY" ]; then
+            echo "::error::PUBLIC_TURNSTILE_SITE_KEY が設定されているのに TURNSTILE_SECRET_KEY が空です（フェイルクローズ）"
+            exit 1
+          fi
       # adapter 生成の wrangler.json をそのまま使う（assets.directory=../client）。dlx で実行し workspace を汚さない。
       - name: deploy（Worker = SSR + 静的アセット）
         working-directory: website/dist/server
