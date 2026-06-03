@@ -53,6 +53,11 @@ jobs:
     environment: website-production
     steps:
       - uses: actions/checkout@v5
+      # wrangler-action は repo の packageManager(pnpm) を使うため pnpm/node を用意する。
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
       - uses: actions/download-artifact@v4
         with:
           name: website-dist
