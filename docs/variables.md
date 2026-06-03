@@ -47,14 +47,24 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | `R2_TFSTATE_KEY_ID` / `R2_TFSTATE_SECRET_KEY` | ✋ | infra | S3 鍵ペア（ID も機密）。発行名 `infra-tfstate` |
 | `EMAIL_FORWARD_TO` | ✋ | infra | 転送先メール（PII）→ `TF_VAR_forward_to` |
 
+### `website-production`
+| 値 | 配置 | 必要とするモジュール | 備考 |
+| --- | --- | --- | --- |
+| `CF_PAGES_DEPLOY_TOKEN` | ✋ | website | Cloudflare Pages へ direct-upload する API トークン（Account → Cloudflare Pages: **Edit**）。発行名 `website-pages-deploy`（→ wrangler の `apiToken`）。infra の TF トークンとは分離 |
+
 ## GitHub Environment Variable（モジュール別・公開・環境依存）
-非秘密だが infra apply だけが使う＝`infra-production` にスコープ（`PUBLIC_` は付けない＝ブラウザに出ないため）。
+非秘密だが apply / deploy だけが使う＝各モジュールの Environment にスコープ（`PUBLIC_` は付けない＝ブラウザに出ないため）。
 
 ### `infra-production`
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
 | `R2_TFSTATE_ACCOUNT_ID` / `R2_TFSTATE_BUCKET` | ✋ | infra | endpoint は account_id から導出。バケット名（ローカルは backend.tfbackend） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS（JSON・公開）→ `TF_VAR_resend_dns_records` |
+
+### `website-production`
+| 値 | 配置 | 必要とするモジュール | 備考 |
+| --- | --- | --- | --- |
+| `CF_ACCOUNT_ID` | ✋ | website | Cloudflare アカウント ID（wrangler の `accountId`）。Pages deploy 先アカウント |
 
 ## GitHub Repository Variable（公開・環境非依存・複数モジュールが参照しうる）
 `PUBLIC_` 付き＝website が bundle に焼き込む公開値（Vite envPrefix）。
