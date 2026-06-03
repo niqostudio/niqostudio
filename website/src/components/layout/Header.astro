@@ -10,7 +10,7 @@ const linkClass = (href: string) =>
   isActive(href) ? 'text-on-dark' : 'text-on-dark-muted hover:text-on-dark';
 ---
 
-<header class="bg-surface-dark text-on-dark relative border-t-2 border-gold">
+<header id="site-header" class="bg-surface-dark text-on-dark sticky top-0 z-50 border-t-2 border-gold transition-transform duration-300">
   <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 h-[4.5rem] flex items-center justify-between">
     <a href="/" class="inline-flex items-center gap-2.5 text-lg">
       <LogoMark class="w-7 h-7" />
@@ -86,5 +86,37 @@ const linkClass = (href: string) =>
       open?.classList.toggle('hidden', isOpen);
       close?.classList.toggle('hidden', !isOpen);
     });
+
+    // 下スクロールでヘッダーを退避し、上スクロールで戻す（常時 viewport を食わない）。
+    // window は ClientRouter 遷移をまたいで残るためリスナーは一度だけ張る（要素は毎回引き直す）。
+    const win = window as unknown as Record<string, unknown>;
+    if (!win.__niqoHeaderScroll) {
+      win.__niqoHeaderScroll = true;
+      let lastY = window.scrollY;
+      let ticking = false;
+      const update = () => {
+        ticking = false;
+        const header = document.getElementById('site-header');
+        const m = document.getElementById('mobile-menu');
+        if (!header) return;
+        const y = window.scrollY;
+        const menuOpen = m ? !m.classList.contains('hidden') : false;
+        // 最上部・メニュー展開中は常に表示。下スクロールで隠し、上スクロールで戻す。
+        if (menuOpen || y < 80) header.classList.remove('-translate-y-full');
+        else if (y > lastY + 4) header.classList.add('-translate-y-full');
+        else if (y < lastY - 4) header.classList.remove('-translate-y-full');
+        lastY = y;
+      };
+      window.addEventListener(
+        'scroll',
+        () => {
+          if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(update);
+          }
+        },
+        { passive: true },
+      );
+    }
   });
 </script>
