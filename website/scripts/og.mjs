@@ -66,9 +66,9 @@ const fonts = [
 
 mkdirSync('public/og', { recursive: true });
 
-// ロゴは大きめの"金のウォーターマーク"として右に薄く配置（サイトのヒーローと同趣）。
-// 屋号/tagline は中央に重ね、正方クロップ（中央 630px）でも見えるようにする。
-const LOGO_H = 540;
+// ロゴ→屋号→tagline を中央に縦スタック。全要素を中央に置くことで横長 1200x630 でも
+// 正方クロップ（中央 630px）でも破綻なく収まる。ロゴは重ならないのでフル不透明の2色。
+const LOGO_H = 184;
 const logoW = logo ? Math.round((logo.w / logo.h) * LOGO_H) : 0;
 
 for (const [key, title] of Object.entries(pages)) {
@@ -76,49 +76,43 @@ for (const [key, title] of Object.entries(pages)) {
     {
       type: 'div',
       props: {
-        // 屋号・tagline は中央（正方 630px クロップの安全域）。ロゴは右の大きな薄い金ウォーターマーク。
         style: {
-          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
+          gap: '28px',
           width: '100%',
           height: '100%',
-          padding: '0 90px',
+          padding: '0 80px',
           backgroundColor: BG,
           borderBottom: `24px solid ${GOLD}`,
         },
         children: [
+          ...(logo ? [{ type: 'img', props: { src: logo.src, width: logoW, height: LOGO_H } }] : []),
           {
             type: 'div',
             props: {
-              style: { fontSize: 84, fontWeight: 700, color: CREAM, letterSpacing: '-0.02em', lineHeight: 1.05 },
-              children: title,
-            },
-          },
-          {
-            type: 'div',
-            props: {
-              style: { fontSize: 36, fontWeight: 400, color: GOLD, marginTop: '20px' },
-              children: TAGLINE,
-            },
-          },
-          ...(logo
-            ? [
+              style: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+              children: [
                 {
-                  type: 'img',
+                  type: 'div',
                   props: {
-                    src: logo.src,
-                    width: logoW,
-                    height: LOGO_H,
-                    // 右にはみ出す大きな薄い金。中央テキストの背面（コードでは末尾＝下層に置けないため低 opacity で干渉を抑える）。
-                    style: { position: 'absolute', right: '-150px', top: `${Math.round((630 - LOGO_H) / 2)}px`, opacity: 0.7 },
+                    style: { fontSize: 76, fontWeight: 700, color: CREAM, letterSpacing: '-0.02em', lineHeight: 1.05 },
+                    children: title,
                   },
                 },
-              ]
-            : []),
+                {
+                  type: 'div',
+                  props: {
+                    style: { fontSize: 34, fontWeight: 400, color: GOLD, marginTop: '16px' },
+                    children: TAGLINE,
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
