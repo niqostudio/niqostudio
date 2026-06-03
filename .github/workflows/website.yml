@@ -67,9 +67,9 @@ jobs:
       # project 名は config.<env>.json の primary ドメイン配下から取得（単一正本・ハードコードしない）。
       - id: cfg
         run: echo "name=$(jq -r '.domains[.primary].pages.website.project_name' config.production.json)" >> "$GITHUB_OUTPUT"
+      # wrangler-action は pnpm workspace でルート追加を拒否され失敗するため、dlx で直接実行する（workspace を汚さない）。
       - name: deploy（箱は infra が作成済み前提＝未作成なら失敗）
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_PAGES_DEPLOY_TOKEN }}
-          accountId: ${{ vars.CF_ACCOUNT_ID }}
-          command: pages deploy website/dist --project-name=${{ steps.cfg.outputs.name }} --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_DEPLOY_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+        run: pnpm dlx wrangler@3.90.0 pages deploy website/dist --project-name=${{ steps.cfg.outputs.name }} --branch=main
