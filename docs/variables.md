@@ -54,6 +54,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | `RESEND_API_KEY` | ✋ | website | 問い合わせ通知の送信（CI が `wrangler secret` へ投入） |
 | `CONTACT_TO` | ✋ | website | 通知先アドレス（個人メール＝PII。CI が `wrangler secret` へ投入） |
 | `TURNSTILE_SECRET_KEY` | ✋ | website | ボット検証 secret（未設定なら検証 skip。CI が `wrangler secret` へ投入） |
+| `SUPABASE_INQUIRY_JWT` | ✋ | website | `role:inquiry_writer` を名乗る長寿命 JWT（最小権限・INSERT のみ）。`/api/contact` が anon 直叩きを避けて INSERT する経路。未設定なら publishable=anon にフォールバック。JWT secret で署名し発行 |
 
 ## GitHub Environment Variable（モジュール別・公開・環境依存）
 非秘密だが apply / deploy だけが使う＝各モジュールの Environment にスコープ（`PUBLIC_` は付けない＝ブラウザに出ないため）。

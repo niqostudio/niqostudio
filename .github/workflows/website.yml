@@ -94,12 +94,14 @@ jobs:
           CONTACT_FROM: ${{ vars.CONTACT_FROM }}
           CONTACT_TO: ${{ secrets.CONTACT_TO }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          SUPABASE_INQUIRY_JWT: ${{ secrets.SUPABASE_INQUIRY_JWT }}
         run: |
           # 空値は載せない（未導入の Turnstile 等は skip）。secret bulk は JSON を一括投入する。
           jq -n \
             --arg r "$RESEND_API_KEY" --arg f "$CONTACT_FROM" \
             --arg t "$CONTACT_TO" --arg ts "$TURNSTILE_SECRET_KEY" \
-            '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts}
+            --arg ij "$SUPABASE_INQUIRY_JWT" \
+            '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_JWT:$ij}
              | with_entries(select(.value != ""))' > secrets.json
           pnpm dlx wrangler@4 secret bulk secrets.json
           rm -f secrets.json

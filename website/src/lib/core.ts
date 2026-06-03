@@ -1,5 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { Work, Case, Service, Profile, PublicClient } from '../types/database';
+import type { Work, Case, Service, Profile, PublicClient, Database } from '../types/database';
 
 export type WorkRow = Work & { clients: PublicClient | null };
 export type CaseRow = Case & { clients: PublicClient | null };
@@ -70,9 +71,13 @@ export type InquiryInput = {
   message: string;
 };
 
-// RLS で inquiries の INSERT のみ許可。失敗は throw。
-export async function submitInquiry(input: InquiryInput): Promise<void> {
-  const { error } = await supabase.from('inquiries').insert({
+// inquiries への INSERT。既定は共有クライアント（publishable=anon）。最小権限の inquiry_writer
+// クライアントを渡せば、その JWT 経由で INSERT する（Worker 専用経路）。失敗は throw。
+export async function submitInquiry(
+  input: InquiryInput,
+  client: SupabaseClient<Database> = supabase,
+): Promise<void> {
+  const { error } = await client.from('inquiries').insert({
     name: input.name,
     company: input.company ?? null,
     email: input.email,

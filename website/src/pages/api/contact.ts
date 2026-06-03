@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { submitInquiry } from '../../lib/core';
+import { inquiryClient } from '../../lib/supabase';
 
 export const prerender = false;
 
@@ -46,7 +47,10 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    await submitInquiry({ name, company, email, subject, message });
+    // SUPABASE_INQUIRY_JWT があれば最小権限ロール経由で INSERT（直叩き不可の本番経路）。
+    // 未設定なら共有クライアント（publishable=anon）にフォールバック（移行期/dev でも動く）。
+    const writerJwt = runtimeEnv.SUPABASE_INQUIRY_JWT;
+    await submitInquiry({ name, company, email, subject, message }, writerJwt ? inquiryClient(writerJwt) : undefined);
 
     const resendApiKey = runtimeEnv.RESEND_API_KEY;
     if (resendApiKey) {

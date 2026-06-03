@@ -14,3 +14,12 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase: SupabaseClient<Database> = createClient<Database>(supabaseUrl, supabaseKey);
+
+// 問い合わせ INSERT 専用クライアント。apikey は publishable のまま、Authorization に最小権限ロール
+// inquiry_writer を名乗る JWT を載せる（JWT は実行時 secret＝公開値でない）。Worker からのみ使う。
+export function inquiryClient(jwt: string): SupabaseClient<Database> {
+  return createClient<Database>(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
