@@ -1,8 +1,8 @@
--- 問い合わせ INSERT 専用の最小権限ロール（Worker 経由のみ書き込ませる B 方式）。
+-- 問い合わせ INSERT 専用の最小権限ロール（Worker 経由のみ書き込ませる）。
 -- Worker は role: inquiry_writer を名乗る JWT を Bearer に載せて INSERT する。漏洩時の影響は
 -- 「inquiries への INSERT のみ」に限定される（service_role/secret key の全 DB アクセスと異なる）。
 -- このファイルは anon を一切触らない＝適用してもフォームは無停止（anon も従来どおり INSERT 可）。
--- anon の剥奪は website が JWT 経路に切替わった後、別マイグレーション(phase 2)で行う。
+-- anon の剥奪は website が JWT 経路に切替わった後、別マイグレーションで行う。
 
 -- ロールは cluster 全体に残るため db reset の再適用で二重作成しないよう存在チェックする。
 DO $$
