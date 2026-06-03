@@ -39,12 +39,14 @@ jobs:
       - run: pnpm install --frozen-lockfile --filter @niqostudio/website...
       - run: pnpm build
       - run: pnpm check
-      # 本番 deploy 用に dist を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
+      # 本番 deploy 用に静的成果物を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
+      # @astrojs/cloudflare は dist/client（静的）と dist/server（worker）に分割する。Pages へは静的の client を配信。
       - if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: website-dist
-          path: website/dist
+          path: website/dist/client
+          include-hidden-files: true
           retention-days: 1
 
   # push / 手動 dispatch で Cloudflare Pages へ direct-upload（PR は除く）。secret は website-production にスコープ。
@@ -63,7 +65,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: website-dist
-          path: website/dist
+          path: website/dist/client
       # project 名は config.<env>.json の primary ドメイン配下から取得（単一正本・ハードコードしない）。
       - id: cfg
         run: echo "name=$(jq -r '.domains[.primary].pages.website.project_name' config.production.json)" >> "$GITHUB_OUTPUT"
@@ -72,4 +74,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_DEPLOY_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
-        run: pnpm dlx wrangler@3.90.0 pages deploy website/dist --project-name=${{ steps.cfg.outputs.name }} --branch=main
+        run: pnpm dlx wrangler@3.90.0 pages deploy website/dist/client --project-name=${{ steps.cfg.outputs.name }} --branch=main
