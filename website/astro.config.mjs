@@ -53,6 +53,17 @@ export default defineConfig({
         'sans-serif',
       ],
     },
+    {
+      // 等幅は wordmark・コード調 UI（SectionLabel・価格・番号）に使う。端末依存の system mono を避け固定。
+      provider: fontProviders.google(),
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jetbrains-mono',
+      weights: [400, 600],
+      subsets: ['latin'],
+      display: 'swap',
+      optimizedFallbacks: false,
+      fallbacks: ['ui-monospace', 'monospace'],
+    },
   ],
   vite: {
     plugins: [tailwindcss()],

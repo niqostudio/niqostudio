@@ -59,7 +59,7 @@
      ラテン=Inter（欧文系フォールバックのみ）→ 和文=Noto Sans JP の順で、
      和文が手前の system フォントに食われないようにする。 */
   --font-sans: var(--font-inter), var(--font-noto-jp);
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 
   /* 角丸はほぼソリッド（全 rounded-sm がこの値を参照） */
   --radius-sm: 0.125rem;

@@ -124,14 +124,14 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
       },
       children: [
         ...(logo
-          ? [{ type: 'img', props: { src: logo.src, width: markW, height: MARK_H, style: { position: 'absolute', right: '-40px', top: '-45px', opacity: 0.9 } } }]
+          ? [{ type: 'img', props: { src: logo.src, width: markW, height: MARK_H, style: { position: 'absolute', right: '-40px', top: '-45px', opacity: 0.6 } } }]
           : []),
         {
           type: 'div',
           props: {
             style: {
               position: 'absolute',
-              left: '288px',
+              left: '315px',
               top: '0px',
               bottom: '0px',
               width: '400px',
@@ -149,7 +149,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
         {
           type: 'div',
           props: {
-            style: { position: 'absolute', left: '288px', bottom: '56px', fontSize: 26, fontWeight: 700, color: CREAM, fontFamily: 'JetBrains Mono', letterSpacing: '0.08em' },
+            style: { position: 'absolute', left: '315px', bottom: '56px', fontSize: 26, fontWeight: 700, color: CREAM, fontFamily: 'JetBrains Mono', letterSpacing: '0.08em' },
             children: 'NIQO STUDIO',
           },
         },
