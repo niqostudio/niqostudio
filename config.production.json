@@ -3,13 +3,20 @@
   "domains": {
     "niqostudio.com": {
       "email": {
-        "spf_includes": ["_spf.mx.cloudflare.net"],
+        "spf_includes": [
+          "_spf.mx.cloudflare.net"
+        ],
         "spf_all": "~all",
         "dmarc_policy": "none",
         "dmarc_rua": ""
       },
       "pages": {
-        "website": { "project_name": "", "production_branch": "main", "subdomain": "", "cname": "" }
+        "website": {
+          "project_name": "niqostudio",
+          "production_branch": "main",
+          "subdomain": "",
+          "cname": ""
+        }
       }
     },
     "niqo.studio": {
