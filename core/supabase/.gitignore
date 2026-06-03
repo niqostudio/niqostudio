@@ -2,6 +2,9 @@
 .branches
 .temp
 
+# JWT 署名鍵（秘密鍵を含む＝絶対にコミットしない）
+signing_keys.json
+
 # dotenvx
 .env.keys
 .env.local
