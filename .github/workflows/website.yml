@@ -17,6 +17,12 @@ jobs:
   build:
     if: github.repository == 'niqostudio/niqostudio'
     runs-on: ubuntu-latest
+    # SSG ビルドは公開値で実データを取得する（公開鍵＝Repository Variable・RLS 準拠）。
+    # prebuild / build / check のいずれでも参照され得るのでジョブレベルで渡す。
+    # ドメインは root の config.<env>.json を直読（DEPLOY_ENV 未設定＝production）。
+    env:
+      PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
     defaults:
       run:
         working-directory: website
@@ -30,12 +36,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       # workspace の root lockfile を使う。website とその workspace 依存（db-types）のみ入れる。
       - run: pnpm install --frozen-lockfile --filter @niqostudio/website...
-      # SSG ビルドは公開値で実データを取得する（公開鍵＝Repository Variable・RLS 準拠）。
-      # ドメインは root の config.<env>.json を直読（DEPLOY_ENV 未設定＝production）。
       - run: pnpm build
-        env:
-          PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
-          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       - run: pnpm check
       # 本番 deploy 用に dist を受け渡す（main push のみ。PR ではアップロードしない）。
       - if: github.event_name == 'push'
