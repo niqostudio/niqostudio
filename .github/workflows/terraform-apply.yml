@@ -33,7 +33,7 @@ jobs:
         # 機微(PII)は Secret、公開DNS(Resend)は Variable に分離して env 経由で渡す。
         env:
           R2_TFSTATE_BUCKET:         ${{ vars.R2_TFSTATE_BUCKET }}
-          R2_TFSTATE_ACCOUNT_ID:       ${{ vars.R2_TFSTATE_ACCOUNT_ID }}
+          CF_ACCOUNT_ID:             ${{ vars.CF_ACCOUNT_ID }}
           TF_VAR_forward_to:         ${{ secrets.EMAIL_FORWARD_TO }}
           TF_VAR_resend_dns_records: ${{ vars.RESEND_DNS_RECORDS }}
         run: |
@@ -41,7 +41,7 @@ jobs:
           cat > backend.tfbackend <<EOF
           bucket    = "$R2_TFSTATE_BUCKET"
           key       = "niqostudio-com/terraform.tfstate"
-          endpoints = { s3 = "https://$R2_TFSTATE_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
           EOF
           terraform init -backend-config=backend.tfbackend -input=false
           terraform apply -auto-approve -input=false
@@ -49,13 +49,13 @@ jobs:
       - name: apply niqo-studio
         working-directory: infra/stacks/niqo-studio
         env:
-          R2_TFSTATE_BUCKET:   ${{ vars.R2_TFSTATE_BUCKET }}
-          R2_TFSTATE_ACCOUNT_ID: ${{ vars.R2_TFSTATE_ACCOUNT_ID }}
+          R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
+          CF_ACCOUNT_ID:     ${{ vars.CF_ACCOUNT_ID }}
         run: |
           cat > backend.tfbackend <<EOF
           bucket    = "$R2_TFSTATE_BUCKET"
           key       = "niqo-studio/terraform.tfstate"
-          endpoints = { s3 = "https://$R2_TFSTATE_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
           EOF
           terraform init -backend-config=backend.tfbackend -input=false
           terraform apply -auto-approve -input=false

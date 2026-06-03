@@ -58,19 +58,15 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 ### `infra-production`
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
-| `R2_TFSTATE_ACCOUNT_ID` / `R2_TFSTATE_BUCKET` | ✋ | infra | endpoint は account_id から導出。バケット名（ローカルは backend.tfbackend） |
+| `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS（JSON・公開）→ `TF_VAR_resend_dns_records` |
 
-### `website-production`
-| 値 | 配置 | 必要とするモジュール | 備考 |
-| --- | --- | --- | --- |
-| `CF_ACCOUNT_ID` | ✋ | website | Cloudflare アカウント ID（wrangler の `accountId`）。Pages deploy 先アカウント |
-
 ## GitHub Repository Variable（公開・環境非依存・複数モジュールが参照しうる）
-`PUBLIC_` 付き＝website が bundle に焼き込む公開値（Vite envPrefix）。
+複数モジュールが共有する非秘密値。`PUBLIC_` 付き＝website が bundle に焼き込む公開値（Vite envPrefix）。
 
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
+| `CF_ACCOUNT_ID` | ✋ | infra, website | Cloudflare アカウント ID（非秘密）。infra=R2 endpoint 組立 / website=Pages deploy（wrangler `accountId`） |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✋ | website, infra(keep-alive) | フロントに載る公開鍵（`sb_publishable_`・RLS 準拠）。SSG ビルド＆ping |
 | `PUBLIC_TURNSTILE_SITE_KEY` | ✋ | website | ボット対策の公開 site key（未設定なら検証 skip） |
 
