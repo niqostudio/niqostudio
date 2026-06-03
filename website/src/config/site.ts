@@ -92,7 +92,7 @@ export const CTA = {
 // 契約フロー（無料相談 → Discovery Phase → 本契約）。ContractFlow が /contact・/about で共用。
 // detail の {price} は live の Discovery サービス価格に置換される。
 export const CONTRACT_FLOW = [
-  { title: '無料相談', detail: '30分・Zoom / Google Meet。課題と進め方をすり合わせます。' },
+  { title: '無料相談', detail: '30分・Google Meet。課題と進め方をすり合わせます。' },
   { title: 'Discovery Phase', detail: '事前設計（有償 {price}）。要件・技術・費用を固めます。' },
   { title: '本契約', detail: 'Discovery Phase の費用は、本契約金額から差し引かれます。' },
 ] as const;
