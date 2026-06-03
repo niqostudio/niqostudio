@@ -13,7 +13,7 @@ try {
 } catch {}
 
 const url = process.env.PUBLIC_SUPABASE_URL;
-const key = process.env.PUBLIC_SUPABASE_ANON_KEY;
+const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
   console.log('favicon: Supabase 未設定のためスキップ');
