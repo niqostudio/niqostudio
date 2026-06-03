@@ -27,7 +27,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | --- | --- | --- | --- |
 | `primary` | ✋ | infra, website | 主ドメイン名。zone/account 導出・website 正 URL |
 | `domains.<domain>.email.*` | ✋ | infra | `spf_includes` / `spf_all` / `dmarc_policy` / `dmarc_rua` |
-| `domains.<domain>.pages.<role>.*` | ✋ | infra | `project_name` / `production_branch` / `subdomain` / `cname`（role マップ） |
+| `domains.<domain>.workers.<role>.*` | ✋ | infra, website | `name`（Worker 名＝CI が deploy 名に使用＆infra が service 束ね） / `subdomain`（role マップ） |
 | `domains.<domain>.{redirect_to,placeholder_ip}` | ✋ | infra | リダイレクト専用ドメイン |
 
 > `zone_id` / `account_id` は各ドメイン名から **data source で導出**（🤖）＝書かない。
@@ -50,7 +50,10 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 ### `website-production`
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
-| `CF_PAGES_DEPLOY_TOKEN` | ✋ | website | Cloudflare Pages へ direct-upload する API トークン（Account → Cloudflare Pages: **Edit**）。発行名 `website-pages-deploy`（→ wrangler の `apiToken`）。infra の TF トークンとは分離 |
+| `CF_DEPLOY_TOKEN` | ✋ | website | Worker を deploy ＋ secret 投入する API トークン（Account → Workers Scripts: **Edit**）。発行名 `website-worker-deploy`（→ `CLOUDFLARE_API_TOKEN`）。infra の TF トークンとは分離 |
+| `RESEND_API_KEY` | ✋ | website | 問い合わせ通知の送信（CI が `wrangler secret` へ投入） |
+| `CONTACT_TO` | ✋ | website | 通知先アドレス（個人メール＝PII。CI が `wrangler secret` へ投入） |
+| `TURNSTILE_SECRET_KEY` | ✋ | website | ボット検証 secret（未設定なら検証 skip。CI が `wrangler secret` へ投入） |
 
 ## GitHub Environment Variable（モジュール別・公開・環境依存）
 非秘密だが apply / deploy だけが使う＝各モジュールの Environment にスコープ（`PUBLIC_` は付けない＝ブラウザに出ないため）。
@@ -61,16 +64,24 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS（JSON・公開）→ `TF_VAR_resend_dns_records` |
 
+### `website-production`
+| 値 | 配置 | 必要とするモジュール | 備考 |
+| --- | --- | --- | --- |
+| `CONTACT_FROM` | ✋ | website | 通知メールの送信元（認証済みドメインのアドレス。非秘密。CI が `wrangler secret` へ投入） |
+
 ## GitHub Repository Variable（公開・環境非依存・複数モジュールが参照しうる）
 複数モジュールが共有する非秘密値。`PUBLIC_` 付き＝website が bundle に焼き込む公開値（Vite envPrefix）。
 
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
-| `CF_ACCOUNT_ID` | ✋ | infra, website | Cloudflare アカウント ID（非秘密）。infra=R2 endpoint 組立 / website=Pages deploy（wrangler `accountId`） |
+| `CF_ACCOUNT_ID` | ✋ | infra, website | Cloudflare アカウント ID（非秘密）。infra=R2 endpoint 組立 / website=Worker deploy（wrangler `accountId`） |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✋ | website, infra(keep-alive) | フロントに載る公開鍵（`sb_publishable_`・RLS 準拠）。SSG ビルド＆ping |
 | `PUBLIC_TURNSTILE_SITE_KEY` | ✋ | website | ボット対策の公開 site key（未設定なら検証 skip） |
 
 ## wrangler secret（website ランタイム・サーバ側のみ）
+
+> Worker 実行時に `/api/contact` が読む値（公開値でない＝ビルドにインラインされない）。手動設定ではなく
+> **`website.yml` の deploy が `website-production` Environment から `wrangler secret bulk` で投入**する（空値は skip）。
 
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |

@@ -35,9 +35,9 @@ terraform import 'module.email_routing.cloudflare_email_routing_address.destinat
 # DNS レコード（for_each キー = "type:name:hash"。terraform plan の差分でキーを確認）
 terraform import 'module.dns.cloudflare_dns_record.this["TXT:niqostudio.com:<hash>"]' <ZONE_ID>/<RECORD_ID>
 
-# Pages（有効化している場合・キーは config の pages.<role>。例 "website"）
-terraform import 'cloudflare_pages_project.this["website"]' <ACCOUNT_ID>/<PROJECT_NAME>
-terraform import 'cloudflare_pages_domain.this["website"]' <ACCOUNT_ID>/<PROJECT_NAME>/<DOMAIN_ID>
+# Worker カスタムドメイン（キーは config の workers.<role>。例 "website"。Worker 本体は wrangler 管理＝import 不要）
+# import ID は <ACCOUNT_ID>/<DOMAIN_ID>（custom domain の ID。CF API /workers/domains で確認）
+terraform import 'cloudflare_workers_custom_domain.this["website"]' <ACCOUNT_ID>/<DOMAIN_ID>
 ```
 import 後に `terraform plan` が **No changes** になるまで（content/priority 等を）突き合わせる。
 

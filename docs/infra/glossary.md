@@ -29,7 +29,7 @@
 ## サービス
 - **Cloudflare Email Routing** … ドメイン宛メールを**受信して転送**する仕組み（送信はしない）。
 - **Resend** … メール**送信**サービス（内部は AWS SES）。ドメイン認証を DNS で行う。
-- **Cloudflare Pages** … 静的サイト/フロントの**ホスティング**。`<project>.pages.dev` が既定ホスト。
+- **Cloudflare Workers（Static Assets）** … エッジ Worker で**静的アセット配信＋SSR**を1つで行う。`@astrojs/cloudflare` のネイティブ形式で、website はこの形でデプロイする（`wrangler deploy`）。
 - **Turnstile** … Cloudflare の CAPTCHA 代替。
 - **Supabase** … Postgres ベースの BaaS（DB/認証）。スキーマは core モジュールが正本。
 - **R2** … Cloudflare のオブジェクトストレージ（S3 互換）。ここに Terraform state を置く。

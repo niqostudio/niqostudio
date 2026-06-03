@@ -22,7 +22,7 @@ flowchart TB
 
   subgraph CF["Cloudflare"]
     dns["DNS / Email Routing / Rulesets"]
-    pages["Pages（ホスティング）"]
+    worker["Worker（SSR + 静的アセット）"]
     r2[("R2: Terraform state")]
   end
 
@@ -30,10 +30,10 @@ flowchart TB
   supabase[("Supabase: DB / Auth")]
 
   infra -->|terraform apply| dns
-  infra -->|terraform apply| pages
+  infra -->|カスタムドメイン束ね| worker
   infra -->|認証用 DNS| resend
   infra <-->|state 読み書き| r2
-  website -->|wrangler pages deploy| pages
+  website -->|wrangler deploy| worker
   core -->|migrations| supabase
   infra -->|keep-alive ping| supabase
   cfg -.->|直読| infra
@@ -44,7 +44,7 @@ flowchart TB
 ```
 
 要点：
-- **infra が触るのは「アカウント共有資産」だけ**（DNS・メール・Pages の箱・state）。website は Pages へ deploy、core は Supabase にスキーマ適用。
+- **infra が触るのは「アカウント共有資産」だけ**（DNS・メール・Worker のカスタムドメイン・state）。website は Worker（SSR+静的）を deploy、core は Supabase にスキーマ適用。
 - 公開定数は **root の `config.<env>.json`（env ごとに1ファイル・committed）**。infra（Terraform）と website が直読する。
 - 秘密は **GitHub Environments** でスコープし、本番反映は承認ゲートを通す。
 
@@ -80,7 +80,7 @@ flowchart TB
 
 ワークフローは root `.github/workflows/` に集約し、**paths で対象モジュールだけ起動**する。
 
-- `website/**` → build / check（Pages へは Cloudflare 連携）。
+- `website/**` → build / check → `wrangler deploy`（Cloudflare Worker＝SSR+静的）。
 - `core/supabase/migrations/**` → db push（push は dry-run、承認 dispatch で apply）。
 - `infra/**` → fmt / validate（PR）、terraform apply（Environment `infra-production`・承認ゲート）。
 - `docs/**` / `mkdocs.yml` → MkDocs build → GitHub Pages。
