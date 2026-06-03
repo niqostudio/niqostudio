@@ -5,12 +5,22 @@ import { getProfile } from '../../lib/content';
 
 interface Props {
   class?: string;
+  // cover: SVG をコンテナいっぱいに埋める（preserveAspectRatio=slice）。非正方ロゴの上下/左右レターボックス余白を解消。
+  cover?: boolean;
 }
-const { class: className } = Astro.props;
+const { class: className, cover = false } = Astro.props;
 const profile = await getProfile();
+
+// cover 時は viewBox の余白を抑えてコンテナを埋める（slice＝はみ出しは svg がクリップ）。
+const svg =
+  cover && profile.logoSvg
+    ? /preserveAspectRatio=/.test(profile.logoSvg)
+      ? profile.logoSvg.replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="xMidYMid slice"')
+      : profile.logoSvg.replace(/<svg\b/, '<svg preserveAspectRatio="xMidYMid slice"')
+    : profile.logoSvg;
 ---
 
 <span
   class:list={['inline-block [&>svg]:block [&>svg]:w-full [&>svg]:h-full', className]}
-  set:html={profile.logoSvg}
+  set:html={svg}
 />

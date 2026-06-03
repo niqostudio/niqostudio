@@ -8,14 +8,21 @@ import Icon from '../ui/Icon.astro';
 
 interface Props {
   service: ServiceView;
+  // compact: トップ等のティーザー用。カード全体を /services#slug へのリンクにし、要点（名前・リード・料金/期間）だけ出す。
+  compact?: boolean;
 }
 
-const { service } = Astro.props;
+const { service, compact = false } = Astro.props;
+const detailHref = `/services#${service.slug}`;
 
 // 入口サービスは英語のプラン名を主・日本語 gloss を副に。他は日本語名が主・英語が副。
 const titlePrimary = service.enPrimary ? service.name : (service.nameJa ?? service.name);
 const titleSub = service.enPrimary ? service.nameJa : service.nameJa ? service.name : null;
 
+// compact（ティーザー）のリード文（料金・期間はトップでは出さず /services に集約）。
+const lead = service.headline ?? service.summary;
+
+// 以下は full レイアウト用。
 // label はアイコンを緑のアンカーに、labelBase はアイコンも muted のまま（含まないもの用：緑は不自然なため）。
 const labelBase = 'flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted';
 const label = `${labelBase} [&>svg]:text-accent`;
@@ -33,153 +40,175 @@ const hasDetails =
   service.exclusions.length > 0;
 ---
 
-<Card as="article" id={service.slug} class="p-6 sm:p-8 scroll-mt-8">
-  {/* 見出し＋リード（左） ｜ 料金（右）。対象の課題は「詳しく見る」へ移動。 */}
-  <div class="grid gap-x-12 gap-y-6 lg:grid-cols-[2fr_1fr] lg:items-start">
-    <div>
-      <h3 class="font-semibold text-xl sm:text-2xl">
-        {titlePrimary}
-        {titleSub && <span class="text-muted text-base font-medium ml-2">{titleSub}</span>}
+{
+  compact ? (
+    /* ティーザー: 名前＋リードのみ（料金・期間は /services に集約）。カード全体を詳細へのリンクに。 */
+    <Card href={detailHref} class="flex flex-col h-full p-5">
+      <h3 class="font-medium">
+        <span class="block">{titlePrimary}</span>
+        {titleSub && <span class="block text-muted text-sm mt-0.5">{titleSub}</span>}
       </h3>
-      {service.headline && (
-        <p class="text-lg sm:text-xl font-medium leading-relaxed mt-3">
-          <Jp text={service.headline} />
+      {lead && (
+        <p class="text-sm text-muted leading-relaxed mt-3">
+          <Jp text={lead} />
         </p>
       )}
-      {service.summary && (
-        <p class="text-muted leading-relaxed mt-2">
-          <Jp text={service.summary} breakOnPeriod />
-        </p>
-      )}
-    </div>
-
-    {
-      (service.pricing || service.duration) && (
-        <div class="bg-bg rounded-sm p-4">
-          {service.pricing && (
-            <Fragment>
-              <p class={label}><Icon name="yen" class={iconNudge} />料金</p>
-              {service.pricing.base_price && (
-                <p class="font-mono text-2xl font-semibold mt-2">{service.pricing.base_price}</p>
-              )}
-              {service.pricing.tiers && service.pricing.tiers.length > 0 && (
-                <ul class="mt-2 flex flex-col gap-3">
-                  {service.pricing.tiers.map((tier) => (
-                    <li>
-                      <div class="flex items-baseline justify-between gap-3">
-                        <span class="font-medium">{tier.name}</span>
-                        <span class="font-mono text-sm whitespace-nowrap">{tier.price}</span>
-                      </div>
-                      {tier.scope && <p class="text-sm text-muted mt-0.5">{tier.scope}</p>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {service.pricing.factors && service.pricing.factors.length > 0 && (
-                <ul class="mt-3 flex flex-col gap-1 text-sm text-muted">
-                  {service.pricing.factors.map((factor) => (
-                    <li class="flex items-baseline justify-between gap-3">
-                      <span>{factor.name}</span>
-                      <span class="font-mono whitespace-nowrap">{factor.price}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {service.pricing.notes && <p class="text-xs text-muted mt-3">{service.pricing.notes}</p>}
-            </Fragment>
+    </Card>
+  ) : (
+    <Card as="article" id={service.slug} class="p-6 sm:p-8 scroll-mt-8">
+      {/* 見出し＋リード（左） ｜ 料金（右）。対象の課題は「詳しく見る」へ移動。 */}
+      <div class="grid gap-x-12 gap-y-6 lg:grid-cols-[2fr_1fr] lg:items-start">
+        <div>
+          <h3 class="font-semibold text-xl sm:text-2xl">
+            {titlePrimary}
+            {titleSub && <span class="text-muted text-base font-medium ml-2">{titleSub}</span>}
+          </h3>
+          {service.headline && (
+            <p class="text-lg sm:text-xl font-medium leading-relaxed mt-3">
+              <Jp text={service.headline} />
+            </p>
           )}
-          {service.duration && (
-            <p class="text-xs text-muted mt-3">期間目安: {service.duration}</p>
+          {service.summary && (
+            <p class="text-muted leading-relaxed mt-2">
+              <Jp text={service.summary} breakOnPeriod />
+            </p>
           )}
         </div>
-      )
-    }
-  </div>
 
-  {/* 詳細は折りたたみ（既定は要点だけ） */}
-  {
-    hasDetails && (
-      <details class="group mt-6 border-t border-border-subtle pt-4">
-        <summary class="flex items-center gap-1.5 cursor-pointer select-none text-sm text-accent list-none [&::-webkit-details-marker]:hidden">
-          詳しく見る
-          <Icon name="chevron" class="transition-transform group-open:rotate-180" />
-        </summary>
-        <div class="mt-5 grid gap-x-12 gap-y-7 md:grid-cols-2">
-          <div class="space-y-6">
-            {
-              service.targetPains.length > 0 && (
+        {(service.pricing || service.duration) && (
+          <div class="bg-bg rounded-sm p-4">
+            {service.pricing && (
+              <Fragment>
+                <p class={label}>
+                  <Icon name="yen" class={iconNudge} />
+                  料金
+                </p>
+                {service.pricing.base_price && (
+                  <p class="font-mono text-2xl font-semibold mt-2">{service.pricing.base_price}</p>
+                )}
+                {service.pricing.tiers && service.pricing.tiers.length > 0 && (
+                  <ul class="mt-2 flex flex-col gap-3">
+                    {service.pricing.tiers.map((tier) => (
+                      <li>
+                        <div class="flex items-baseline justify-between gap-3">
+                          <span class="font-medium">{tier.name}</span>
+                          <span class="font-mono text-sm whitespace-nowrap">{tier.price}</span>
+                        </div>
+                        {tier.scope && <p class="text-sm text-muted mt-0.5">{tier.scope}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {service.pricing.factors && service.pricing.factors.length > 0 && (
+                  <ul class="mt-3 flex flex-col gap-1 text-sm text-muted">
+                    {service.pricing.factors.map((factor) => (
+                      <li class="flex items-baseline justify-between gap-3">
+                        <span>{factor.name}</span>
+                        <span class="font-mono whitespace-nowrap">{factor.price}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {service.pricing.notes && <p class="text-xs text-muted mt-3">{service.pricing.notes}</p>}
+              </Fragment>
+            )}
+            {service.duration && (
+              <p class="text-xs text-muted mt-3">期間目安: {service.duration}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 詳細は折りたたみ（既定は要点だけ） */}
+      {hasDetails && (
+        <details class="group mt-6 border-t border-border-subtle pt-4">
+          <summary class="flex items-center gap-1.5 cursor-pointer select-none text-sm text-accent list-none [&::-webkit-details-marker]:hidden">
+            詳しく見る
+            <Icon name="chevron" class="transition-transform group-open:rotate-180" />
+          </summary>
+          <div class="mt-5 grid gap-x-12 gap-y-7 md:grid-cols-2">
+            <div class="space-y-6">
+              {service.targetPains.length > 0 && (
                 <div>
-                  <p class={label}><Icon name="target" class={iconNudge} />対象の課題</p>
+                  <p class={label}>
+                    <Icon name="target" class={iconNudge} />
+                    対象の課題
+                  </p>
                   <ul class={list}>
                     {service.targetPains.map((pain) => (
                       <li>{pain}</li>
                     ))}
                   </ul>
                 </div>
-              )
-            }
-            {
-              service.details && (
+              )}
+              {service.details && (
                 <div>
-                  <p class={label}><Icon name="list" />実施内容</p>
+                  <p class={label}>
+                    <Icon name="list" />
+                    実施内容
+                  </p>
                   <RichText text={service.details} class="text-sm leading-relaxed" />
                 </div>
-              )
-            }
-            {
-              service.coverage.length > 0 && (
+              )}
+              {service.coverage.length > 0 && (
                 <div>
-                  <p class={label}><Icon name="grid" />対応</p>
+                  <p class={label}>
+                    <Icon name="grid" />
+                    対応
+                  </p>
                   <ul class="flex flex-wrap gap-2 mt-2">
                     {service.coverage.map((c) => (
                       <Chip variant="soft">{c}</Chip>
                     ))}
                   </ul>
                 </div>
-              )
-            }
-          </div>
+              )}
+            </div>
 
-          <div class="space-y-6">
-            {
-              service.deliverables.length > 0 && (
+            <div class="space-y-6">
+              {service.deliverables.length > 0 && (
                 <div>
-                  <p class={label}><Icon name="package" />成果物</p>
+                  <p class={label}>
+                    <Icon name="package" />
+                    成果物
+                  </p>
                   <ul class={list}>
                     {service.deliverables.map((d) => (
                       <li>{d}</li>
                     ))}
                   </ul>
                 </div>
-              )
-            }
-            {
-              service.followups.length > 0 && (
+              )}
+              {service.followups.length > 0 && (
                 <div>
-                  <p class={label}><Icon name="heart" />アフターケア</p>
+                  <p class={label}>
+                    <Icon name="heart" />
+                    アフターケア
+                  </p>
                   <ul class={list}>
                     {service.followups.map((f) => (
                       <li>{f}</li>
                     ))}
                   </ul>
                 </div>
-              )
-            }
-            {
-              service.exclusions.length > 0 && (
+              )}
+              {service.exclusions.length > 0 && (
                 <div>
-                  <p class={labelBase}><Icon name="slash" />含まないもの</p>
+                  <p class={labelBase}>
+                    <Icon name="slash" />
+                    含まないもの
+                  </p>
                   <ul class:list={[list, 'text-muted']}>
                     {service.exclusions.map((e) => (
                       <li>{e}</li>
                     ))}
                   </ul>
                 </div>
-              )
-            }
+              )}
+            </div>
           </div>
-        </div>
-      </details>
-    )
-  }
-</Card>
+        </details>
+      )}
+    </Card>
+  )
+}

@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getWorks, getProfile, getServices } from '../lib/content';
 import { SITE, HOME } from '../config/site';
-import { WorkCard, Card, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
+import { WorkCard, ServiceCard, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
 
 const works = (await getWorks()).slice(0, 3);
 const services = await getServices();
@@ -17,12 +17,15 @@ const steps = [
 ---
 
 <BaseLayout width="wide" title={HOME.title} description={HOME.description}>
-  <section class="relative isolate overflow-hidden py-8">
+  {/* 内容は上下中央寄せ（flex + justify-center）。ウォーターマークは inset-y-0 h-full＝セクション高さ 100%で全表示。
+      高さ＝ウォーターマークの大きさ＝上下余白の量は min-h で決まる（小さくすると余白も watermark も縮む）。
+      -mt-6 で nav との間を詰める。 */}
+  <section class="relative isolate -mt-6 flex min-h-[26rem] flex-col justify-center overflow-hidden">
     <div
-      class="pointer-events-none absolute right-0 top-1/2 -z-10 aspect-square w-[24rem] -translate-y-1/2 text-border-subtle opacity-50 [--logo-pair:currentColor] [--logo-diag:currentColor] sm:w-[24rem] lg:w-[30rem]"
+      class="pointer-events-none absolute inset-y-0 right-0 -z-10 aspect-square h-full text-border-subtle opacity-50 [--logo-pair:currentColor] [--logo-diag:currentColor]"
       aria-hidden="true"
     >
-      <LogoMark class="h-full w-full" />
+      <LogoMark class="h-full w-full" cover />
     </div>
     <h1>
       <span class="block font-mono text-sm text-muted uppercase tracking-wide">{SITE.name}</span>
@@ -69,55 +72,10 @@ const steps = [
             サービス一覧を見る
           </ArrowLink>
         </div>
-        <div class="grid sm:grid-cols-2 gap-4 mt-6">
-          {
-            services.map((service) => {
-              const basePrice = service.pricing?.base_price ?? null;
-              const tiers = service.pricing?.tiers ?? [];
-              const lead = service.headline ?? service.summary;
-              const primary = service.enPrimary ? service.name : (service.nameJa ?? service.name);
-              const sub = service.enPrimary ? service.nameJa : service.nameJa ? service.name : null;
-              return (
-                <Card href={`/services#${service.slug}`} class="block p-6">
-                  <h3 class="font-medium text-lg">
-                    {primary}
-                    {sub && <span class="text-muted text-sm ml-1.5">{sub}</span>}
-                  </h3>
-                  {lead && (
-                    <p class="text-sm text-muted mt-2">
-                      <Jp text={lead} />
-                    </p>
-                  )}
-                  <dl class="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-2 text-sm mt-4">
-                    {(basePrice || tiers.length > 0) && (
-                      <Fragment>
-                        <dt class="text-muted">料金</dt>
-                        <dd>
-                          {basePrice && <p class="font-mono">{basePrice}</p>}
-                          {tiers.length > 0 && (
-                            <ul class="flex flex-col gap-0.5">
-                              {tiers.map((tier) => (
-                                <li class="flex items-baseline justify-between gap-3">
-                                  <span>{tier.name}</span>
-                                  <span class="font-mono text-muted whitespace-nowrap">{tier.price}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </dd>
-                      </Fragment>
-                    )}
-                    {service.duration && (
-                      <Fragment>
-                        <dt class="text-muted">期間</dt>
-                        <dd>{service.duration}</dd>
-                      </Fragment>
-                    )}
-                  </dl>
-                </Card>
-              );
-            })
-          }
+        <div class="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-4">
+          {services.map((service) => (
+            <ServiceCard service={service} compact />
+          ))}
         </div>
       </section>
     )
