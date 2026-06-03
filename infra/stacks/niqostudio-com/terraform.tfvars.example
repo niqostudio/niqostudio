@@ -1,5 +1,5 @@
 # コピーして terraform.tfvars を作成（terraform.tfvars はコミットしない）。
-# 定数（ドメイン・SPF/DMARC・Pages 等）は ../../../config.<env>.json に集約。ここには機微値だけ。
+# 定数（ドメイン・SPF/DMARC・Worker 名等）は ../../../config.<env>.json に集約。ここには機微値だけ。
 # API トークンは tfvars に書かず、環境変数 CLOUDFLARE_API_TOKEN で渡す。
 
 forward_to = "you@example.com" # Cloudflare で検証済みの既定転送先（個人受信箱）

@@ -14,9 +14,9 @@ output "account_id" {
   value       = local.account_id
 }
 
-output "pages_project_names" {
-  description = "Cloudflare Pages プロジェクト名（role => name）"
-  value       = { for role, proj in cloudflare_pages_project.this : role => proj.name }
+output "worker_custom_domains" {
+  description = "Worker のカスタムドメイン（role => hostname）"
+  value       = { for role, d in cloudflare_workers_custom_domain.this : role => d.hostname }
 }
 
 output "dns_record_ids" {

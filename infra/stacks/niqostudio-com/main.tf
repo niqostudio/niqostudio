@@ -1,4 +1,4 @@
-# niqostudio.com の合成: Web(Pages) DNS + Email Routing(受信) + Resend(送信)用 DNS。
+# niqostudio.com の合成: Web(Worker カスタムドメイン) + Email Routing(受信) + Resend(送信)用 DNS。
 # 送受信を同一ルートに集約する前提（SPF は1本に統合する）。
 # 定数は config.<env>.json（local.cfg）から、機微値は tfvars から取り、文字列のハードコードを避ける。
 
@@ -33,14 +33,7 @@ module "dns" {
   zone_id = local.zone_id
 
   records = concat(
-    # Web: 各 Cloudflare Pages role のカスタムドメイン CNAME（project_name 設定で有効化）
-    [for role, p in local.pages : {
-      name    = p.subdomain != "" ? "${p.subdomain}.${local.domain}" : local.domain
-      type    = "CNAME"
-      content = p.cname != "" ? p.cname : "${p.project_name}.pages.dev"
-      proxied = true
-      comment = "pages: ${role}"
-    }],
+    # Web の DNS は Worker のカスタムドメイン（workers.tf）が自動投入するため、ここでは持たない。
 
     # 送受信統合の SPF（Cloudflare 転送 + Amazon SES/Resend）。TXT は必ず1本に統合する。
     # 注: Email Routing 有効化時に CF が SPF/MX を自動投入する。apex に SPF が2本並ぶと

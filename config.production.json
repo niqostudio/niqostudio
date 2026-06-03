@@ -10,12 +10,10 @@
         "dmarc_policy": "none",
         "dmarc_rua": ""
       },
-      "pages": {
+      "workers": {
         "website": {
-          "project_name": "niqostudio",
-          "production_branch": "main",
-          "subdomain": "",
-          "cname": ""
+          "name": "website",
+          "subdomain": ""
         }
       }
     },

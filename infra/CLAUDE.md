@@ -1,12 +1,12 @@
 # CLAUDE.md — infra
 
-NIQO STUDIO のプラットフォーム（IaC）。ドメイン・DNS・メール・配信（Pages 等）・Terraform state を
+NIQO STUDIO のプラットフォーム（IaC）。ドメイン・DNS・メール・配信（Worker カスタムドメイン等）・Terraform state を
 Terraform で管理する。アプリ実装は持たない。
 
 ## 責任範囲
 
-- **管理する**: Cloudflare（DNS / Email Routing / Pages・Workers / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定・keep-alive、Terraform state。
-- **管理しない**: アプリのコード/ビルド（→ website）、core のスキーマ/RLS（→ core）、シークレットの**値**（→ CI Secret / Environment / `wrangler secret`。state にも残さない）。
+- **管理する**: Cloudflare（DNS / Email Routing / Worker のカスタムドメイン / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定・keep-alive、Terraform state。
+- **管理しない**: アプリのコード/ビルド/Worker スクリプト本体（→ website の `wrangler deploy`）、core のスキーマ/RLS（→ core）、シークレットの**値**（→ CI Secret / Environment / `wrangler secret`。state にも残さない）。
 
 ## 構成
 

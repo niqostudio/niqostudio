@@ -4,7 +4,7 @@
 locals {
   cfg    = jsondecode(file("${path.module}/../../../config.${var.env}.json"))
   domain = local.cfg.primary               # この stack は primary ドメインを管理する
-  dom    = local.cfg.domains[local.domain] # そのドメインのブロック（email / pages）
+  dom    = local.cfg.domains[local.domain] # そのドメインのブロック（email / workers）
 }
 
 # config.<env>.json の値の健全性チェック（plan 時に検出）。

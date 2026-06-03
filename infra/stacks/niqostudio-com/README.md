@@ -1,6 +1,6 @@
 # stack: niqostudio-com
 
-niqostudio.com の合成: Web(Pages) DNS + Email Routing(受信) + Resend(送信)用 DNS。
+niqostudio.com の合成: Web(Worker カスタムドメイン) + Email Routing(受信) + Resend(送信)用 DNS。
 送受信を同一ルートに集約し、SPF は1本に統合する。state はこの stack 単位で分離。
 
 apply は CI（`terraform-apply` dispatch）。ローカルは plan 確認 / 復旧用。
@@ -31,8 +31,7 @@ terraform plan
 
 | Name | Type |
 |------|------|
-| [cloudflare_pages_domain.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/pages_domain) | resource |
-| [cloudflare_pages_project.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/pages_project) | resource |
+| [cloudflare_workers_custom_domain.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/workers_custom_domain) | resource |
 
 ## Inputs
 
@@ -53,6 +52,6 @@ terraform plan
 | dns\_record\_ids | 投入した DNS レコードの ID |
 | domain | 正本として管理するルートドメイン |
 | email\_routing\_rule\_ids | Email Routing 転送ルールの ID |
-| pages\_project\_names | Cloudflare Pages プロジェクト名（role => name） |
+| worker\_custom\_domains | Worker のカスタムドメイン（role => hostname） |
 | zone\_id | Cloudflare ゾーン ID（domain から導出 or 上書き値） |
 <!-- END_TF_DOCS -->

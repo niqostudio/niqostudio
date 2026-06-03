@@ -1,6 +1,6 @@
 # infra
 
-NIQO STUDIO の**プラットフォーム（IaC）**モジュール。ドメイン・DNS・メール・配信（Pages 等）・
+NIQO STUDIO の**プラットフォーム（IaC）**モジュール。ドメイン・DNS・メール・配信（Worker カスタムドメイン等）・
 Terraform state を Terraform で管理する。アプリ実装は持たない。
 
 > モノリポの一部。全体像・規約は root の [README](../README.md) / [CLAUDE.md](CLAUDE.md)、
@@ -22,7 +22,7 @@ scripts/                      gen-docs（terraform-docs 生成）/ list-secrets
 - CI（fmt/validate・terraform apply・terraform-docs）は root `.github/workflows/`（paths=`infra/**`）。
 
 ## 設定の置き場
-- **公開定数** → root `config.<env>.json`（ドメイン・SPF/DMARC 既定・Pages 名/ブランチ・リダイレクト元）。infra と website が直読する。
+- **公開定数** → root `config.<env>.json`（ドメイン・SPF/DMARC 既定・Worker 名・リダイレクト元）。infra と website が直読する。
 - **機微値 / 個人情報**（転送先メール・Resend の DNS 値）→ `*.tfvars`（gitignore）/ Environment Variable。
 - **シークレット**（CF トークン・R2 キー）→ Environment Secret。state にも残さない。
 - `zone_id` / `account_id` は各ドメイン名から **データソースで導出**（注入は API トークン1本）。
