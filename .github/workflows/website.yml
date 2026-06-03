@@ -1,8 +1,7 @@
 name: website
 
-# website のビルド検証。Pages の箱は infra が config.<env>.json から作成（direct-upload）、
-# deploy は website の `wrangler pages deploy dist`（project 名は config.<env>.json 由来）。
-# deploy step は Pages 有効化時に追加（要 wrangler devDep + CF deploy token）。
+# website のビルド検証＋本番 deploy。Pages の箱は infra が config.<env>.json から作成（direct-upload・
+# 箱が無いと deploy は失敗＝先に terraform-apply）。deploy は main への push 時のみ。
 # canonical ドメインは root の config.<env>.json を website が直読する（DEPLOY_ENV で選択・既定 production）。
 on:
   pull_request:
@@ -38,3 +37,32 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       - run: pnpm check
+      # 本番 deploy 用に dist を受け渡す（main push のみ。PR ではアップロードしない）。
+      - if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-dist
+          path: website/dist
+          retention-days: 1
+
+  # main への push 時のみ Cloudflare Pages へ direct-upload。secret は website-production にスコープ。
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    environment: website-production
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: website/dist
+      # project 名は config.<env>.json の primary ドメイン配下から取得（単一正本・ハードコードしない）。
+      - id: cfg
+        run: echo "name=$(jq -r '.domains[.primary].pages.website.project_name' config.production.json)" >> "$GITHUB_OUTPUT"
+      - name: deploy（箱は infra が作成済み前提＝未作成なら失敗）
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_PAGES_DEPLOY_TOKEN }}
+          accountId: ${{ vars.CF_ACCOUNT_ID }}
+          command: pages deploy website/dist --project-name=${{ steps.cfg.outputs.name }} --branch=main
