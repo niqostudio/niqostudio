@@ -25,6 +25,8 @@ jobs:
     env:
       PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
       PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      # Turnstile の site key（公開・未設定ならウィジェット非表示で検証 skip）。secret は deploy 側で投入。
+      PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
     defaults:
       run:
         working-directory: website
