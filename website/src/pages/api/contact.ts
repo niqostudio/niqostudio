@@ -30,10 +30,14 @@ export const POST: APIRoute = async ({ request }) => {
     // ＝ビルドにインラインされないため。dev は .dev.vars が供給する。未設定の機能は skip。
     const runtimeEnv = env as Record<string, string | undefined>;
 
-    // Turnstile: secret 設定時のみ検証（未設定なら skip＝dev/未導入でも動く）。
-    // 変数名は infra コントラクト（docs/variables.md）の TURNSTILE_SECRET_KEY に合わせる。
-    const turnstileSecret = runtimeEnv.TURNSTILE_SECRET_KEY;
-    if (turnstileSecret) {
+    // site key がビルドにある＝ウィジェットを出す配信なので検証必須。secret 欠落は構成ミスとして弾く（fail-closed）。
+    // secret 名は infra コントラクト（docs/variables.md）の TURNSTILE_SECRET_KEY に合わせる。
+    if (import.meta.env.PUBLIC_TURNSTILE_SITE_KEY) {
+      const turnstileSecret = runtimeEnv.TURNSTILE_SECRET_KEY;
+      if (!turnstileSecret) {
+        console.error('Turnstile enabled (PUBLIC_TURNSTILE_SITE_KEY present) but TURNSTILE_SECRET_KEY is missing');
+        return json({ error: 'Server error' }, 500);
+      }
       const token = formData.get('cf-turnstile-response')?.toString() ?? '';
       const ip = request.headers.get('CF-Connecting-IP') ?? '';
       const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -47,10 +51,13 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    // SUPABASE_INQUIRY_JWT があれば最小権限ロール経由で INSERT（直叩き不可の本番経路）。
-    // 未設定なら共有クライアント（publishable=anon）にフォールバック（移行期/dev でも動く）。
+    // INSERT は最小権限ロールの JWT 経由のみ（anon は INSERT 不可）。JWT 欠落は構成ミスとして弾く（fail-closed）。
     const writerJwt = runtimeEnv.SUPABASE_INQUIRY_JWT;
-    await submitInquiry({ name, company, email, subject, message }, writerJwt ? inquiryClient(writerJwt) : undefined);
+    if (!writerJwt) {
+      console.error('SUPABASE_INQUIRY_JWT is missing; inquiry insert requires the least-privilege writer role');
+      return json({ error: 'Server error' }, 500);
+    }
+    await submitInquiry({ name, company, email, subject, message }, inquiryClient(writerJwt));
 
     const resendApiKey = runtimeEnv.RESEND_API_KEY;
     if (resendApiKey) {
