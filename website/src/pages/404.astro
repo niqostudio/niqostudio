@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { PageHeader, Button } from '../components';
+import { PAGES } from '../config/site';
+
+// 404 は検索対象から外す（noindex）。CTA も出さない。
+---
+
+<BaseLayout title="ページが見つかりません" noindex cta={false}>
+  <div class="flex flex-col items-center text-center">
+    <p class="font-mono text-sm uppercase tracking-widest text-muted">404</p>
+    <PageHeader title="ページが見つかりません" class="mt-3">
+      <p class="text-muted mt-3">
+        お探しのページは移動または削除された可能性があります。<br />URL をご確認のうえ、下のリンクからお進みください。
+      </p>
+    </PageHeader>
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <Button href="/">ホームへ戻る</Button>
+      <Button href={PAGES.contact.href} variant="secondary">お問い合わせ</Button>
+    </div>
+  </div>
+</BaseLayout>
