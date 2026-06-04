@@ -2,15 +2,13 @@ name: "website: build & deploy"
 
 # website のビルド検証＋本番 deploy。@astrojs/cloudflare のネイティブ形式（Worker＝SSR＋静的アセット）を
 # wrangler deploy で配信する。カスタムドメインの束ねは infra が管理（workers.tf）。Worker は本 deploy で
-# 作られるため、初回のみ website deploy → terraform-apply の順（以後は順不同・冪等）。deploy は main push 時のみ。
+# 作られるため、初回のみ website deploy → terraform-apply の順（以後は順不同・冪等）。
+# 本番反映は dispatch 専用（core/infra と統一・承認ゲート）。PR は build 検証のみ。
 # canonical ドメインは root の config.<env>.json を website が直読する（DEPLOY_ENV で選択・既定 production）。
 on:
   pull_request:
     paths: ["website/**", "config.*.json", ".github/workflows/website.yml"]
-  push:
-    branches: [main]
-    paths: ["website/**", "config.*.json", ".github/workflows/website.yml"]
-  workflow_dispatch: # website 変更なしでも手動で build+deploy を回せる
+  workflow_dispatch: # 本番 build + deploy は明示の dispatch で回す
 
 permissions:
   contents: read
