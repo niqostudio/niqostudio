@@ -86,11 +86,11 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `RESEND_API_KEY` | ✋ | website | 問い合わせ通知の送信（CI が `wrangler secret` へ投入） | — |
 | `CONTACT_TO` | ✋ | website | 通知先アドレス（個人メール＝PII。CI が `wrangler secret` へ投入） | — |
 | `TURNSTILE_SECRET_KEY` | ✋ | website | ボット検証 secret。site key 設定時は必須（欠落で deploy fail＋runtime 拒否＝フェイルクローズ）。site key 無しなら検証 skip。CI が `wrangler secret` へ投入 | — |
-| `SUPABASE_INQUIRY_JWT` | ✋ | website | `role:inquiry_writer` を名乗る長寿命 JWT（最小権限・INSERT のみ）。`/api/contact` が anon 直叩きを避けて INSERT する経路。**必須**（欠落で送信 500＝フェイルクローズ／deploy 整合チェックでも弾く）。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_writer`<br>　inquiries: INSERT のみ |
+| `SUPABASE_INQUIRY_WRITER_JWT` | ✋ | website | `role:inquiry_writer` を名乗る長寿命 JWT（最小権限・INSERT のみ）。`/api/contact` が anon 直叩きを避けて INSERT する経路。**必須**（欠落で送信 500＝フェイルクローズ／deploy 整合チェックでも弾く）。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_writer`<br>　inquiries: INSERT のみ |
 | `SUPABASE_INQUIRY_READER_JWT` | ✋ | website | `role:inquiry_reader` を名乗る長寿命 JWT。`/api/resend-webhook` が到達状況を反映するための SELECT＋更新経路。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_reader`<br>　inquiries: SELECT＋`delivery_status` UPDATE のみ |
 | `RESEND_WEBHOOK_SECRET` | ✋ | website | Resend webhook の Svix 署名検証用（`whsec_…`）。`/api/resend-webhook` が偽装イベントを弾く。登録手順は [Resend 手順](infra/resend.md) | — |
 
-> トークン・JWT の**発行手順**と権限名の細かい注釈は各プラットフォーム手順へ：CF トークンは [Cloudflare 手順](infra/cloudflare.md)、`SUPABASE_INQUIRY_JWT` は [Supabase 手順](infra/supabase.md)。権限グループ名・アクセスは Cloudflare 公式の権限定義に準拠（TF リソース→権限の対応表は公式に無く、初回 `plan` / `apply` で過不足を確認）。
+> トークン・JWT の**発行手順**と権限名の細かい注釈は各プラットフォーム手順へ：CF トークンは [Cloudflare 手順](infra/cloudflare.md)、`SUPABASE_INQUIRY_WRITER_JWT` は [Supabase 手順](infra/supabase.md)。権限グループ名・アクセスは Cloudflare 公式の権限定義に準拠（TF リソース→権限の対応表は公式に無く、初回 `plan` / `apply` で過不足を確認）。
 
 ## GitHub Environment Variable（モジュール別・公開・環境依存）
 非秘密だが apply / deploy だけが使う＝各モジュールの Environment にスコープ（`PUBLIC_` は付けない＝ブラウザに出ないため）。
@@ -117,6 +117,6 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 
 ## Worker ランタイム値（独立した置き場を持たない）
 
-`/api/contact` が実行時に読む値（`RESEND_API_KEY` / `CONTACT_TO` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_JWT` / 公開の `CONTACT_FROM`）は、上の `website-production` Environment の Secret/Variable と**同一値**。deploy 時に `website.yml` が `wrangler secret bulk` / var で Worker へ投入する（空値は skip）＝**手動配置しない**ので、ここに別表は持たない。投入済みかの目視確認は [デプロイ手順](deploy.md) を参照。
+`/api/contact` が実行時に読む値（`RESEND_API_KEY` / `CONTACT_TO` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_WRITER_JWT` / 公開の `CONTACT_FROM`）は、上の `website-production` Environment の Secret/Variable と**同一値**。deploy 時に `website.yml` が `wrangler secret bulk` / var で Worker へ投入する（空値は skip）＝**手動配置しない**ので、ここに別表は持たない。投入済みかの目視確認は [デプロイ手順](deploy.md) を参照。
 
 > dev のローカル `.env`（website が必要とする値）は `website/.env.example` を正本とする。

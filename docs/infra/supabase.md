@@ -10,7 +10,7 @@
 
 ## 署名鍵と問い合わせ用 JWT の発行（ES256）
 `/api/contact`・`/api/resend-webhook` は最小権限ロールの自前 JWT で DB にアクセスする
-（`SUPABASE_INQUIRY_JWT`＝`inquiry_writer`／`SUPABASE_INQUIRY_READER_JWT`＝`inquiry_reader`）。
+（`SUPABASE_INQUIRY_WRITER_JWT`＝`inquiry_writer`／`SUPABASE_INQUIRY_READER_JWT`＝`inquiry_reader`）。
 署名できるのは**自分で持つ秘密鍵**だけなので、Supabase 生成鍵ではなく**自前の鍵ペアを作って import** する
 （Supabase が生成した鍵の秘密鍵は取り出せない＝署名に使えない）。ロール本体は migration で作成済み（`core/supabase/migrations/`）。
 
@@ -28,12 +28,14 @@
    pnpm -F @niqostudio/core exec supabase gen bearer-jwt --role inquiry_writer --valid-for 8760h
    pnpm -F @niqostudio/core exec supabase gen bearer-jwt --role inquiry_reader --valid-for 8760h
    ```
-   それぞれ Secret `SUPABASE_INQUIRY_JWT` / `SUPABASE_INQUIRY_READER_JWT`（`website-production`）に設定。
+   それぞれ Secret `SUPABASE_INQUIRY_WRITER_JWT` / `SUPABASE_INQUIRY_READER_JWT`（`website-production`）に設定。
 5. **後始末**：`git checkout core/supabase/config.toml` で signing_keys_path をコメントへ戻す（永続差分を残さない）。
 
 これで `/api/contact` は最小権限（INSERT のみ）で INSERT し、`/api/resend-webhook` は最小権限（SELECT＋`delivery_status` UPDATE のみ）で到達状況を反映する。設計は [セキュリティ](../security.md)。
 
 > docs は public。ロール名は誰でも知り得るが、**有効な JWT は自前の秘密鍵でしか署名できない**ため、ロール名が漏れても偽造トークンは作れない。秘密鍵（`signing_keys.json`）はコミットせずオフライン保管する。
+>
+> ⚠️ **署名鍵は `role` を何にでも設定した JWT を発行できる**（`service_role`＝BYPASSRLS も含む）。最小権限を担保しているのは鍵ではなく各ロールの GRANT であり、鍵が漏れれば RLS を越える全権を偽造され得る。したがって `signing_keys.json` は **service_role 級の機密**として扱い、オフライン厳重保管・非コミット・バックアップする（writer/reader を分けてもこの性質は変わらない）。
 
 ## ローテーション
 問い合わせ用 JWT は有効期限付き。期限前、または漏洩が疑われたら再発行する：

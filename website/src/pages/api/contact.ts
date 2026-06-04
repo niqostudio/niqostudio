@@ -53,9 +53,9 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // INSERT は最小権限ロールの JWT 経由のみ（anon は INSERT 不可）。JWT 欠落は構成ミスとして弾く（fail-closed）。
-    const writerJwt = runtimeEnv.SUPABASE_INQUIRY_JWT;
+    const writerJwt = runtimeEnv.SUPABASE_INQUIRY_WRITER_JWT;
     if (!writerJwt) {
-      console.error('SUPABASE_INQUIRY_JWT is missing; inquiry insert requires the least-privilege writer role');
+      console.error('SUPABASE_INQUIRY_WRITER_JWT is missing; inquiry insert requires the least-privilege writer role');
       return json({ error: 'Server error' }, 500);
     }
 

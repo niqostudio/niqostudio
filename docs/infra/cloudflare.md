@@ -37,7 +37,7 @@
 
 ## Worker ランタイム secret の目視確認
 - deploy 時に CI が `wrangler secret bulk` で投入する（手動配置しない）。
-- Workers & Pages → 対象 Worker → Settings → Variables and Secrets で `RESEND_API_KEY` / `CONTACT_TO` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_JWT` が入っているか目視確認（値は表示されない）。
+- Workers & Pages → 対象 Worker → Settings → Variables and Secrets で `RESEND_API_KEY` / `CONTACT_TO` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_WRITER_JWT` が入っているか目視確認（値は表示されない）。
 
 ## Turnstile
 - Turnstile → Add site → ドメイン登録。

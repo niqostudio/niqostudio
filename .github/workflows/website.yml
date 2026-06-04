@@ -75,7 +75,7 @@ jobs:
         env:
           SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
           SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-          INQUIRY_JWT: ${{ secrets.SUPABASE_INQUIRY_JWT }}
+          INQUIRY_JWT: ${{ secrets.SUPABASE_INQUIRY_WRITER_JWT }}
         run: |
           # ウィジェットを出している（site key 設定済み）のに Turnstile secret が空＝検証 skip の構成ミス。
           if [ -n "$SITE_KEY" ] && [ -z "$SECRET_KEY" ]; then
@@ -84,7 +84,7 @@ jobs:
           fi
           # anon は inquiries の INSERT を剥奪済み＝問い合わせは inquiry_writer JWT 必須。空だと全送信が 500。
           if [ -z "$INQUIRY_JWT" ]; then
-            echo "::error::SUPABASE_INQUIRY_JWT が空です（問い合わせ INSERT に必須）"
+            echo "::error::SUPABASE_INQUIRY_WRITER_JWT が空です（問い合わせ INSERT に必須）"
             exit 1
           fi
       # adapter 生成の wrangler.json をそのまま使う（assets.directory=../client）。版固定 wrangler を bin 直叩きで実行。
@@ -112,7 +112,7 @@ jobs:
           CONTACT_FROM: ${{ vars.CONTACT_FROM }}
           CONTACT_TO: ${{ secrets.CONTACT_TO }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-          SUPABASE_INQUIRY_JWT: ${{ secrets.SUPABASE_INQUIRY_JWT }}
+          SUPABASE_INQUIRY_WRITER_JWT: ${{ secrets.SUPABASE_INQUIRY_WRITER_JWT }}
           SUPABASE_INQUIRY_READER_JWT: ${{ secrets.SUPABASE_INQUIRY_READER_JWT }}
           RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
         run: |
@@ -120,9 +120,9 @@ jobs:
           jq -n \
             --arg r "$RESEND_API_KEY" --arg f "$CONTACT_FROM" \
             --arg t "$CONTACT_TO" --arg ts "$TURNSTILE_SECRET_KEY" \
-            --arg ij "$SUPABASE_INQUIRY_JWT" --arg ir "$SUPABASE_INQUIRY_READER_JWT" \
+            --arg ij "$SUPABASE_INQUIRY_WRITER_JWT" --arg ir "$SUPABASE_INQUIRY_READER_JWT" \
             --arg wh "$RESEND_WEBHOOK_SECRET" \
-            '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_JWT:$ij, SUPABASE_INQUIRY_READER_JWT:$ir, RESEND_WEBHOOK_SECRET:$wh}
+            '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_WRITER_JWT:$ij, SUPABASE_INQUIRY_READER_JWT:$ir, RESEND_WEBHOOK_SECRET:$wh}
              | with_entries(select(.value != ""))' > secrets.json
           ../../node_modules/.bin/wrangler secret bulk secrets.json
           rm -f secrets.json

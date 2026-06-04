@@ -27,7 +27,7 @@
 ### B. 反映（CI・依存順）
 9. `core: migrate`（apply=true）：スキーマ＋ `inquiry_writer` ロールを作る。
 10. **`profile` singleton を投入**（Studio）：website ビルドは実データ前提（profile 欠落で throw）。→ [core 運用](core/operations.md)
-11. `inquiry_writer` JWT を発行 → `SUPABASE_INQUIRY_JWT` を設定（ロール作成後）。→ [Supabase 手順](infra/supabase.md)
+11. `inquiry_writer` JWT を発行 → `SUPABASE_INQUIRY_WRITER_JWT` を設定（ロール作成後）。→ [Supabase 手順](infra/supabase.md)
 12. `website: build & deploy` を dispatch：**Worker の箱を作る**（`wrangler deploy`）。JWT / Turnstile secret も投入。fail-closed のため 11・Turnstile・`PUBLIC_*` 値が前提。
 13. `infra: apply` を dispatch：DNS（SPF / DMARC / DKIM / `send.`）＋ **Worker カスタムドメイン束ね**。束ねは Worker 実体が要るので **12 の後**。
 14. 検証：Resend verify・`dig`・フォーム疎通（下の「apply 後の検証」）。
