@@ -87,6 +87,8 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `CONTACT_TO` | ✋ | website | 通知先アドレス（個人メール＝PII。CI が `wrangler secret` へ投入） | — |
 | `TURNSTILE_SECRET_KEY` | ✋ | website | ボット検証 secret。site key 設定時は必須（欠落で deploy fail＋runtime 拒否＝フェイルクローズ）。site key 無しなら検証 skip。CI が `wrangler secret` へ投入 | — |
 | `SUPABASE_INQUIRY_JWT` | ✋ | website | `role:inquiry_writer` を名乗る長寿命 JWT（最小権限・INSERT のみ）。`/api/contact` が anon 直叩きを避けて INSERT する経路。**必須**（欠落で送信 500＝フェイルクローズ／deploy 整合チェックでも弾く）。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_writer`<br>　inquiries: INSERT のみ |
+| `SUPABASE_INQUIRY_READER_JWT` | ✋ | website | `role:inquiry_reader` を名乗る長寿命 JWT。`/api/resend-webhook` が到達状況を反映するための SELECT＋更新経路。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_reader`<br>　inquiries: SELECT＋`delivery_status` UPDATE のみ |
+| `RESEND_WEBHOOK_SECRET` | ✋ | website | Resend webhook の Svix 署名検証用（`whsec_…`）。`/api/resend-webhook` が偽装イベントを弾く。登録手順は [Resend 手順](infra/resend.md) | — |
 
 > トークン・JWT の**発行手順**と権限名の細かい注釈は各プラットフォーム手順へ：CF トークンは [Cloudflare 手順](infra/cloudflare.md)、`SUPABASE_INQUIRY_JWT` は [Supabase 手順](infra/supabase.md)。権限グループ名・アクセスは Cloudflare 公式の権限定義に準拠（TF リソース→権限の対応表は公式に無く、初回 `plan` / `apply` で過不足を確認）。
 
