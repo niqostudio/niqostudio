@@ -1,7 +1,8 @@
 ---
-import { INQUIRY_LIMITS } from '../../config/inquiry';
+import { INQUIRY_LIMITS, INQUIRY_FORM } from '../../config/inquiry';
 // Turnstile（ボット対策）。サイトキーは公開値。未設定ならウィジェットを出さない（dev/未導入でも動く）。
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+const sched = INQUIRY_FORM.schedule;
 ---
 
 <form id="contact-form" method="POST" action="/api/contact" class="flex flex-col gap-5">
@@ -41,13 +42,35 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   <label class="flex flex-col gap-1 text-sm">
     <span>お問い合わせ内容 <span class="text-muted">*</span></span>
     <textarea
+      id="contact-message"
       name="message"
       required
       maxlength={INQUIRY_LIMITS.message}
       rows="6"
-      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none resize-y"
+      placeholder={INQUIRY_FORM.message_placeholder}
+      class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none resize-y placeholder:text-muted"
     ></textarea>
   </label>
+
+  {/* 無料相談の希望日程ピッカー。日付を選び時間帯タップで候補に即追加。送信時にだけ message へ添付する（textarea は自由記述のまま）。 */}
+  <fieldset id="sched" class="flex flex-col gap-3 text-sm border border-border-subtle rounded-sm p-4">
+    <legend class="px-1 text-xs font-mono uppercase tracking-wide text-muted">{sched.heading}</legend>
+
+    <div class="flex items-center justify-between">
+      <button type="button" id="sched-prev" aria-label="前の月" class="rounded-sm px-2 py-1 hover:bg-bg disabled:opacity-30">‹</button>
+      <span id="sched-month" class="font-mono"></span>
+      <button type="button" id="sched-next" aria-label="次の月" class="rounded-sm px-2 py-1 hover:bg-bg disabled:opacity-30">›</button>
+    </div>
+
+    <div id="sched-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+
+    <div class="flex flex-col gap-1">
+      <span class="text-xs text-muted">時間帯（日付を選んでタップで追加・最大{sched.max_candidates}件）</span>
+      <div id="sched-bands" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <ul id="sched-list" class="flex flex-col gap-1 text-xs"></ul>
+  </fieldset>
 
   {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="auto"></div>}
 
@@ -92,6 +115,152 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       else document.getElementById('cf-turnstile-script')?.addEventListener('load', render, { once: true });
     }
 
+    // 無料相談のご希望日程ピッカー。日付を選び時間帯をタップで候補に即追加（最大 max_candidates）。
+    // 本文には書き込まず、送信時にだけ message へ希望日程を添付する（textarea は自由記述のまま）。書式の正本は config の inquiry_form。
+    let scheduleBlock = (): string => '';
+    const messageEl = document.getElementById('contact-message') as HTMLTextAreaElement | null;
+    const grid = document.getElementById('sched-grid');
+    if (messageEl && grid) {
+      const cfg = __INQUIRY_FORM__.schedule;
+      const monthLabel = document.getElementById('sched-month') as HTMLElement;
+      const bandsEl = document.getElementById('sched-bands') as HTMLElement;
+      const listEl = document.getElementById('sched-list') as HTMLElement;
+      const prevBtn = document.getElementById('sched-prev') as HTMLButtonElement;
+      const nextBtn = document.getElementById('sched-next') as HTMLButtonElement;
+
+      const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
+      const iso = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      // 選択可能なのは今日〜「今月＋months_ahead か月」の末日まで。
+      const maxDate = new Date(today.getFullYear(), today.getMonth() + cfg.months_ahead + 1, 0);
+      const maxMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+      let view = new Date(minMonth);
+      let selDate: Date | null = null;
+      type Cand = { iso: string; label: string; band: string; wd: number };
+      const cands: Cand[] = [];
+      const full = () => cands.length >= cfg.max_candidates;
+      const has = (isoStr: string, band: string) => cands.some((c) => c.iso === isoStr && c.band === band);
+
+      const lineFor = (i: number, c: Cand) =>
+        cfg.line_format
+          .replace('{n}', String(i + 1))
+          .replace('{date}', c.label)
+          .replace('{weekday}', WEEK[c.wd])
+          .replace('{band}', c.band);
+
+      // 送信時に message へ添付する希望日程ブロック（候補が無ければ空文字）。
+      scheduleBlock = () => (cands.length ? cfg.block_label + '\n' + cands.map((c, i) => lineFor(i, c)).join('\n') : '');
+
+      const renderBands = () => {
+        bandsEl.replaceChildren();
+        for (const band of cfg.time_bands) {
+          const disabled = selDate === null || full() || has(iso(selDate), band);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = band;
+          b.disabled = disabled;
+          b.className =
+            'rounded-sm border px-3 py-1 text-xs transition-colors ' +
+            (disabled
+              ? 'border-border-subtle text-border cursor-not-allowed'
+              : 'border-border text-muted hover:border-accent hover:text-accent');
+          // 日付選択済みなら時間帯タップで即・候補に追加。
+          if (!disabled) {
+            b.addEventListener('click', () => {
+              if (selDate === null || full()) return;
+              cands.push({ iso: iso(selDate), label: `${selDate.getMonth() + 1}/${selDate.getDate()}`, band, wd: selDate.getDay() });
+              renderList();
+              renderBands();
+            });
+          }
+          bandsEl.appendChild(b);
+        }
+      };
+
+      const renderList = () => {
+        listEl.replaceChildren();
+        cands.forEach((c, i) => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center gap-2 text-muted';
+          const span = document.createElement('span');
+          span.textContent = lineFor(i, c);
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.textContent = '削除';
+          rm.className = 'text-error hover:underline';
+          rm.addEventListener('click', () => {
+            cands.splice(i, 1);
+            renderList();
+            renderBands();
+          });
+          li.append(span, rm);
+          listEl.appendChild(li);
+        });
+      };
+
+      const renderCalendar = () => {
+        grid.replaceChildren();
+        monthLabel.textContent = `${view.getFullYear()}年 ${view.getMonth() + 1}月`;
+        for (const w of WEEK) {
+          const h = document.createElement('span');
+          h.textContent = w;
+          h.className = 'py-1 text-muted';
+          grid.appendChild(h);
+        }
+        const blanks = new Date(view.getFullYear(), view.getMonth(), 1).getDay();
+        for (let i = 0; i < blanks; i++) grid.appendChild(document.createElement('span'));
+        const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+        for (let d = 1; d <= days; d++) {
+          const date = new Date(view.getFullYear(), view.getMonth(), d);
+          // 受付曜日（working_days）かつ 今日〜maxDate の範囲だけ選択可。
+          const disabled = date < today || date > maxDate || !cfg.working_days.includes(date.getDay());
+          const isSel = selDate !== null && iso(selDate) === iso(date);
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.textContent = String(d);
+          cell.disabled = disabled;
+          cell.className =
+            'rounded-sm py-1 transition-colors ' +
+            (disabled ? 'text-border cursor-not-allowed' : isSel ? 'bg-accent text-bg' : 'hover:bg-bg');
+          if (!disabled) {
+            cell.addEventListener('click', () => {
+              selDate = date;
+              renderCalendar();
+              renderBands();
+            });
+          }
+          grid.appendChild(cell);
+        }
+        prevBtn.disabled = view <= minMonth;
+        nextBtn.disabled = view >= maxMonth;
+      };
+
+      prevBtn.addEventListener('click', () => {
+        view = new Date(view.getFullYear(), view.getMonth() - 1, 1);
+        renderCalendar();
+      });
+      nextBtn.addEventListener('click', () => {
+        view = new Date(view.getFullYear(), view.getMonth() + 1, 1);
+        renderCalendar();
+      });
+      // 送信成功時の form.reset() で希望日程の選択もクリアする。
+      form.addEventListener('reset', () => {
+        cands.length = 0;
+        selDate = null;
+        renderList();
+        renderBands();
+        renderCalendar();
+      });
+
+      renderCalendar();
+      renderBands();
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!status || !button) return;
@@ -104,10 +273,14 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       status.className = 'text-sm text-muted';
 
       try {
-        const res = await fetch('/api/contact', {
-          method: 'POST',
-          body: new FormData(form),
-        });
+        // 希望日程は本文に書き込まず、送信時にだけ message へ添付する。
+        const fd = new FormData(form);
+        const block = scheduleBlock();
+        if (block) {
+          const msg = (fd.get('message') as string) ?? '';
+          fd.set('message', msg ? `${msg}\n\n${block}` : block);
+        }
+        const res = await fetch('/api/contact', { method: 'POST', body: fd });
         if (!res.ok) throw new Error('failed');
         form.reset();
         getTurnstile()?.reset(widgetId);

@@ -18,6 +18,8 @@ const mail = {
   noreply: cfgEmail.addresses.noreply,
   contact: cfgEmail.addresses.contact,
 };
+// 問い合わせフォームの文言（本文プレースホルダ・希望日程テンプレ）。config を正本にしビルド時 inline 注入する。
+const inquiryForm = cfg.domains[cfg.primary].inquiry_form;
 
 export default defineConfig({
   site,
@@ -27,7 +29,8 @@ export default defineConfig({
   // 現状は日本語のみ。英語は将来必要になった時点で方式から検討する（未着手）。
   integrations: [
     sitemap({
-      filter: (page) => !page.includes('/og/') && !page.includes('/privacy') && !page.includes('/email-preview'),
+      filter: (page) =>
+        !page.includes('/og/') && !page.includes('/privacy') && !page.includes('/email-preview') && !page.includes('/404'),
     }),
   ],
   // フォントはビルド時に Google から取得して self-host（preload＋メトリクス最適化フォールバックは
@@ -108,8 +111,8 @@ export default defineConfig({
     },
   },
   vite: {
-    // config.<env>.json のメール送信 identity を website ランタイムへ inline 注入（site と同じくビルド時）。
-    define: { __MAIL__: JSON.stringify(mail) },
+    // config.<env>.json のメール送信 identity と問い合わせフォーム文言を inline 注入（site と同じくビルド時）。
+    define: { __MAIL__: JSON.stringify(mail), __INQUIRY_FORM__: JSON.stringify(inquiryForm) },
     plugins: [tailwindcss()],
   },
 });

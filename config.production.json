@@ -27,6 +27,18 @@
           "requests_per_period": 5,
           "mitigation_timeout": 10
         }
+      },
+      "inquiry_form": {
+        "message_placeholder": "ご相談内容・ご質問をご記入ください。\n無料相談をご希望の場合は、下のカレンダーからご希望日程を追加できます。",
+        "schedule": {
+          "heading": "無料相談 ご希望日程（任意）",
+          "time_bands": ["10:00-12:00", "14:00-18:00"],
+          "max_candidates": 3,
+          "months_ahead": 1,
+          "working_days": [1, 2, 3, 4, 5],
+          "block_label": "【無料相談 ご希望日程】",
+          "line_format": "第{n}希望: {date}（{weekday}）{band}"
+        }
       }
     },
     "niqo.studio": {

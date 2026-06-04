@@ -7,3 +7,6 @@ export const INQUIRY_LIMITS = {
   subject: 200,
   message: 5000,
 } as const;
+
+// フォーム文言（本文プレースホルダ・希望日程テンプレ）。正本は config.<env>.json（astro.config が inline 注入）。
+export const INQUIRY_FORM = __INQUIRY_FORM__;
