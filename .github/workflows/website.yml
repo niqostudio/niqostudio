@@ -29,9 +29,9 @@ jobs:
       run:
         working-directory: website
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -44,7 +44,7 @@ jobs:
       # @astrojs/cloudflare は dist/client（静的）と dist/server（Worker＝entry.mjs + wrangler.json）に分割する。
       # Worker デプロイには両方要る（wrangler.json の assets.directory が ../client を指す）。
       - if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: website-dist
           path: website/dist
@@ -59,12 +59,12 @@ jobs:
     environment: website-production
     steps:
       # .nvmrc と packageManager(pnpm) 解決のため checkout する（成果物自体は artifact から取る）。
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: website-dist
           path: website/dist
