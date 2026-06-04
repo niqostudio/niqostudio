@@ -65,14 +65,14 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 <script>
   type Turnstile = { render: (el: Element) => void; reset: () => void };
 
-  // ClientRouter 遷移後も効くよう astro:page-load で初期化（初回ロードでも発火）。
-  document.addEventListener('astro:page-load', () => {
+  // module script は defer 実行で DOM 解析後に走る。各ページのフルロードで一度だけ初期化する。
+  (() => {
     const form = document.getElementById('contact-form') as HTMLFormElement | null;
     if (!form) return;
     const status = document.getElementById('contact-status');
     const button = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
-    // クライアント遷移では Turnstile の自動描画が走らないため、未描画なら明示 render。
+    // Turnstile は api.js が自動描画するが、タイミング次第で未描画なら明示 render（二重描画は iframe 有無で回避）。
     const turnstile = (window as unknown as { turnstile?: Turnstile }).turnstile;
     const widget = form.querySelector('.cf-turnstile');
     if (turnstile && widget && !widget.querySelector('iframe')) turnstile.render(widget);
@@ -102,5 +102,5 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         button.disabled = false;
       }
     });
-  });
+  })();
 </script>

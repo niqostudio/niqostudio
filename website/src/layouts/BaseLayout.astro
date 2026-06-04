@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import { Font } from 'astro:assets';
-import { ClientRouter } from 'astro:transitions';
 import Shell from './Shell.astro';
 import { getProfile } from '../lib/content';
 import { SITE, THEME, PAGES } from '../config/site';
@@ -68,12 +67,35 @@ const schemas = [orgLd, ...(breadcrumbLd ? [breadcrumbLd] : []), ...extra];
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {/* クライアント遷移でドキュメントを保持し、ロード済みフォントを引き継ぐ（遷移時の FOUT 解消）。 */}
-    <ClientRouter />
+    {/* font loader: 同セッションで読込済みなら初回ペイントから webfont（遷移時 swap なし）。before-paint で同期適用。 */}
+    <script is:inline>
+      if (sessionStorage.getItem('fonts-loaded')) document.documentElement.classList.add('fonts-loaded');
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* 初回ペイントに要る欧文と wordmark を preload（loader が読込後に webfont へ差し替える）。 */}
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-noto-jp" />
-    <Font cssVariable="--font-jetbrains-mono" />
+    <Font cssVariable="--font-jetbrains-mono" preload />
+    <script>
+      // 初回訪問: fallback で描画 → 本フォント（Astro 生成のハッシュ付き family 名）を明示ロード →
+      // 完了後に fonts-loaded を付けて差し替え、セッションに記録（以後は初回ペイントから webfont）。
+      if (!sessionStorage.getItem('fonts-loaded')) {
+        const root = document.documentElement;
+        const family = (v: string) =>
+          getComputedStyle(root).getPropertyValue(v).split(',')[0].trim().replace(/^["']|["']$/g, '');
+        const families = ['--font-inter', '--font-noto-jp', '--font-jetbrains-mono'].map(family).filter(Boolean);
+        Promise.all(families.map((f) => document.fonts.load('1em "' + f + '"')))
+          .then(() => {
+            root.classList.add('fonts-loaded');
+            try {
+              sessionStorage.setItem('fonts-loaded', '1');
+            } catch {
+              /* sessionStorage 不可でも描画は継続 */
+            }
+          })
+          .catch(() => root.classList.add('fonts-loaded'));
+      }
+    </script>
     <title>{fullTitle}</title>
     <link rel="canonical" href={canonical.href} />
     {
