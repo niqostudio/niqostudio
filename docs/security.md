@@ -42,16 +42,16 @@ publishable key 経由で anon が読めてしまう情報漏洩が脅威。
 
 ## 攻撃面: 配信・セキュリティヘッダ（website）
 
-XSS・クリックジャッキング・MIME スニッフィング等のブラウザ側脅威。全項目とも `website/public/_headers` で設定する。
+XSS・クリックジャッキング・MIME スニッフィング等のブラウザ側脅威。ヘッダは `website/public/_headers`、CSP は Astro 設定。
 
-- [x] `X-Content-Type-Options: nosniff`
-- [x] `Referrer-Policy: strict-origin-when-cross-origin`
-- [x] `Permissions-Policy`（カメラ/マイク/位置情報等を無効）
-- [x] `X-Frame-Options: DENY`（クリックジャッキング）
-- [x] `Strict-Transport-Security`（HSTS）
-- [ ] CSP を強制（現在 Report-Only。preview で違反ゼロを確認後に昇格）
+- [x] `X-Content-Type-Options: nosniff` — `_headers`
+- [x] `Referrer-Policy: strict-origin-when-cross-origin` — `_headers`
+- [x] `Permissions-Policy`（カメラ/マイク/位置情報等を無効） — `_headers`
+- [x] `X-Frame-Options: DENY`（クリックジャッキング・CSP meta で効かない frame-ancestors の代替） — `_headers`
+- [x] `Strict-Transport-Security`（HSTS） — `_headers`
+- [x] CSP 強制（Astro が `<meta>` 出力・インライン script/style の hash をビルド毎に自動生成） — `website/astro.config.mjs`
 
-説明：CSP は Turnstile（`challenges.cloudflare.com`）と Supabase を許可しつつ、誤検知で壊さないよう Report-Only で導入中。
+説明：CSP は Astro の `security.csp` が `<meta>` で出力。Turnstile・Supabase・Cloudflare Web Analytics（`*.cloudflareinsights.com`）を許可し、インライン hash は自動付与（Astro 更新でも壊れない）。`<meta>` では `frame-ancestors` が効かないため `X-Frame-Options: DENY` で代替する。
 
 ## 攻撃面: シークレット衛生
 
@@ -97,7 +97,7 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 | A02 セキュリティ設定ミス | deploy 前の構成整合チェック、承認ゲート、セキュリティヘッダ | ✅ |
 | A03 ソフトウェアサプライチェーンの不備 | `minimumReleaseAge`、wrangler 版固定、Dependabot（npm / actions） | ✅ |
 | A04 暗号化の失敗 | HTTPS / HSTS、秘密値は CI Secret・`wrangler secret` 管理 | ✅ |
-| A05 インジェクション | Supabase クライアント（パラメータ化）、入力検証、CSP | ✅（CSP は Report-Only） |
+| A05 インジェクション | Supabase クライアント（パラメータ化）、入力検証、CSP（強制） | ✅ |
 | A06 安全でない設計 | 最小権限の書込み経路・フェイルクローズ設計 | ✅ |
 | A07 認証・識別の失敗 | 公開 auth 無効、書込みは短命 JWT の最小権限ロールのみ | ✅ |
 | A08 ソフトウェア/データ完全性の不備 | gitleaks、署名鍵を gitignore、本番反映は承認ゲート | ✅ |

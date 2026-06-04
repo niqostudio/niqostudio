@@ -65,6 +65,28 @@ export default defineConfig({
       fallbacks: ['ui-monospace', 'monospace'],
     },
   ],
+  // CSP は Astro が出力（インライン script/style の hash をビルド毎に自動生成＝ClientRouter も追従）。
+  // meta 出力のため frame-ancestors は効かないが X-Frame-Options: DENY（_headers）で担保。
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co https://cloudflareinsights.com",
+        "frame-src https://challenges.cloudflare.com",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ],
+      scriptDirective: {
+        // Turnstile ウィジェット＋ Cloudflare Web Analytics ビーコン。インライン script は hash 自動付与。
+        resources: ["'self'", 'https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'],
+      },
+      styleDirective: {
+        resources: ["'self'", "'unsafe-inline'"],
+      },
+    },
+  },
   vite: {
     plugins: [tailwindcss()],
   },
