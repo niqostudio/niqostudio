@@ -55,10 +55,11 @@
   --color-on-dark-muted: #cbd5e1;
   /* slate-300 */
 
-  /* 既定は metric 一致 fallback のみ（webfont を参照しない）。font loader が読込後に
-     html.fonts-loaded で webfont stack へ差し替える＝遷移時の FOUT を出さない。 */
-  --font-sans: "Inter Fallback", "Noto Sans JP Fallback", Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  /* Astro Fonts(astro:fonts)が self-host＋メトリクス最適化フォールバックを生成。
+     ラテン=Inter（欧文系フォールバックのみ）→ 和文=Noto Sans JP の順で、
+     和文が手前の system フォントに食われないようにする。 */
+  --font-sans: var(--font-inter), var(--font-noto-jp);
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 
   /* 角丸はほぼソリッド（全 rounded-sm がこの値を参照） */
   --radius-sm: 0.125rem;
@@ -87,12 +88,6 @@
   --color-gold: #dcb441;
   --color-on-dark: #faf9f7;
   --color-on-dark-muted: #d6d3d1;
-}
-
-/* font loader が本フォント読込後に付与。webfont stack へ差し替える（未付与時は fallback のみ）。 */
-html.fonts-loaded {
-  --font-sans: var(--font-inter), var(--font-noto-jp);
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 }
 
 html {
@@ -148,4 +143,11 @@ dd {
 
 .link-rich:hover {
   text-decoration-thickness: 2px;
+}
+
+/* View Transitions(ClientRouter) の既定フェードを無効化＝遷移は即時。
+   目的はドキュメント保持によるフォント維持（FOUT 解消）で、演出は不要。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
 }

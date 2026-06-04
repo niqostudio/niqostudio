@@ -72,8 +72,8 @@ const linkClass = (href: string) =>
 </header>
 
 <script>
-  // module script は defer 実行で DOM 解析後に走る。各ページのフルロードで一度だけ初期化する。
-  (() => {
+  // ClientRouter 遷移後も効くよう astro:page-load で初期化（初回ロードでも発火）。
+  document.addEventListener('astro:page-load', () => {
     const btn = document.getElementById('menu-toggle');
     const menu = document.getElementById('mobile-menu');
     const open = btn?.querySelector('[data-icon="open"]');
@@ -88,7 +88,10 @@ const linkClass = (href: string) =>
     });
 
     // 下スクロールでヘッダーを退避し、上スクロールで戻す（常時 viewport を食わない）。
-    {
+    // window は ClientRouter 遷移をまたいで残るためリスナーは一度だけ張る（要素は毎回引き直す）。
+    const win = window as unknown as Record<string, unknown>;
+    if (!win.__niqoHeaderScroll) {
+      win.__niqoHeaderScroll = true;
       let lastY = window.scrollY;
       let ticking = false;
       const update = () => {
@@ -115,5 +118,5 @@ const linkClass = (href: string) =>
         { passive: true },
       );
     }
-  })();
+  });
 </script>
