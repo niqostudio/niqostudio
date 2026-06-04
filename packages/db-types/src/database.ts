@@ -143,9 +143,11 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          auto_reply_id: string | null
           company: string | null
           converted_client_id: string | null
           created_at: string
+          delivery_status: string
           email: string
           id: string
           internal_notes: string | null
@@ -156,9 +158,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_reply_id?: string | null
           company?: string | null
           converted_client_id?: string | null
           created_at?: string
+          delivery_status?: string
           email: string
           id?: string
           internal_notes?: string | null
@@ -169,9 +173,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_reply_id?: string | null
           company?: string | null
           converted_client_id?: string | null
           created_at?: string
+          delivery_status?: string
           email?: string
           id?: string
           internal_notes?: string | null
