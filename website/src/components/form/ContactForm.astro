@@ -1,4 +1,5 @@
 ---
+import { INQUIRY_LIMITS } from '../../config/inquiry';
 // Turnstile（ボット対策）。サイトキーは公開値。未設定ならウィジェットを出さない（dev/未導入でも動く）。
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 ---
@@ -10,7 +11,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       type="text"
       name="name"
       required
-      maxlength="100"
+      maxlength={INQUIRY_LIMITS.name}
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
     <span class="text-xs text-muted">本名でなくても、お呼びする名前で構いません。</span>
@@ -21,7 +22,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     <input
       type="text"
       name="company"
-      maxlength="100"
+      maxlength={INQUIRY_LIMITS.company}
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
   </label>
@@ -32,7 +33,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       type="email"
       name="email"
       required
-      maxlength="254"
+      maxlength={INQUIRY_LIMITS.email}
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
   </label>
@@ -42,7 +43,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     <textarea
       name="message"
       required
-      maxlength="5000"
+      maxlength={INQUIRY_LIMITS.message}
       rows="6"
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none resize-y"
     ></textarea>

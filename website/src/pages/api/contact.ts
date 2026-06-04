@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { submitInquiry } from '../../lib/core';
 import { inquiryClient } from '../../lib/supabase';
 import { sendAutoReply, sendOwnerNotification } from '../../lib/email';
+import { INQUIRY_LIMITS } from '../../config/inquiry';
 
 export const prerender = false;
 
@@ -20,10 +21,15 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // 早期バリデーション: email 形式と各フィールド長（DB / RLS 前段で弾く）。
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > INQUIRY_LIMITS.email) {
       return json({ error: 'Invalid email' }, 400);
     }
-    if (name.length > 100 || (company && company.length > 100) || (subject && subject.length > 200) || message.length > 5000) {
+    if (
+      name.length > INQUIRY_LIMITS.name ||
+      (company && company.length > INQUIRY_LIMITS.company) ||
+      (subject && subject.length > INQUIRY_LIMITS.subject) ||
+      message.length > INQUIRY_LIMITS.message
+    ) {
       return json({ error: 'Field too long' }, 400);
     }
 
