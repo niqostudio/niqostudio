@@ -19,6 +19,8 @@ theme:
 
 markdown_extensions:
   - admonition
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - toc:
       permalink: true
       # 日本語見出しのアンカーを保持する（既定 slugify は非 ASCII を落とすため）。

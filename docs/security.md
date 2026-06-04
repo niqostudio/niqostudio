@@ -1,88 +1,111 @@
 # セキュリティ
 
-> NIQO STUDIO システム（website / core / infra）の**脅威モデル・対策・実装状況**の正本。
-> 2026-06 のセキュリティ監査に基づく。値の置き場は [変数の配置](variables.md)、メール認証は
-> [メール設計](infra/email.md)、復旧は [recovery](infra/recovery.md) も参照。
+> NIQO STUDIO システムの**脅威モデル・対策・実装状況**の正本。
+> 2026-06 のセキュリティ監査に基づく。攻撃面ごとにチェックリストを持ち、各対策に**対応箇所（コード）**を併記する。
+> 値の置き場は [変数の配置](variables.md)、メール認証は [メール設計](infra/email.md) も参照。
+>
+> 表記：`[x]`=実装済（本番反映は CI 経由）／`[ ]`=未対応・予定。「要 apply」はコードはあるが本番未適用。
+> 対応箇所はパス末尾の短縮形で示す（同一節内の再掲は括弧で役割を区別）。
 
 ## 前提（脅威モデル）
 
-- **全リポ public**。シークレットの「値」は追跡ファイルに置かない（CI Secret / Environment /
-  `wrangler secret` で注入）。
-- **Supabase の publishable key は公開前提**。データ保護の関所は **RLS**（行＝ポリシー、機密列＝列 GRANT）。
+- **全リポ public**。シークレットの値は追跡ファイルに置かない（CI Secret / Environment / `wrangler secret`）。
+- **Supabase publishable key は公開前提**＝データ保護の関所は **RLS**（行＝ポリシー、機密列＝列 GRANT）。
 - 実害の中心は **情報漏洩** と **公開エンドポイント（`/api/contact`）の悪用（スパム/コスト）**。
 - 公開 auth（ユーザーログイン）は無効。**書き込みは最小権限の経路に限定**する。
 
-## 実装状況（チェックリスト）
+## 攻撃面: お問い合わせフォーム（`/api/contact`）
 
-✅=コード実装済（本番反映は CI 経由）／🔜=予定・適用待ち
+唯一の公開 SSR エンドポイント。スパム/コスト悪用と不正書き込みが脅威。
 
-| 領域 | 対策 | 重要度 | 状態 |
-| --- | --- | --- | --- |
-| データ層 | 顧客の公開同意フラグ `is_public_name_allowed` を RLS で必須化 | 高 | ✅ |
-| データ層 | 公開読みテーブルの anon 書込み表特権を REVOKE（多層防御） | 中 | ✅ |
-| データ層 | `profile` を列単位 GRANT に限定（将来列の暗黙露出防止） | 低 | ✅ |
-| 問い合わせ | 入力検証（必須 / email 形式 / 長さ） | - | ✅ |
-| 問い合わせ | 最小権限 `inquiry_writer` 経由 INSERT、anon 直叩きを封鎖 | 高 | 🔜 phase2 適用待ち |
-| 問い合わせ | エッジレート制限（Cloudflare・5 req/10s/IP） | 高 | ✅ apply 待ち |
-| 問い合わせ | Turnstile（site key 有り＋secret 欠落は deploy を fail） | 中 | ✅ |
-| ヘッダ | nosniff / Referrer-Policy / Permissions-Policy / X-Frame-Options / HSTS | 中 | ✅ |
-| ヘッダ | CSP | 低 | 🔜 Report-Only（強制へ昇格予定） |
-| シークレット | 値を追跡しない・gitleaks で誤コミット検出 | - | ✅ |
-| インフラ | CF/CI トークン最小権限・PII/公開値の分離・承認ゲート | - | ✅ |
-| メール | SPF / DKIM / DMARC | 中 | 🔜 DMARC を none→reject へ段階強化中 |
-| 依存 | `minimumReleaseAge` cooldown | 低 | ✅ |
-| 依存 | wrangler バージョン固定 | 低 | 🔜 |
-| 依存 | CI 依存監査（pnpm audit / Dependabot） | 低 | 🔜 |
+- [x] 入力検証（必須 / email 形式 / 長さ上限） — `contact.ts`
+- [x] CSRF：Astro `checkOrigin`（SSR 既定・同一オリジンの POST のみ） — フレームワーク既定
+- [x] Bot 対策：Turnstile（site key 有りで検証必須。secret 欠落は deploy fail＋runtime 拒否＝フェイルクローズ） — `contact.ts`（siteverify）／ `ContactForm.astro`（ウィジェット）／ `website.yml`（deploy 整合チェック）
+- [x] エッジレート制限：`POST /api/contact` を IP 単位 5 req/10s（要 apply） — `ratelimit.tf`
+- [x] 最小権限書き込み：`inquiry_writer` JWT 経由のみ INSERT。JWT 欠落時は送信拒否（フェイルクローズ） — `contact.ts`（JWT 必須）／ `supabase.ts`（`inquiryClient`）
+- [x] コスト面：通知メール（Resend）は Worker 経路のみ＝直叩きでメールは飛ばない — `contact.ts`（Resend 呼び出し）
 
-## システム全体
+説明：publishable key は公開なので、攻撃者は Worker（Turnstile・レート制限）を**迂回して Supabase REST に直 INSERT** できる。これを塞ぐのが最小権限ロール `inquiry_writer` と anon の INSERT 剥奪。漏洩しても影響は inquiries への INSERT のみに限定される。
 
-### シークレット衛生
-- `.env` / `*.tfvars` / state / 各種鍵は gitignore。CI は GitHub **Environment** でモジュール別にスコープ注入。
-- `signing_keys.json`（JWT 秘密鍵）も gitignore。gitleaks（[secret-scan.yml](https://github.com/niqostudio/niqostudio/blob/main/.github/workflows/secret-scan.yml)）で誤コミットを CI 検出。
-- 状態: ✅（監査で追跡ファイルへの実値混入なしを確認）。
+## 攻撃面: データ層（Supabase RLS）
 
-### Cloudflare / CI トークン
-- infra の TF トークンは対象ゾーン限定＋必要権限のみ。website deploy は別トークン（Workers Scripts:Edit）。
-- PII（転送先・通知宛先）は Secret、公開 DNS（Resend 認証レコード）は Variable に分離。
-- 本番反映（terraform apply / db push / deploy）は**承認ゲート付き Environment**で実行。
-- 状態: ✅。
+publishable key 経由で anon が読めてしまう情報漏洩が脅威。
 
-### メール認証（SPF / DKIM / DMARC）
-- apex SPF は1本（CF 転送用）、DKIM は `resend._domainkey`、DMARC は監視から。詳細は [メール設計](infra/email.md)。
-- 状態: 🔜 DMARC を `p=none` から rua 設定 → `quarantine` → `reject` へ段階強化予定。
+- [x] 全テーブル RLS 有効（ポリシー無し＝deny 既定） — `core/supabase/migrations/`（各テーブル定義）
+- [x] 機密列の遮断：`real_name` / `internal_notes` は anon に列 GRANT しない — `…000000_security_hardening_rls.sql`
+- [x] 顧客の公開同意：`is_public_name_allowed = true` を RLS で必須化（未同意は `public_name` も出さない） — `…000000_…_rls.sql`
+- [x] 多層防御：公開読みテーブル（works/cases/services）の anon 書込み表特権を REVOKE — `…000000_…_rls.sql`
+- [x] `profile` を全列開放から**公開列のみ GRANT**（将来 internal 列の暗黙露出を防止） — `…000000_…_rls.sql`
+- [x] 書込み最小権限：`inquiry_writer` に inquiries の INSERT 列のみ GRANT、anon の INSERT は剥奪 — `…000100_inquiry_writer_role.sql`／ `…000200_revoke_anon_inquiry_insert.sql`
 
-### データ層（Supabase RLS）
-- publishable key は公開前提＝**RLS が関所**。機密列（`real_name` / `internal_notes`）は列 GRANT で遮断。
-- 顧客の公開は **同意フラグ `is_public_name_allowed` を RLS で必須化**（未同意なら関連実績を公開しても `public_name` を出さない）。
-- 公開読みテーブル（works / cases / services / profile）は **SELECT のみ**＝書込み表特権を anon から REVOKE。
-- `profile` は全列開放をやめ**公開列のみ GRANT**（将来 internal 列を足しても暗黙露出しない）。
-- 状態: ✅（`core/supabase/migrations/20260604000000_security_hardening_rls.sql`）。
+説明：RLS のポリシー有無だけに頼らず、表 GRANT でも書込みを遮断する二段構え。
 
-## website
+## 攻撃面: 配信・セキュリティヘッダ（website）
 
-### お問い合わせフォーム（`/api/contact`）
-唯一の公開 SSR エンドポイント。多層で守る：
+XSS・クリックジャッキング・MIME スニッフィング等のブラウザ側脅威。全項目とも `website/public/_headers` で設定する。
 
-1. **入力検証**: 必須 / email 形式 / 長さ上限（[contact.ts](https://github.com/niqostudio/niqostudio/blob/main/website/src/pages/api/contact.ts)）。
-2. **CSRF**: Astro の `checkOrigin`（同一オリジンの POST のみ許可）。
-3. **Bot 対策**: Turnstile。site key があるのに `TURNSTILE_SECRET_KEY` が欠落＝検証 skip の構成ミスは
-   **deploy job で fail**（フェイルクローズ）。
-4. **流量制限**: Cloudflare レート制限で `POST /api/contact` を IP 単位 **5 req/10s**（`infra/.../ratelimit.tf`）。
-5. **書き込み（最小権限）**: 最小権限ロール **`inquiry_writer`**（inquiries への INSERT だけ）を名乗る
-   JWT 経由でのみ INSERT。publishable key の**直叩き**（Worker / Turnstile / レート制限の迂回）は
-   phase2 で anon の INSERT を REVOKE して封鎖。JWT は非対称 signing key で署名し、website-production の
-   secret（`SUPABASE_INQUIRY_JWT`）として Worker に渡す。漏洩時の影響は inquiries への INSERT のみ。
+- [x] `X-Content-Type-Options: nosniff`
+- [x] `Referrer-Policy: strict-origin-when-cross-origin`
+- [x] `Permissions-Policy`（カメラ/マイク/位置情報等を無効）
+- [x] `X-Frame-Options: DENY`（クリックジャッキング）
+- [x] `Strict-Transport-Security`（HSTS）
+- [ ] CSP を強制（現在 Report-Only。preview で違反ゼロを確認後に昇格）
 
-- 通知メール（Resend）は **Worker 経路だけ**＝直叩きではメールが飛ばず、コスト悪用にならない。
-- 状態: 1–4 ✅、5 は JWT 経路が稼働済み・**phase2（anon 剥奪）適用待ち**。
+説明：CSP は Turnstile（`challenges.cloudflare.com`）と Supabase を許可しつつ、誤検知で壊さないよう Report-Only で導入中。
 
-### セキュリティヘッダ
-- `website/public/_headers` で `X-Content-Type-Options: nosniff` / `Referrer-Policy` /
-  `Permissions-Policy` / `X-Frame-Options: DENY` / `Strict-Transport-Security` を全アセットに付与。
-- **CSP** は Turnstile（`challenges.cloudflare.com`）と Supabase を許可しつつ、誤検知で壊さないよう
-  **Report-Only** で導入。preview で違反ゼロを確認してから強制へ昇格する。
-- 状態: ✅（CSP は Report-Only）。
+## 攻撃面: シークレット衛生
 
-## 監査・再点検
-- 本ドキュメントは監査所見の要約。深掘り再監査は `/code-review ultra` 等で随時。
-- 新しい公開エンドポイント・テーブル・第三者リソースを足したら、本チェックリストに項目を追加する。
+公開リポへの秘密値の混入・流出。
+
+- [x] `.env` / `*.tfvars` / state / 鍵を gitignore（雛形 `*.example` のみ追跡） — ルート / 各モジュールの `.gitignore`
+- [x] `signing_keys.json`（JWT 署名の秘密鍵）を gitignore — `core/supabase/.gitignore`
+- [x] gitleaks で誤コミットを CI 検出 — `.github/workflows/secret-scan.yml`
+- [x] 監査で追跡ファイルへの実値混入なしを確認 — （手動監査）
+
+## 攻撃面: インフラ / CI トークン
+
+トークン過剰権限・本番への無断反映。
+
+- [x] CF/CI トークンは対象スコープ＋必要権限のみ（infra=Workers Scripts/DNS/Email、website=Workers Scripts） — 正本 [変数の配置](variables.md)
+- [x] PII（転送先・通知宛先）は Secret、公開 DNS は Variable に分離 — `infra-apply.yml` / `website.yml`
+- [x] 本番反映（terraform apply / db push / deploy）は承認ゲート付き Environment — `infra-apply.yml` / `core-migrate.yml` / `website.yml`
+- [x] Environment はモジュール別（`<module>-<env>`）にスコープ＝ジョブが他モジュールの secret を読めない — [ADR 0003](adr/0003-environment-per-module.md)
+
+## 攻撃面: メール認証（SPF / DKIM / DMARC）
+
+なりすまし送信・到達率。詳細は [メール設計](infra/email.md)。
+
+- [x] apex SPF は1本に統合（CF 転送用） — `config.production.json`（`email.spf_*`）
+- [x] DKIM（`resend._domainkey`）で `d=niqostudio.com` 整列 — infra DNS（`resend_dns_records`）
+- [ ] DMARC を `p=none` → rua 設定 → `quarantine` → `reject` へ段階強化 — `config.production.json`（`email.dmarc_*`）
+
+## 攻撃面: 依存・サプライチェーン
+
+乗っ取りパッケージ・既知脆弱性。cooldown は `pnpm-workspace.yaml` で設定する。
+
+- [x] `minimumReleaseAge` で新規バージョンの取り込み cooldown
+- [ ] wrangler のバージョン固定（`pnpm dlx wrangler@4` → devDeps に pin）
+- [ ] CI 依存監査（`pnpm audit` か Dependabot）
+
+## OWASP Top 10（2025）対応
+
+各攻撃面を OWASP の枠で俯瞰する（網羅性の確認用）。詳細・対応箇所は上の各節。
+
+| カテゴリ | 主な対応 | 状況 |
+| --- | --- | --- |
+| A01 アクセス制御の不備（SSRF 統合） | RLS＋列 GRANT、書込みは `inquiry_writer` 最小権限のみ。SSRF：公開 SSR は固定の外部 API（Turnstile / Resend / Supabase）のみ呼びユーザー指定 URL を fetch しない | ✅ |
+| A02 セキュリティ設定ミス | deploy 前の構成整合チェック、承認ゲート、セキュリティヘッダ | ✅ |
+| A03 ソフトウェアサプライチェーンの不備 | `minimumReleaseAge`、（予定）`pnpm audit` / wrangler pin | ◐ |
+| A04 暗号化の失敗 | HTTPS / HSTS、秘密値は CI Secret・`wrangler secret` 管理 | ✅ |
+| A05 インジェクション | Supabase クライアント（パラメータ化）、入力検証、CSP | ✅（CSP は Report-Only） |
+| A06 安全でない設計 | 最小権限の書込み経路・フェイルクローズ設計 | ✅ |
+| A07 認証・識別の失敗 | 公開 auth 無効、書込みは短命 JWT の最小権限ロールのみ | ✅ |
+| A08 ソフトウェア/データ完全性の不備 | gitleaks、署名鍵を gitignore、本番反映は承認ゲート | ✅ |
+| A09 ログ・アラートの不備 | Worker のエラーログ（`console.error`）、集約・アラートは未整備 | ◐ |
+| A10 例外条件の不適切な処理 | フォームは try/catch で 500、各前提を fail-closed にして「黙って通す」を排除 | ✅ |
+
+## 再点検
+
+- 新しい公開エンドポイント・テーブル・第三者リソースを足したら、対応する攻撃面のチェックリストと対応箇所を更新する。
+- セキュリティ・インフラは今後も増えるため、本ページは継続メンテ対象（変更時に対応箇所を追従）。
+- 深掘り再監査は `/code-review ultra` 等で随時。
