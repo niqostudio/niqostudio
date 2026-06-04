@@ -68,6 +68,8 @@ jobs:
         with:
           name: website-dist
           path: website/dist
+      # deploy 用に website の依存（pin した wrangler）を入れる。artifact に node_modules は含まれないため。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/website
       # フェイルクローズ: 構成不変条件を deploy 前に検査する（secret は website-production にしか無いため deploy job で）。
       - name: 必須 secret の整合チェック
         env:
@@ -85,7 +87,7 @@ jobs:
             echo "::error::SUPABASE_INQUIRY_JWT が空です（問い合わせ INSERT に必須）"
             exit 1
           fi
-      # adapter 生成の wrangler.json をそのまま使う（assets.directory=../client）。dlx で実行し workspace を汚さない。
+      # adapter 生成の wrangler.json をそのまま使う（assets.directory=../client）。pin した wrangler を pnpm exec で実行。
       - name: deploy（Worker = SSR + 静的アセット）
         working-directory: website/dist/server
         env:
@@ -98,7 +100,7 @@ jobs:
           # Astro session 用 KV は未使用で id 未指定の binding は deploy が拒否するため除去する。
           name=$(jq -r '.domains[.primary].workers.website.name' "$GITHUB_WORKSPACE/config.production.json")
           jq --arg n "$name" '.name = $n | .topLevelName = $n | del(.kv_namespaces) | del(.previews.kv_namespaces) | .workers_dev = false' wrangler.json > w.json && mv w.json wrangler.json
-          pnpm dlx wrangler@4 deploy
+          pnpm exec wrangler deploy
       # フォーム送信に要る実行時値（公開値ではない＝ビルドにインラインされない）。worker 作成後に設定する。
       - name: runtime secrets（Resend / 宛先 / Turnstile）
         working-directory: website/dist/server
@@ -118,5 +120,5 @@ jobs:
             --arg ij "$SUPABASE_INQUIRY_JWT" \
             '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_JWT:$ij}
              | with_entries(select(.value != ""))' > secrets.json
-          pnpm dlx wrangler@4 secret bulk secrets.json
+          pnpm exec wrangler secret bulk secrets.json
           rm -f secrets.json
