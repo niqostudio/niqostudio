@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # npm（pnpm workspace）。minor/patch は1 PR にまとめ、major は個別に出す。
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+  # ワークフローで使う Action のバージョン更新。
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
