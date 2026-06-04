@@ -90,6 +90,34 @@ export async function submitInquiry(
   if (error) throw error;
 }
 
+export type InquiryDelivery = Required<Pick<InquiryInput, 'name' | 'email'>> &
+  Pick<InquiryInput, 'company' | 'subject'> & { message: string; delivery_status: string };
+
+// 自動返信の Resend email id で inquiry を引く（webhook 用・最小権限 inquiry_reader クライアントを渡す）。
+// 該当が無い（自動返信以外の email）場合は null。
+export async function findInquiryByAutoReplyId(
+  client: SupabaseClient<Database>,
+  autoReplyId: string,
+): Promise<InquiryDelivery | null> {
+  const { data, error } = await client
+    .from('inquiries')
+    .select('name, company, email, subject, message, delivery_status')
+    .eq('auto_reply_id', autoReplyId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as InquiryDelivery) ?? null;
+}
+
+// 到達状況の更新（webhook 用）。auto_reply_id で対象行を特定する。
+export async function setDeliveryStatus(
+  client: SupabaseClient<Database>,
+  autoReplyId: string,
+  status: 'delivered' | 'bounced',
+): Promise<void> {
+  const { error } = await client.from('inquiries').update({ delivery_status: status }).eq('auto_reply_id', autoReplyId);
+  if (error) throw error;
+}
+
 // profile は singleton（必須）。欠落・接続失敗は throw（本番相当の前提）。
 export async function fetchProfile(): Promise<Profile> {
   const { data, error } = await supabase.from('profile').select('*').eq('id', 'singleton').single();
