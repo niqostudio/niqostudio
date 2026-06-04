@@ -73,9 +73,11 @@ export type InquiryInput = {
 
 // inquiries への INSERT。既定は共有クライアント（publishable=anon）。最小権限の inquiry_writer
 // クライアントを渡せば、その JWT 経由で INSERT する（Worker 専用経路）。失敗は throw。
+// autoReplyId は自動返信の Resend email id（webhook が到達状況で行を相関するため）。
 export async function submitInquiry(
   input: InquiryInput,
   client: SupabaseClient<Database> = supabase,
+  autoReplyId: string | null = null,
 ): Promise<void> {
   const { error } = await client.from('inquiries').insert({
     name: input.name,
@@ -83,6 +85,7 @@ export async function submitInquiry(
     email: input.email,
     subject: input.subject ?? null,
     message: input.message,
+    auto_reply_id: autoReplyId,
   });
   if (error) throw error;
 }

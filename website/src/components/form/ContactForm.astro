@@ -10,6 +10,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       type="text"
       name="name"
       required
+      maxlength="100"
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
     <span class="text-xs text-muted">本名でなくても、お呼びする名前で構いません。</span>
@@ -20,6 +21,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     <input
       type="text"
       name="company"
+      maxlength="100"
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
   </label>
@@ -30,6 +32,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       type="email"
       name="email"
       required
+      maxlength="254"
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none"
     />
   </label>
@@ -39,6 +42,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     <textarea
       name="message"
       required
+      maxlength="5000"
       rows="6"
       class="bg-surface border border-border rounded-sm px-3 py-2 focus:border-accent outline-none resize-y"
     ></textarea>
@@ -81,6 +85,9 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       e.preventDefault();
       if (!status || !button) return;
 
+      // client validation: 必須・email 形式・長さ（maxlength）をネイティブ制約で検証し、不備は UI を出して中断。
+      if (!form.reportValidity()) return;
+
       button.disabled = true;
       status.textContent = '送信中…';
       status.className = 'text-sm text-muted';
@@ -93,7 +100,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         if (!res.ok) throw new Error('failed');
         form.reset();
         turnstile?.reset();
-        status.textContent = '送信しました。折り返しご連絡します。';
+        status.textContent =
+          '送信しました。確認メールをお送りしました。数分内に届かない場合は、メールアドレスをご確認のうえ再送信ください。';
         status.className = 'text-sm';
       } catch {
         status.textContent = '送信に失敗しました。時間をおいて再度お試しください。';

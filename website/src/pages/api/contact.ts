@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { submitInquiry } from '../../lib/core';
 import { inquiryClient } from '../../lib/supabase';
+import { sendAutoReply, sendOwnerNotification } from '../../lib/email';
 
 export const prerender = false;
 
@@ -57,31 +58,20 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('SUPABASE_INQUIRY_JWT is missing; inquiry insert requires the least-privilege writer role');
       return json({ error: 'Server error' }, 500);
     }
-    await submitInquiry({ name, company, email, subject, message }, inquiryClient(writerJwt));
 
+    const mail = { name, company, email, subject, message };
     const resendApiKey = runtimeEnv.RESEND_API_KEY;
-    if (resendApiKey) {
+
+    // 自動返信（noreply）を先に送り、その email id を inquiry に紐付ける。webhook が到達状況（delivered/bounced）で
+    // この行を相関し、delivered のとき初めて hi@ へ通知する（無効アドレスへの通知を避ける）。
+    const autoReplyId = resendApiKey ? await sendAutoReply(resendApiKey, mail) : null;
+    await submitInquiry(mail, inquiryClient(writerJwt), autoReplyId);
+
+    // 自動返信を送れなかった（key 無し or 送信失敗）＝到達 webhook が来ないため、通知をここで送る（取りこぼし防止）。
+    if (!autoReplyId && resendApiKey) {
       const from = runtimeEnv.CONTACT_FROM;
       const to = runtimeEnv.CONTACT_TO;
-      const mail = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from,
-          to,
-          // 通知メールから送信者へ直接返信できるよう reply_to に問い合わせ者のアドレスを入れる。
-          reply_to: email,
-          subject: `[Inquiry] ${subject || 'New message'}`,
-          text: `From: ${name} (${email})\nCompany: ${company || '-'}\n\n${message}`,
-        }),
-      });
-      // 受理（DB INSERT）は済んでいるので通知失敗で 500 にはしない。可観測性のためログに残す。
-      if (!mail.ok) {
-        console.error(`Resend notification failed: ${mail.status} ${await mail.text()}`);
-      }
+      if (from && to) await sendOwnerNotification(resendApiKey, from, to, mail);
     }
 
     return json({ ok: true }, 200);
