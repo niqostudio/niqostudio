@@ -1,7 +1,6 @@
 // Resend 経由のメール送信ヘルパー。自動返信（顧客宛・noreply）と通知（hi@ 宛）を組み立てる。
-// /api/email-events と /api/contact の双方から使う。ブランド名・送信元は config/site.ts に集約。
-import { SITE } from '../config/site';
-
+// /api/email-events と /api/contact の双方から使う。送信 identity（表示名＋送信元）は
+// config.<env>.json 由来で astro.config が __MAIL__ に inline 注入する。
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 export type InquiryMail = {
@@ -37,7 +36,7 @@ function detailRows(input: InquiryMail): string {
 function shell(bodyHtml: string): string {
   return `<!doctype html><html lang="ja"><body style="margin:0;background:#faf9f8;font-family:-apple-system,'Segoe UI',sans-serif;color:#1c1917;line-height:1.8">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px">
-    <div style="font-family:ui-monospace,monospace;letter-spacing:.08em;color:#1c1917;font-weight:600">${SITE.name}</div>
+    <div style="font-family:ui-monospace,monospace;letter-spacing:.08em;color:#1c1917;font-weight:600">${__MAIL__.name}</div>
     <div style="height:2px;background:#dcb441;margin:8px 0 20px"></div>
     ${bodyHtml}
   </div></body></html>`;
@@ -59,9 +58,9 @@ export async function sendAutoReply(apiKey: string, input: InquiryMail): Promise
     <table style="border-collapse:collapse;margin:16px 0;width:100%">${detailRows(input)}</table>
     <p style="color:#57534e;font-size:13px">本メールは送信専用アドレスからの自動返信です。本メールへの返信はご遠慮ください。</p>`);
   const res = await send(apiKey, {
-    from: `${SITE.name} <${SITE.noreply}>`,
+    from: `${__MAIL__.name} <${__MAIL__.noreply}>`,
     to: input.email,
-    subject: `お問い合わせを受け付けました｜${SITE.name}`,
+    subject: `お問い合わせを受け付けました｜${__MAIL__.name}`,
     html,
   });
   if (!res.ok) {

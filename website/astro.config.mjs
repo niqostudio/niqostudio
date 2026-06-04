@@ -10,6 +10,13 @@ import sitemap from '@astrojs/sitemap';
 const env = process.env.DEPLOY_ENV ?? 'production';
 const cfg = JSON.parse(readFileSync(new URL(`../config.${env}.json`, import.meta.url), 'utf8'));
 const site = `https://${cfg.primary}`;
+// メール設定（表示名・送信元・公開連絡先）はインフラ設定＝config.<env>.json 由来。site と同じくビルド時に inline 注入する。
+const cfgEmail = cfg.domains[cfg.primary].email;
+const mail = {
+  name: cfgEmail.sender_name,
+  noreply: cfgEmail.addresses.noreply,
+  contact: cfgEmail.addresses.contact,
+};
 
 export default defineConfig({
   site,
@@ -92,6 +99,8 @@ export default defineConfig({
     },
   },
   vite: {
+    // config.<env>.json のメール送信 identity を website ランタイムへ inline 注入（site と同じくビルド時）。
+    define: { __MAIL__: JSON.stringify(mail) },
     plugins: [tailwindcss()],
   },
 });

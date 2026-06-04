@@ -67,8 +67,9 @@ v=spf1 include:_spf.mx.cloudflare.net ~all
 
 ## 段階強化（DMARC）
 
-`config.<env>.json` の `domains.niqostudio.com.email.dmarc_policy` を `none` で始め、`dmarc_rua` を設定して
-数日レポートを見たのち `quarantine`→`reject` へ上げる。apply は [デプロイ手順](../deploy.md)。
+`config.<env>.json` の `domains.niqostudio.com.email.dmarc_policy` を `none` で始め、数日レポートを見たのち
+`quarantine`→`reject` へ上げる。apply は [デプロイ手順](../deploy.md)。
 
-集約レポートの宛先（rua）は `dmarc@niqostudio.com`。この受信は Email Routing の既定ルール（`hi@` と同じく
-`forward_to`＝個人箱へ転送）として Terraform が作る（転送先は `hi@` で検証済みのものを再利用するため追加検証は不要）。
+集約レポートの宛先（rua）は `email.addresses.dmarc`（＝`dmarc@niqostudio.com`）から **Terraform が `mailto:` を付けて DMARC レコードに生成**する。
+この受信は Email Routing の既定ルール（`addresses.contact`＝`hi@` と同じく `forward_to`＝個人箱へ転送）として Terraform が
+**addresses から派生**して作る（転送先は `hi@` で検証済みのものを再利用するため追加検証は不要）。

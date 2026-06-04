@@ -4,3 +4,6 @@
 declare module 'cloudflare:workers' {
   export const env: Record<string, string | undefined>;
 }
+
+// astro.config が config.<env>.json から inline 注入するメール設定（vite define）。
+declare const __MAIL__: { name: string; noreply: string; contact: string };

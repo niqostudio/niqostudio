@@ -26,7 +26,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
 | `primary` | ✋ | infra, website | 主ドメイン名。zone/account 導出・website 正 URL |
-| `domains.<domain>.email.*` | ✋ | infra | `spf_includes` / `spf_all` / `dmarc_policy` / `dmarc_rua` |
+| `domains.<domain>.email.*` | ✋ | infra, website | DNS 系 `spf_includes` / `spf_all` / `dmarc_policy`（infra）。`sender_name` と `addresses.{contact,noreply,dmarc}`（全アドレスの単一ソース）。contact/dmarc は infra が受信ルール・DMARC rua に派生、noreply/sender_name/contact は website が使用（astro.config が inline 注入） |
 | `domains.<domain>.workers.<role>.*` | ✋ | infra, website | `name`（Worker 名＝CI が deploy 名に使用＆infra が service 束ね） / `subdomain`（role マップ） |
 | `domains.<domain>.{redirect_to,placeholder_ip}` | ✋ | infra | リダイレクト専用ドメイン |
 
@@ -44,8 +44,13 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
       "email": {
         "spf_includes": ["_spf.mx.cloudflare.net"], // apex SPF の include（転送用のみ。Resend は send. 側）
         "spf_all": "~all",                          // SPF 修飾子。~all=softfail / -all=fail
-        "dmarc_policy": "none",                     // none→quarantine→reject と段階強化
-        "dmarc_rua": ""                             // 集約レポート先。空だと監視が機能しない
+        "dmarc_policy": "none",                     // none→quarantine→reject（rua は addresses.dmarc から infra が派生）
+        "sender_name": "NIQO STUDIO",               // 送信ブランド名（自動返信 From の表示名・署名）
+        "addresses": {                              // メール各アドレスの単一ソース
+          "contact": "hi@niqostudio.com",           // 公開連絡先＋受信(forward)。website SITE.email・infra 受信ルール
+          "noreply": "noreply@niqostudio.com",      // 自動返信の送信元（送信専用・受信ルートなし）
+          "dmarc": "dmarc@niqostudio.com"           // DMARC レポート受信＝rua＋受信(forward)
+        }
       },
       "workers": {                                  // role ごとのマップ。増えたら additive に追加
         "website": {

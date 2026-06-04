@@ -8,7 +8,12 @@
         ],
         "spf_all": "~all",
         "dmarc_policy": "none",
-        "dmarc_rua": "mailto:dmarc@niqostudio.com"
+        "sender_name": "NIQO STUDIO",
+        "addresses": {
+          "contact": "hi@niqostudio.com",
+          "noreply": "noreply@niqostudio.com",
+          "dmarc": "dmarc@niqostudio.com"
+        }
       },
       "workers": {
         "website": {

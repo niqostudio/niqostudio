@@ -1,19 +1,13 @@
 // サイト全体の定数。ブランド / ナビ / 各ページの meta（title・description）・見出しラベル。
 // description は CMS 管理せず、ページ固有の SEO 文としてここで一元管理する。
 
-// 正 URL（astro.config の site）をホスト名の単一ソースにする（astro.config が config.<env>.json の
-// primary から site を必ず設定するため fallback は持たない）。
-const SITE_HOST = new URL(import.meta.env.SITE!).hostname;
-
 export const SITE = {
   name: 'NIQO STUDIO',
   // 事業の固定説明。JSON-LD の組織エンティティ・トップ meta など、事業を語る箇所の単一ソース。
   description:
     '速く、賢く、ちょうどよく――。運用の痛みを設計で断つ業務委託エンジニアが、中小事業者・スタートアップの Web・業務システムを構築。',
-  // 既定の連絡先メール（profile.contact_email 未設定時のフォールバック）。ドメインは site から導出。
-  email: `hi@${SITE_HOST}`,
-  // 自動返信メールの送信元（送信専用・受信ルートは持たない）。認証済みドメイン上の任意アドレスでよい。
-  noreply: `noreply@${SITE_HOST}`,
+  // 既定の連絡先メール（profile.contact_email 未設定時のフォールバック）。config の email.addresses.contact 由来。
+  email: __MAIL__.contact,
 } as const;
 
 // 配色テーマ（global.css の [data-theme] と対応）。既定 'cool'（寒色）/ 代替 'warm'

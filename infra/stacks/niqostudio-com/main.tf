@@ -3,18 +3,18 @@
 # 定数は config.<env>.json（local.cfg）から、機微値は tfvars から取り、文字列のハードコードを避ける。
 
 locals {
-  # 受信ルール: hi@ と dmarc@（DMARC 集約レポート rua 受け）を既定転送先へ。inbound_forwards で追加/上書き。
-  inbound = merge({ hi = var.forward_to, dmarc = var.forward_to }, var.inbound_forwards)
+  # 受信ルール: 受信アドレス（contact / dmarc）の local part を config から取り、既定転送先へ。
+  # noreply は送信専用で受信しない。inbound_forwards で追加/上書き可。
+  inbound = merge({
+    (split("@", local.dom.email.addresses.contact)[0]) = var.forward_to,
+    (split("@", local.dom.email.addresses.dmarc)[0])   = var.forward_to,
+  }, var.inbound_forwards)
 
   # 統合 SPF を include 群から組み立てる（受信 + 送信を1本に）。
   spf_record = "v=spf1 ${join(" ", [for i in local.dom.email.spf_includes : "include:${i}"])} ${local.dom.email.spf_all}"
 
-  # DMARC は rua があれば付与（無いと監視として機能しないため明示制御）。
-  dmarc_record = join(" ", compact([
-    "v=DMARC1;",
-    "p=${local.dom.email.dmarc_policy};",
-    local.dom.email.dmarc_rua == "" ? "" : "rua=${local.dom.email.dmarc_rua};",
-  ]))
+  # DMARC: 集約レポート先（rua）は config の受信アドレス addresses.dmarc から組み立てる。
+  dmarc_record = "v=DMARC1; p=${local.dom.email.dmarc_policy}; rua=mailto:${local.dom.email.addresses.dmarc};"
 }
 
 module "email_routing" {
