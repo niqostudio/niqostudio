@@ -1,7 +1,7 @@
 # アーキテクチャ
 
 > **責務**：全体像を**図**で示す（システム / 秘密境界 / CI）。変数の置き場の一覧表は
-> [variables.md](variables.md)、用語は [glossary.md](infra/glossary.md)、手順は [infra/setup.md](infra/setup.md)。
+> [variables.md](variables.md)、用語は [glossary.md](infra/glossary.md)、手順は [デプロイ手順](deploy.md)。
 
 1つの monorepo（`niqostudio/niqostudio`）に website / core / infra / packages をモジュールとして持ち、
 外部サービス（Cloudflare / Resend / Supabase）と連携する。モジュールは独立し、共有は root の規約・docs と、
@@ -45,6 +45,7 @@ flowchart TB
 
 要点：
 - **infra が触るのは「アカウント共有資産」だけ**（DNS・メール・Worker のカスタムドメイン・state）。website は Worker（SSR+静的）を deploy、core は Supabase にスキーマ適用。
+- **Terraform state は stack ごとに R2 へ分離**（1 stack = 1 ドメイン）。stack 間で state を共有せず、爆心の限定と並行 apply の衝突回避を図る（R2 バケット作成は [Cloudflare 手順](infra/cloudflare.md)、backend 配線は [デプロイ手順](deploy.md)）。
 - 公開定数は **root の `config.<env>.json`（env ごとに1ファイル・committed）**。infra（Terraform）と website が直読する。
 - 秘密は **GitHub Environments** でスコープし、本番反映は承認ゲートを通す。
 
@@ -80,7 +81,7 @@ flowchart TB
 
 ワークフローは root `.github/workflows/` に集約し、**paths で対象モジュールだけ起動**する。
 
-- `website/**` → build / check → `wrangler deploy`（Cloudflare Worker＝SSR+静的）。
+- `website/**` → PR で build / check、本番は `website: build & deploy` を dispatch → `wrangler deploy`（Cloudflare Worker＝SSR+静的・承認ゲート）。
 - `core/supabase/migrations/**` → `core: migrate`（dispatch で dry-run / apply・承認ゲート）。
 - `infra/**` → `infra: validate`（fmt / validate・PR）、`infra: apply`（dispatch・Environment `infra-production`・承認ゲート）。
 - `docs/**` / `mkdocs.yml` → `docs: mkdocs`（MkDocs build → GitHub Pages）。

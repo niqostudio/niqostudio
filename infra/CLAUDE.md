@@ -13,7 +13,7 @@ Terraform で管理する。アプリ実装は持たない。
 - `modules/<name>` … 再利用モジュール（`main.tf` / `variables.tf` / `outputs.tf`）。
 - `stacks/<name>` … ドメイン/環境ごとの合成。**state は stack 単位**で分離する。
 - 定数の正本は root の [config.\<env\>.json](../config.production.json)（env ごとに1ファイル・committed。各 stack が `var.env` で選んで `jsondecode` で読む）。website も同じファイルを直読する。
-- 手順・設計: [docs/infra/setup.md](../docs/infra/setup.md) / [docs/infra/email.md](../docs/infra/email.md) / [docs/architecture.md](../docs/architecture.md) / [docs/variables.md](../docs/variables.md)。
+- 手順・設計: [docs/deploy.md](../docs/deploy.md) / [docs/infra/cloudflare.md](../docs/infra/cloudflare.md) / [docs/infra/resend.md](../docs/infra/resend.md) / [docs/infra/email.md](../docs/infra/email.md) / [docs/architecture.md](../docs/architecture.md) / [docs/variables.md](../docs/variables.md)。
 
 ## このモジュールの規約（Terraform）
 
