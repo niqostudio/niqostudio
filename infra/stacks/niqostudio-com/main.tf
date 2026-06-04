@@ -3,8 +3,8 @@
 # 定数は config.<env>.json（local.cfg）から、機微値は tfvars から取り、文字列のハードコードを避ける。
 
 locals {
-  # 受信ルール: 明示指定が無ければ hi@ を既定転送先へ1本だけ作る。
-  inbound = length(var.inbound_forwards) > 0 ? var.inbound_forwards : { hi = var.forward_to }
+  # 受信ルール: hi@ と dmarc@（DMARC 集約レポート rua 受け）を既定転送先へ。inbound_forwards で追加/上書き。
+  inbound = merge({ hi = var.forward_to, dmarc = var.forward_to }, var.inbound_forwards)
 
   # 統合 SPF を include 群から組み立てる（受信 + 送信を1本に）。
   spf_record = "v=spf1 ${join(" ", [for i in local.dom.email.spf_includes : "include:${i}"])} ${local.dom.email.spf_all}"

@@ -30,7 +30,7 @@ variable "forward_to" {
 
 variable "inbound_forwards" {
   type        = map(string)
-  description = "受信転送ルール。キー=ローカルパート（@より前）、値=転送先。空なら hi@ を forward_to へ1本作る。"
+  description = "受信転送ルールの追加/上書き。キー=ローカルパート（@より前）、値=転送先。既定の hi@ / dmarc@（→ forward_to）にマージされる。"
   default     = {}
 }
 

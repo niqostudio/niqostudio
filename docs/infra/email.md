@@ -69,3 +69,6 @@ v=spf1 include:_spf.mx.cloudflare.net ~all
 
 `config.<env>.json` の `domains.niqostudio.com.email.dmarc_policy` を `none` で始め、`dmarc_rua` を設定して
 数日レポートを見たのち `quarantine`→`reject` へ上げる。apply は [デプロイ手順](../deploy.md)。
+
+集約レポートの宛先（rua）は `dmarc@niqostudio.com`。この受信は Email Routing の既定ルール（`hi@` と同じく
+`forward_to`＝個人箱へ転送）として Terraform が作る（転送先は `hi@` で検証済みのものを再利用するため追加検証は不要）。

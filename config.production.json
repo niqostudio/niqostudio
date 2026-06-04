@@ -8,7 +8,7 @@
         ],
         "spf_all": "~all",
         "dmarc_policy": "none",
-        "dmarc_rua": ""
+        "dmarc_rua": "mailto:dmarc@niqostudio.com"
       },
       "workers": {
         "website": {
