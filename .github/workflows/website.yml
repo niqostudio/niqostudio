@@ -100,7 +100,8 @@ jobs:
           # workers.dev プレビュー URL は使わない（canonical は infra のカスタムドメインのみ＝重複ホストを作らない）。
           # Astro session 用 KV は未使用で id 未指定の binding は deploy が拒否するため除去する。
           name=$(jq -r '.domains[.primary].workers.website.name' "$GITHUB_WORKSPACE/config.production.json")
-          jq --arg n "$name" '.name = $n | .topLevelName = $n | del(.kv_namespaces) | del(.previews.kv_namespaces) | .workers_dev = false' wrangler.json > w.json && mv w.json wrangler.json
+          # html_handling=drop-trailing-slash で配信も末尾スラッシュなしに統一（/foo/ → /foo へリダイレクト）。
+          jq --arg n "$name" '.name = $n | .topLevelName = $n | del(.kv_namespaces) | del(.previews.kv_namespaces) | .workers_dev = false | .assets.html_handling = "drop-trailing-slash"' wrangler.json > w.json && mv w.json wrangler.json
           ../../node_modules/.bin/wrangler deploy
       # フォーム送信に要る実行時値（公開値ではない＝ビルドにインラインされない）。worker 作成後に設定する。
       - name: runtime secrets（Resend / Turnstile / JWT / webhook）

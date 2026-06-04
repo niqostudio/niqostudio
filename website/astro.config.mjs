@@ -21,8 +21,14 @@ const mail = {
 export default defineConfig({
   site,
   adapter: cloudflare(),
+  // URL は末尾スラッシュなしに統一（canonical / リンク / 遷移を一貫させる）。
+  trailingSlash: 'never',
   // 現状は日本語のみ。英語は将来必要になった時点で方式から検討する（未着手）。
-  integrations: [sitemap({ filter: (page) => !page.includes('/og/') && !page.includes('/privacy') })],
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes('/og/') && !page.includes('/privacy') && !page.includes('/email-preview'),
+    }),
+  ],
   // フォントはビルド時に Google から取得して self-host（preload＋メトリクス最適化フォールバックは
   // Astro が自動生成）。ラテン=Inter / 和文=Noto Sans JP を別 family にし、スタック側で順序を制御。
   fonts: [
