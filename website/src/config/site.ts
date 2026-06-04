@@ -12,6 +12,8 @@ export const SITE = {
     '速く、賢く、ちょうどよく――。運用の痛みを設計で断つ業務委託エンジニアが、中小事業者・スタートアップの Web・業務システムを構築。',
   // 既定の連絡先メール（profile.contact_email 未設定時のフォールバック）。ドメインは site から導出。
   email: `hi@${SITE_HOST}`,
+  // 自動返信メールの送信元（送信専用・受信ルートは持たない）。認証済みドメイン上の任意アドレスでよい。
+  noreply: `noreply@${SITE_HOST}`,
 } as const;
 
 // 配色テーマ（global.css の [data-theme] と対応）。既定 'cool'（寒色）/ 代替 'warm'

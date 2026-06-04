@@ -1,9 +1,8 @@
 // Resend 経由のメール送信ヘルパー。自動返信（顧客宛・noreply）と通知（hi@ 宛）を組み立てる。
-// /api/email-events と /api/contact の双方から使う。認証済みドメインは site ホストから導出。
+// /api/email-events と /api/contact の双方から使う。ブランド名・送信元は config/site.ts に集約。
 import { SITE } from '../config/site';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-const DOMAIN = new URL(import.meta.env.SITE as string).hostname;
 
 export type InquiryMail = {
   name: string;
@@ -60,7 +59,7 @@ export async function sendAutoReply(apiKey: string, input: InquiryMail): Promise
     <table style="border-collapse:collapse;margin:16px 0;width:100%">${detailRows(input)}</table>
     <p style="color:#57534e;font-size:13px">本メールは送信専用アドレスからの自動返信です。本メールへの返信はご遠慮ください。</p>`);
   const res = await send(apiKey, {
-    from: `${SITE.name} <noreply@${DOMAIN}>`,
+    from: `${SITE.name} <${SITE.noreply}>`,
     to: input.email,
     subject: `お問い合わせを受け付けました｜${SITE.name}`,
     html,
