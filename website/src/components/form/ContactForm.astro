@@ -63,12 +63,12 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 
 {
   turnstileSiteKey && (
-    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script is:inline id="cf-turnstile-script" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   )
 }
 
 <script>
-  type Turnstile = { render: (el: Element) => void; reset: () => void };
+  type Turnstile = { render: (el: Element) => string; reset: (id?: string) => void };
 
   // ClientRouter 遷移後も効くよう astro:page-load で初期化（初回ロードでも発火）。
   document.addEventListener('astro:page-load', () => {
@@ -77,10 +77,20 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
     const status = document.getElementById('contact-status');
     const button = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
-    // クライアント遷移では Turnstile の自動描画が走らないため、未描画なら明示 render。
-    const turnstile = (window as unknown as { turnstile?: Turnstile }).turnstile;
+    // Turnstile は explicit レンダリング（api.js の ?render=explicit）。自動描画を止め二重描画を防ぐ。
+    // 既ロードなら即描画（クライアント遷移）、未ロードは api.js の load を待つ（初回ロード）。
     const widget = form.querySelector('.cf-turnstile');
-    if (turnstile && widget && !widget.querySelector('iframe')) turnstile.render(widget);
+    let widgetId: string | undefined;
+    const getTurnstile = () => (window as unknown as { turnstile?: Turnstile }).turnstile;
+    const render = () => {
+      const ts = getTurnstile();
+      if (!ts || !widget || widget.querySelector('iframe')) return;
+      widgetId = ts.render(widget);
+    };
+    if (widget) {
+      if (getTurnstile()) render();
+      else document.getElementById('cf-turnstile-script')?.addEventListener('load', render, { once: true });
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -100,7 +110,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         });
         if (!res.ok) throw new Error('failed');
         form.reset();
-        turnstile?.reset();
+        getTurnstile()?.reset(widgetId);
         status.textContent =
           '送信しました。確認メールをお送りしました。数分内に届かない場合は、メールアドレスをご確認のうえ再送信ください。';
         status.className = 'text-sm';
