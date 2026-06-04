@@ -81,11 +81,11 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 
 ## 攻撃面: 依存・サプライチェーン
 
-乗っ取りパッケージ・既知脆弱性。cooldown は `pnpm-workspace.yaml` で設定する。
+乗っ取りパッケージ・既知脆弱性。
 
-- [x] `minimumReleaseAge` で新規バージョンの取り込み cooldown
-- [ ] wrangler のバージョン固定（`pnpm dlx wrangler@4` → devDeps に pin）
-- [ ] CI 依存監査（`pnpm audit` か Dependabot）
+- [x] `minimumReleaseAge` で新規バージョンの取り込み cooldown — `pnpm-workspace.yaml`
+- [x] wrangler を devDeps に版固定（CI は `pnpm exec` で実行・`dlx` の最新追従をやめる） — `website/package.json` / `website.yml`
+- [x] 依存更新の監視：Dependabot（npm / github-actions・週次） — `.github/dependabot.yml`
 
 ## OWASP Top 10（2025）対応
 
@@ -95,7 +95,7 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 | --- | --- | --- |
 | A01 アクセス制御の不備（SSRF 統合） | RLS＋列 GRANT、書込みは `inquiry_writer` 最小権限のみ。SSRF：公開 SSR は固定の外部 API（Turnstile / Resend / Supabase）のみ呼びユーザー指定 URL を fetch しない | ✅ |
 | A02 セキュリティ設定ミス | deploy 前の構成整合チェック、承認ゲート、セキュリティヘッダ | ✅ |
-| A03 ソフトウェアサプライチェーンの不備 | `minimumReleaseAge`、（予定）`pnpm audit` / wrangler pin | ◐ |
+| A03 ソフトウェアサプライチェーンの不備 | `minimumReleaseAge`、wrangler 版固定、Dependabot（npm / actions） | ✅ |
 | A04 暗号化の失敗 | HTTPS / HSTS、秘密値は CI Secret・`wrangler secret` 管理 | ✅ |
 | A05 インジェクション | Supabase クライアント（パラメータ化）、入力検証、CSP | ✅（CSP は Report-Only） |
 | A06 安全でない設計 | 最小権限の書込み経路・フェイルクローズ設計 | ✅ |
