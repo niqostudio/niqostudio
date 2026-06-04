@@ -6,7 +6,7 @@
   "packageManager": "pnpm@11.5.0",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "node scripts/og.mjs && node scripts/favicon.mjs",
+    "prebuild": "node scripts/og.mjs && node scripts/favicon.mjs && node scripts/email-logo.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",

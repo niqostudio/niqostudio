@@ -8,6 +8,10 @@ import { Buffer } from 'node:buffer';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { createClient } from '@supabase/supabase-js';
+import { INTER, NOTO_SANS_JP, JETBRAINS_MONO, cssFontFamily } from '../src/config/fonts.mjs';
+
+// 本文の sans スタック（欧文 Inter→和文 Noto）。family の正本は config/fonts.mjs。
+const SANS = cssFontFamily([INTER.family, NOTO_SANS_JP.family]);
 
 const GOLD = '#dcb441';
 const CREAM = '#faf9f7';
@@ -61,11 +65,11 @@ const loadFont = async (url, weight, name) => ({
 
 // 英字＝Inter、日本語＝Noto Sans JP。satori は欠落グリフを後続フォントへフォールバックする。
 const fonts = [
-  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter/Inter_700Bold.ttf', 700, 'Inter'),
-  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter/Inter_400Regular.ttf', 400, 'Inter'),
-  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-jp/NotoSansJP_400Regular.ttf', 400, 'Noto Sans JP'),
+  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter/Inter_700Bold.ttf', 700, INTER.family),
+  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter/Inter_400Regular.ttf', 400, INTER.family),
+  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-jp/NotoSansJP_400Regular.ttf', 400, NOTO_SANS_JP.family),
   // 署名は header の Wordmark（mono・大文字・字間広め）に合わせる。
-  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/jetbrains-mono/JetBrainsMono_700Bold.ttf', 700, 'JetBrains Mono'),
+  await loadFont('https://cdn.jsdelivr.net/npm/@expo-google-fonts/jetbrains-mono/JetBrainsMono_700Bold.ttf', 700, JETBRAINS_MONO.family),
 ];
 
 mkdirSync('public/og', { recursive: true });
@@ -92,7 +96,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
         padding: '0 80px',
         backgroundColor: BG,
         borderBottom: `14px solid ${GOLD}`,
-        fontFamily: 'Inter, "Noto Sans JP"',
+        fontFamily: SANS,
       },
       children: [
         ...(logo ? [{ type: 'img', props: { src: logo.src, width: logoW, height: LOGO_H } }] : []),
@@ -101,7 +105,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
           props: {
             style: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
             children: [
-              { type: 'div', props: { style: { fontSize: 78, fontWeight: 700, color: CREAM, fontFamily: 'JetBrains Mono', letterSpacing: '0.04em', lineHeight: 1.05 }, children: en } },
+              { type: 'div', props: { style: { fontSize: 78, fontWeight: 700, color: CREAM, fontFamily: JETBRAINS_MONO.family, letterSpacing: '0.04em', lineHeight: 1.05 }, children: en } },
               { type: 'div', props: { style: { fontSize: 36, fontWeight: 400, color: GOLD, marginTop: '14px' }, children: ja } },
             ],
           },
@@ -123,7 +127,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
         overflow: 'hidden',
         backgroundColor: BG,
         borderBottom: `14px solid ${GOLD}`,
-        fontFamily: 'Inter, "Noto Sans JP"',
+        fontFamily: SANS,
       },
       children: [
         ...(logo
@@ -152,7 +156,7 @@ for (const [key, { en, ja }] of Object.entries(pages)) {
         {
           type: 'div',
           props: {
-            style: { position: 'absolute', left: '315px', bottom: '56px', fontSize: 26, fontWeight: 700, color: CREAM, fontFamily: 'JetBrains Mono', letterSpacing: '0.08em' },
+            style: { position: 'absolute', left: '315px', bottom: '56px', fontSize: 26, fontWeight: 700, color: CREAM, fontFamily: JETBRAINS_MONO.family, letterSpacing: '0.08em' },
             children: 'NIQO STUDIO',
           },
         },

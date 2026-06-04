@@ -14,10 +14,12 @@ const sample: InquiryMail = {
   message: 'お世話になります。\n新規 EC サイトの構築を検討しています。\nよろしくお願いいたします。',
 };
 
+// プレビューは同一オリジンを基点に（ロゴ・リンクを dev サーバから読む。実送信は既定の本番 SITE）。
+const origin = Astro.url.origin;
 const type = Astro.url.searchParams.get('type');
 const headers = { 'content-type': 'text/html; charset=utf-8' };
-if (type === 'auto') return new Response(autoReplyHtml(sample), { headers });
-if (type === 'owner') return new Response(ownerNotificationHtml(sample), { headers });
+if (type === 'auto') return new Response(autoReplyHtml(sample, origin), { headers });
+if (type === 'owner') return new Response(ownerNotificationHtml(sample, origin), { headers });
 ---
 
 <!doctype html>

@@ -1,9 +1,17 @@
 // Resend 経由のメール送信ヘルパー。自動返信（顧客宛・noreply）と通知（hi@ 宛）を組み立てる。
 // /api/email-events と /api/contact の双方から使う。送信 identity（表示名＋送信元）は
 // config.<env>.json 由来で astro.config が __MAIL__ に inline 注入する。
+import { INTER, NOTO_SANS_JP, MAIL_SANS_FALLBACK, cssFontFamily, googleFontsCss2 } from '../config/fonts.mjs';
+
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 // フッターのサイトリンク用（config.<env>.json の primary 由来）。
 const SITE_URL = import.meta.env.SITE as string;
+// 本文フォント。family/weight の正本は config/fonts.mjs（site と共有）。サイトと同じ Inter/Noto Sans JP を
+// 先頭にし、後段は system sans へ落とす。<head> の web フォントを剥がすメーラー（Outlook 等は table 内でも
+// フォントをリセットする）向けに、body だけでなく本文 table にも同じスタックをインラインで当てて Times 化を防ぐ。
+const FONT_STACK = cssFontFamily([INTER.family, NOTO_SANS_JP.family, ...MAIL_SANS_FALLBACK]);
+// 対応メーラーが読む web フォント（<head> の <link>）。site と同じ family/weight を Google Fonts から。
+const GOOGLE_FONTS_HREF = googleFontsCss2([INTER, NOTO_SANS_JP]);
 
 export type InquiryMail = {
   name: string;
@@ -35,19 +43,23 @@ function detailRows(input: InquiryMail): string {
   ].join('');
 }
 
-// サイトのウォーム配色に合わせた枠。サイトヘッダ（gold の上線＋暗色バー＋等幅 wordmark）を踏襲する。
-// メールは CSS 変数を使えないため色は global.css の warm テーマ値をインライン（hex）で再掲する。
-function shell(bodyHtml: string): string {
-  return `<!doctype html><html lang="ja"><body style="margin:0;padding:0;background:#faf9f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Hiragino Sans','Noto Sans JP',Meiryo,sans-serif;color:#1c1917;line-height:1.8;-webkit-text-size-adjust:100%">
+// サイトのウォーム配色に合わせた枠。サイトヘッダ（gold の上線＋暗色バー＋ロゴ）を踏襲する。
+// 本文フォントは <head> で web フォント（Inter / Noto Sans JP）を読み込み、font-family は各所にインライン適用する
+// ＝対応メーラー（Apple Mail / iOS 等）は本フォント、<head> を剥がす Gmail 等は fallback スタックへ素直に落ちる。
+// wordmark は web フォント非依存にするため焼き込み済み PNG（public/email-logo.png・絶対 URL）を使う。
+// 色は CSS 変数を使えないため global.css の warm テーマ値をインライン（hex）で再掲する。
+// origin は画像・リンクの絶対 URL 基点（実送信は本番 SITE、dev プレビューは同一オリジンを渡す）。
+function shell(bodyHtml: string, origin: string): string {
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${GOOGLE_FONTS_HREF}" rel="stylesheet"></head><body style="margin:0;padding:0;background:#faf9f8;font-family:${FONT_STACK};color:#1c1917;line-height:1.8;-webkit-text-size-adjust:100%">
   <div style="max-width:600px;margin:0 auto;padding:24px 16px">
     <div style="background:#ffffff;border:1px solid #eae7e3;border-radius:2px;overflow:hidden">
       <div style="background:#211d19;border-top:3px solid #dcb441;padding:16px 24px">
-        <span style="font-family:'JetBrains Mono',ui-monospace,'Courier New',monospace;letter-spacing:.14em;color:#faf9f7;font-weight:600;font-size:15px">${__MAIL__.name}</span>
+        <img src="${origin}/email-logo.png" alt="${__MAIL__.name}" height="24" style="display:block;height:24px;width:auto;border:0" />
       </div>
       <div style="padding:24px 24px 28px">${bodyHtml}</div>
     </div>
     <div style="padding:14px 24px 0;color:#57534e;font-size:12px;text-align:center">
-      <a href="${SITE_URL}" style="color:#15803d;text-decoration:none">${__MAIL__.name}</a>
+      <a href="${origin}" style="color:#15803d;text-decoration:none">${__MAIL__.name}</a>
     </div>
   </div></body></html>`;
 }
@@ -60,13 +72,13 @@ async function send(apiKey: string, payload: Record<string, unknown>): Promise<R
   });
 }
 
-// 自動返信の HTML（プレビューと送信で共用）。
-export function autoReplyHtml(input: InquiryMail): string {
+// 自動返信の HTML（プレビューと送信で共用）。origin 既定＝本番 SITE（dev プレビューは同一オリジンを渡す）。
+export function autoReplyHtml(input: InquiryMail, origin: string = SITE_URL): string {
   return shell(`
     <p>${escapeHtml(input.name)} 様</p>
     <p>お問い合わせいただきありがとうございます。以下の内容で受け付けました。通常2営業日以内にご返信します。</p>
-    <table style="border-collapse:collapse;margin:16px 0;width:100%">${detailRows(input)}</table>
-    <p style="color:#57534e;font-size:13px">本メールは送信専用アドレスからの自動返信です。本メールへの返信はご遠慮ください。</p>`);
+    <table style="border-collapse:collapse;margin:16px 0;width:100%;font-family:${FONT_STACK}">${detailRows(input)}</table>
+    <p style="color:#57534e;font-size:13px">本メールは送信専用アドレスからの自動返信です。本メールへの返信はご遠慮ください。</p>`, origin);
 }
 
 // 顧客への自動返信（noreply）。相関用の Resend email id を返す（失敗は null）。
@@ -86,11 +98,11 @@ export async function sendAutoReply(apiKey: string, input: InquiryMail): Promise
   return data.id ?? null;
 }
 
-// 管理者通知の HTML（プレビューと送信で共用）。
-export function ownerNotificationHtml(input: InquiryMail): string {
+// 管理者通知の HTML（プレビューと送信で共用）。origin 既定＝本番 SITE（dev プレビューは同一オリジンを渡す）。
+export function ownerNotificationHtml(input: InquiryMail, origin: string = SITE_URL): string {
   return shell(`
     <p style="color:#57534e;font-size:13px;margin:0 0 12px">新しいお問い合わせが届きました。このメールに返信すると送信者へ届きます。</p>
-    <table style="border-collapse:collapse;width:100%">${detailRows(input)}</table>`);
+    <table style="border-collapse:collapse;width:100%;font-family:${FONT_STACK}">${detailRows(input)}</table>`, origin);
 }
 
 // 管理者への通知。From=noreply・表示名は顧客名・Reply-To は顧客（返信でそのまま顧客に届く）。

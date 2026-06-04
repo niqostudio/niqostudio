@@ -4,6 +4,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
+import { INTER, NOTO_SANS_JP, JETBRAINS_MONO } from './src/config/fonts.mjs';
 
 // canonical ドメインは root の config.<env>.json（infra と共有する committed の単一正本）から取る。
 // env は DEPLOY_ENV（未設定は production）。SSG なのでビルド時に読む。欠落時は readFileSync が throw＝fallback しない。
@@ -31,13 +32,15 @@ export default defineConfig({
   ],
   // フォントはビルド時に Google から取得して self-host（preload＋メトリクス最適化フォールバックは
   // Astro が自動生成）。ラテン=Inter / 和文=Noto Sans JP を別 family にし、スタック側で順序を制御。
+  // family / weight / subset の正本は src/config/fonts.mjs（メール側と共有）。ここは self-host の
+  // レンダリング調整（display / フォールバック戦略）のみを足す。
   fonts: [
     {
       provider: fontProviders.google(),
-      name: 'Inter',
-      cssVariable: '--font-inter',
-      weights: [400, 500, 600],
-      subsets: ['latin'],
+      name: INTER.family,
+      cssVariable: INTER.cssVariable,
+      weights: INTER.weights,
+      subsets: INTER.subsets,
       // swap: 取得まで fallback で表示し、到着後に本フォントへ必ず差し替え（テキストは常に可視）。
       // 遷移時の差し替えは ClientRouter のドキュメント保持で回避済み＝出るのは初回ロードの一瞬のみ。
       display: 'swap',
@@ -48,9 +51,9 @@ export default defineConfig({
     },
     {
       provider: fontProviders.google(),
-      name: 'Noto Sans JP',
-      cssVariable: '--font-noto-jp',
-      weights: [400, 500, 600],
+      name: NOTO_SANS_JP.family,
+      cssVariable: NOTO_SANS_JP.cssVariable,
+      weights: NOTO_SANS_JP.weights,
       // swap: 取得まで fallback、到着後に Noto へ必ず差し替え（テキストは常に可視）。
       display: 'swap',
       // 自動最適化フォールバックは Arial 基準で和文グリフを持たないため使わず、
@@ -69,10 +72,10 @@ export default defineConfig({
     {
       // 等幅は wordmark・コード調 UI（SectionLabel・価格・番号）に使う。端末依存の system mono を避け固定。
       provider: fontProviders.google(),
-      name: 'JetBrains Mono',
-      cssVariable: '--font-jetbrains-mono',
-      weights: [400, 600],
-      subsets: ['latin'],
+      name: JETBRAINS_MONO.family,
+      cssVariable: JETBRAINS_MONO.cssVariable,
+      weights: JETBRAINS_MONO.weights,
+      subsets: JETBRAINS_MONO.subsets,
       display: 'swap',
       // latin 専用 mono なので（Inter/Noto と違い和文汚染が無い）Astro 自動のメトリクス補正 fallback を使う。
       // これが無いと swap 時に wordmark がガタつく（fallback が等幅メトリクスに合っていなかった）。
