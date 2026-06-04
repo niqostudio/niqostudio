@@ -1,5 +1,7 @@
 // Resend 経由のメール送信ヘルパー。自動返信（顧客宛・noreply）と通知（hi@ 宛）を組み立てる。
-// /api/contact と Resend webhook の双方から使う。認証済みドメインは site ホストから導出。
+// /api/email-events と /api/contact の双方から使う。認証済みドメインは site ホストから導出。
+import { SITE } from '../config/site';
+
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const DOMAIN = new URL(import.meta.env.SITE as string).hostname;
 
@@ -36,7 +38,7 @@ function detailRows(input: InquiryMail): string {
 function shell(bodyHtml: string): string {
   return `<!doctype html><html lang="ja"><body style="margin:0;background:#faf9f8;font-family:-apple-system,'Segoe UI',sans-serif;color:#1c1917;line-height:1.8">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px">
-    <div style="font-family:ui-monospace,monospace;letter-spacing:.08em;color:#1c1917;font-weight:600">NIQO STUDIO</div>
+    <div style="font-family:ui-monospace,monospace;letter-spacing:.08em;color:#1c1917;font-weight:600">${SITE.name}</div>
     <div style="height:2px;background:#dcb441;margin:8px 0 20px"></div>
     ${bodyHtml}
   </div></body></html>`;
@@ -58,9 +60,9 @@ export async function sendAutoReply(apiKey: string, input: InquiryMail): Promise
     <table style="border-collapse:collapse;margin:16px 0;width:100%">${detailRows(input)}</table>
     <p style="color:#57534e;font-size:13px">本メールは送信専用アドレスからの自動返信です。本メールへの返信はご遠慮ください。</p>`);
   const res = await send(apiKey, {
-    from: `NIQO STUDIO <noreply@${DOMAIN}>`,
+    from: `${SITE.name} <noreply@${DOMAIN}>`,
     to: input.email,
-    subject: 'お問い合わせを受け付けました｜NIQO STUDIO',
+    subject: `お問い合わせを受け付けました｜${SITE.name}`,
     html,
   });
   if (!res.ok) {
