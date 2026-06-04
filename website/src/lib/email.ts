@@ -71,20 +71,16 @@ export async function sendAutoReply(apiKey: string, input: InquiryMail): Promise
   return data.id ?? null;
 }
 
-// 管理者（hi@）への通知。From はドメイン・表示名は顧客名・Reply-To は顧客＝返信でそのまま顧客に届く。
-export async function sendOwnerNotification(
-  apiKey: string,
-  from: string,
-  to: string,
-  input: InquiryMail,
-): Promise<boolean> {
+// 管理者への通知。From=noreply・表示名は顧客名・Reply-To は顧客（返信でそのまま顧客に届く）。
+// 宛先は公開連絡先（contact＝hi@）で、Email Routing が個人箱（EMAIL_FORWARD_TO）へ転送する＝個人箱は infra の1か所のみ。
+export async function sendOwnerNotification(apiKey: string, input: InquiryMail): Promise<boolean> {
   const html = shell(`
     <p style="color:#57534e;font-size:13px;margin:0 0 12px">新しいお問い合わせが届きました。このメールに返信すると送信者へ届きます。</p>
     <table style="border-collapse:collapse;width:100%">${detailRows(input)}</table>`);
   const res = await send(apiKey, {
     // 表示名を顧客名にし Reply-To を顧客にする（From アドレスは認証済みドメインのまま＝なりすましにしない）。
-    from: `${input.name} <${from}>`,
-    to,
+    from: `${input.name} <${__MAIL__.noreply}>`,
+    to: __MAIL__.contact,
     reply_to: input.email,
     subject: `[問い合わせ] ${input.subject || input.name}`,
     html,

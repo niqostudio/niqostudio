@@ -75,9 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 自動返信を送れなかった（key 無し or 送信失敗）＝到達 webhook が来ないため、通知をここで送る（取りこぼし防止）。
     if (!autoReplyId && resendApiKey) {
-      const from = runtimeEnv.CONTACT_FROM;
-      const to = runtimeEnv.CONTACT_TO;
-      if (from && to) await sendOwnerNotification(resendApiKey, from, to, mail);
+      await sendOwnerNotification(resendApiKey, mail);
     }
 
     return json({ ok: true }, 200);

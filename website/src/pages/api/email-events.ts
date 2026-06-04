@@ -86,9 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
     const inquiry = await findInquiryByAutoReplyId(client, emailId);
     if (inquiry && inquiry.delivery_status !== 'delivered') {
       const apiKey = runtimeEnv.RESEND_API_KEY;
-      const from = runtimeEnv.CONTACT_FROM;
-      const to = runtimeEnv.CONTACT_TO;
-      if (apiKey && from && to) await sendOwnerNotification(apiKey, from, to, inquiry);
+      if (apiKey) await sendOwnerNotification(apiKey, inquiry);
       await setDeliveryStatus(client, emailId, 'delivered');
     }
     return new Response('ok', { status: 200 });

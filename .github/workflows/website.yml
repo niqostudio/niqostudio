@@ -103,14 +103,12 @@ jobs:
           jq --arg n "$name" '.name = $n | .topLevelName = $n | del(.kv_namespaces) | del(.previews.kv_namespaces) | .workers_dev = false' wrangler.json > w.json && mv w.json wrangler.json
           ../../node_modules/.bin/wrangler deploy
       # フォーム送信に要る実行時値（公開値ではない＝ビルドにインラインされない）。worker 作成後に設定する。
-      - name: runtime secrets（Resend / 宛先 / Turnstile）
+      - name: runtime secrets（Resend / Turnstile / JWT / webhook）
         working-directory: website/dist/server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_DEPLOY_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          CONTACT_FROM: ${{ vars.CONTACT_FROM }}
-          CONTACT_TO: ${{ secrets.CONTACT_TO }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           SUPABASE_INQUIRY_WRITER_JWT: ${{ secrets.SUPABASE_INQUIRY_WRITER_JWT }}
           SUPABASE_INQUIRY_READER_JWT: ${{ secrets.SUPABASE_INQUIRY_READER_JWT }}
@@ -118,11 +116,10 @@ jobs:
         run: |
           # 空値は載せない（未導入の Turnstile 等は skip）。secret bulk は JSON を一括投入する。
           jq -n \
-            --arg r "$RESEND_API_KEY" --arg f "$CONTACT_FROM" \
-            --arg t "$CONTACT_TO" --arg ts "$TURNSTILE_SECRET_KEY" \
+            --arg r "$RESEND_API_KEY" --arg ts "$TURNSTILE_SECRET_KEY" \
             --arg ij "$SUPABASE_INQUIRY_WRITER_JWT" --arg ir "$SUPABASE_INQUIRY_READER_JWT" \
             --arg wh "$RESEND_WEBHOOK_SECRET" \
-            '{RESEND_API_KEY:$r, CONTACT_FROM:$f, CONTACT_TO:$t, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_WRITER_JWT:$ij, SUPABASE_INQUIRY_READER_JWT:$ir, RESEND_WEBHOOK_SECRET:$wh}
+            '{RESEND_API_KEY:$r, TURNSTILE_SECRET_KEY:$ts, SUPABASE_INQUIRY_WRITER_JWT:$ij, SUPABASE_INQUIRY_READER_JWT:$ir, RESEND_WEBHOOK_SECRET:$wh}
              | with_entries(select(.value != ""))' > secrets.json
           ../../node_modules/.bin/wrangler secret bulk secrets.json
           rm -f secrets.json

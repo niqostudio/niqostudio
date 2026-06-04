@@ -89,7 +89,6 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | --- | --- | --- | --- | --- |
 | `CF_DEPLOY_TOKEN` | ✋ | website | Worker を deploy ＋ secret 投入する API トークン。発行名 `website-worker-deploy`（→ `CLOUDFLARE_API_TOKEN`）。infra の TF トークンとは分離 | Account(NIQO STUDIO)<br>　Workers Scripts: Edit |
 | `RESEND_API_KEY` | ✋ | website | 問い合わせ通知の送信（CI が `wrangler secret` へ投入） | — |
-| `CONTACT_TO` | ✋ | website | 通知先アドレス（個人メール＝PII。CI が `wrangler secret` へ投入） | — |
 | `TURNSTILE_SECRET_KEY` | ✋ | website | ボット検証 secret。site key 設定時は必須（欠落で deploy fail＋runtime 拒否＝フェイルクローズ）。site key 無しなら検証 skip。CI が `wrangler secret` へ投入 | — |
 | `SUPABASE_INQUIRY_WRITER_JWT` | ✋ | website | `role:inquiry_writer` を名乗る長寿命 JWT（最小権限・INSERT のみ）。`/api/contact` が anon 直叩きを避けて INSERT する経路。**必須**（欠落で送信 500＝フェイルクローズ／deploy 整合チェックでも弾く）。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_writer`<br>　inquiries: INSERT のみ |
 | `SUPABASE_INQUIRY_READER_JWT` | ✋ | website | `role:inquiry_reader` を名乗る長寿命 JWT。`/api/email-events` が到達状況を反映するための SELECT＋更新経路。発行手順は [Supabase 手順](infra/supabase.md) | DB role `inquiry_reader`<br>　inquiries: SELECT＋`delivery_status` UPDATE のみ |
@@ -106,10 +105,7 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS。**JSON 配列のみ**（`resend_dns_records =` の代入頭は付けない）。CI が `.auto.tfvars.json` に包んで渡す。ローカルは `terraform.tfvars`（HCL）側に書く |
 
-### `website-production`
-| 値 | 配置 | 必要とするモジュール | 備考 |
-| --- | --- | --- | --- |
-| `CONTACT_FROM` | ✋ | website | 通知メールの送信元（認証済みドメインのアドレス。非秘密。CI が `wrangler secret` へ投入） |
+> website のメール送信元・宛先（noreply / hi@）は GitHub Variable ではなく config.json（`email.addresses`・astro.config が inline 注入）に集約。
 
 ## GitHub Repository Variable（公開・環境非依存・複数モジュールが参照しうる）
 複数モジュールが共有する非秘密値。`PUBLIC_` 付き＝website が bundle に焼き込む公開値（Vite envPrefix）。
@@ -122,6 +118,6 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 
 ## Worker ランタイム値（独立した置き場を持たない）
 
-`/api/contact` が実行時に読む値（`RESEND_API_KEY` / `CONTACT_TO` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_WRITER_JWT` / 公開の `CONTACT_FROM`）は、上の `website-production` Environment の Secret/Variable と**同一値**。deploy 時に `website.yml` が `wrangler secret bulk` / var で Worker へ投入する（空値は skip）＝**手動配置しない**ので、ここに別表は持たない。投入済みかの目視確認は [デプロイ手順](deploy.md) を参照。
+`/api/contact`・`/api/email-events` が実行時に読む secret（`RESEND_API_KEY` / `TURNSTILE_SECRET_KEY` / `SUPABASE_INQUIRY_WRITER_JWT` / `SUPABASE_INQUIRY_READER_JWT` / `RESEND_WEBHOOK_SECRET`）は、上の `website-production` Secret と**同一値**。deploy 時に `website.yml` が `wrangler secret bulk` で Worker へ投入する（空値は skip）＝**手動配置しない**。メールの送信元・宛先アドレスは secret ではなく config.json（`email.addresses`・astro.config が inline 注入）由来。投入済みかの目視確認は [デプロイ手順](deploy.md) を参照。
 
 > dev のローカル `.env`（website が必要とする値）は `website/.env.example` を正本とする。
