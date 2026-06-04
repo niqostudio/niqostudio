@@ -61,7 +61,9 @@ export default defineConfig({
       weights: [400, 600],
       subsets: ['latin'],
       display: 'swap',
-      optimizedFallbacks: false,
+      // latin 専用 mono なので（Inter/Noto と違い和文汚染が無い）Astro 自動のメトリクス補正 fallback を使う。
+      // これが無いと swap 時に wordmark がガタつく（fallback が等幅メトリクスに合っていなかった）。
+      optimizedFallbacks: true,
       fallbacks: ['ui-monospace', 'monospace'],
     },
   ],
