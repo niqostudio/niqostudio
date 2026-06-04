@@ -14,7 +14,7 @@
 - 実害の中心は **情報漏洩** と **公開エンドポイント（`/api/contact`）の悪用（スパム/コスト）**。
 - 公開 auth（ユーザーログイン）は無効。**書き込みは最小権限の経路に限定**する。
 
-## 攻撃面: お問い合わせフォーム（`/api/contact`）＋ Resend webhook（`/api/resend-webhook`）
+## 攻撃面: お問い合わせフォーム（`/api/contact`）＋ Resend webhook（`/api/email-events`）
 
 公開 SSR エンドポイント。スパム/コスト悪用・不正書き込み・偽装イベントが脅威。
 
@@ -24,8 +24,8 @@
 - [x] エッジレート制限：`POST /api/contact` を IP 単位 5 req/10s（要 apply） — `ratelimit.tf`
 - [x] 最小権限書き込み：`inquiry_writer` JWT 経由のみ INSERT。JWT 欠落時は送信拒否（フェイルクローズ） — `contact.ts`（JWT 必須）／ `supabase.ts`（`inquiryClient`）
 - [x] コスト面：通知メール（Resend）は Worker 経路のみ＝直叩きでメールは飛ばない — `contact.ts` / `email.ts`
-- [x] webhook の署名検証：Svix（HMAC-SHA256）＋ ±5分のリプレイ防止。偽装イベントを拒否 — `resend-webhook.ts`
-- [x] webhook の最小権限：`inquiry_reader` JWT（SELECT＋`delivery_status` UPDATE のみ） — `resend-webhook.ts` / `…000300_inquiry_delivery_tracking.sql`
+- [x] webhook の署名検証：Svix（HMAC-SHA256）＋ ±5分のリプレイ防止。偽装イベントを拒否 — `email-events.ts`
+- [x] webhook の最小権限：`inquiry_reader` JWT（SELECT＋`delivery_status` UPDATE のみ） — `email-events.ts` / `…000300_inquiry_delivery_tracking.sql`
 
 説明：publishable key は公開なので、攻撃者は Worker（Turnstile・レート制限）を**迂回して Supabase REST に直 INSERT** できる。これを塞ぐのが最小権限ロール `inquiry_writer` と anon の INSERT 剥奪。漏洩しても影響は inquiries への INSERT のみ。webhook は署名検証で偽装を弾き、権限も読取＋到達状況更新だけに限定する。
 

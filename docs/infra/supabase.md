@@ -9,7 +9,7 @@
 - 本番 `db push` 用の接続文字列は Database → Connection string → **Session pooler**（CI は IPv4 のみ）。`SUPABASE_DB_URL` に設定。詳細は [core 運用](../core/operations.md)。
 
 ## 署名鍵と問い合わせ用 JWT の発行（ES256）
-`/api/contact`・`/api/resend-webhook` は最小権限ロールの自前 JWT で DB にアクセスする
+`/api/contact`・`/api/email-events` は最小権限ロールの自前 JWT で DB にアクセスする
 （`SUPABASE_INQUIRY_WRITER_JWT`＝`inquiry_writer`／`SUPABASE_INQUIRY_READER_JWT`＝`inquiry_reader`）。
 署名できるのは**自分で持つ秘密鍵**だけなので、Supabase 生成鍵ではなく**自前の鍵ペアを作って import** する
 （Supabase が生成した鍵の秘密鍵は取り出せない＝署名に使えない）。ロール本体は migration で作成済み（`core/supabase/migrations/`）。
@@ -31,7 +31,7 @@
    それぞれ Secret `SUPABASE_INQUIRY_WRITER_JWT` / `SUPABASE_INQUIRY_READER_JWT`（`website-production`）に設定。
 5. **後始末**：`git checkout core/supabase/config.toml` で signing_keys_path をコメントへ戻す（永続差分を残さない）。
 
-これで `/api/contact` は最小権限（INSERT のみ）で INSERT し、`/api/resend-webhook` は最小権限（SELECT＋`delivery_status` UPDATE のみ）で到達状況を反映する。設計は [セキュリティ](../security.md)。
+これで `/api/contact` は最小権限（INSERT のみ）で INSERT し、`/api/email-events` は最小権限（SELECT＋`delivery_status` UPDATE のみ）で到達状況を反映する。設計は [セキュリティ](../security.md)。
 
 > docs は public。ロール名は誰でも知り得るが、**有効な JWT は自前の秘密鍵でしか署名できない**ため、ロール名が漏れても偽造トークンは作れない。秘密鍵（`signing_keys.json`）はコミットせずオフライン保管する。
 >
