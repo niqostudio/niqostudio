@@ -17,4 +17,13 @@ check "config_values" {
     condition     = contains(["~all", "-all", "?all", "+all"], local.dom.email.spf_all)
     error_message = "config.${var.env}.json: domains[primary].email.spf_all は ~all / -all / ?all / +all。"
   }
+  assert {
+    condition     = alltrue([for v in [local.dom.rate_limit.contact.period, local.dom.rate_limit.contact.requests_per_period, local.dom.rate_limit.contact.mitigation_timeout] : v > 0])
+    error_message = "config.${var.env}.json: domains[primary].rate_limit.contact の period / requests_per_period / mitigation_timeout は正の整数。"
+  }
+  assert {
+    # Cloudflare の制約: mitigation_timeout >= period（Free は同値のみ）。
+    condition     = local.dom.rate_limit.contact.mitigation_timeout >= local.dom.rate_limit.contact.period
+    error_message = "config.${var.env}.json: domains[primary].rate_limit.contact.mitigation_timeout は period 以上。"
+  }
 }

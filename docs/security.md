@@ -21,7 +21,7 @@
 - [x] 入力検証（必須 / email 形式 / 長さ上限）：client（`maxlength`＋`reportValidity`）＋ server — `ContactForm.astro` / `contact.ts`
 - [x] CSRF：Astro `checkOrigin`（SSR 既定・同一オリジンの POST のみ） — フレームワーク既定
 - [x] Bot 対策：Turnstile（site key 有りで検証必須。secret 欠落は deploy fail＋runtime 拒否＝フェイルクローズ） — `contact.ts`（siteverify）／ `ContactForm.astro`（ウィジェット）／ `website.yml`（deploy 整合チェック）
-- [x] エッジレート制限：`POST /api/contact` を IP 単位 5 req/10s（要 apply） — `ratelimit.tf`
+- [x] エッジレート制限：`POST /api/contact` を IP 単位で制限（しきい値は `config.<env>.json` の `rate_limit.contact`・既定 5 req/10s・要 apply） — `ratelimit.tf`
 - [x] 最小権限書き込み：`inquiry_writer` JWT 経由のみ INSERT。JWT 欠落時は送信拒否（フェイルクローズ） — `contact.ts`（JWT 必須）／ `supabase.ts`（`inquiryClient`）
 - [x] コスト面：通知メール（Resend）は Worker 経路のみ＝直叩きでメールは飛ばない — `contact.ts` / `email.ts`
 - [x] webhook の署名検証：Svix（HMAC-SHA256）＋ ±5分のリプレイ防止。偽装イベントを拒否 — `email-events.ts`

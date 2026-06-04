@@ -20,6 +20,13 @@
           "name": "website",
           "subdomain": ""
         }
+      },
+      "rate_limit": {
+        "contact": {
+          "period": 10,
+          "requests_per_period": 5,
+          "mitigation_timeout": 10
+        }
       }
     },
     "niqo.studio": {

@@ -28,6 +28,7 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
 | `primary` | ✋ | infra, website | 主ドメイン名。zone/account 導出・website 正 URL |
 | `domains.<domain>.email.*` | ✋ | infra, website | DNS 系 `spf_includes` / `spf_all` / `dmarc_policy`（infra）。`sender_name` と `addresses.{contact,noreply,dmarc}`（全アドレスの単一ソース）。contact/dmarc は infra が受信ルール・DMARC rua に派生、noreply/sender_name/contact は website が使用（astro.config が inline 注入） |
 | `domains.<domain>.workers.<role>.*` | ✋ | infra, website | `name`（Worker 名＝CI が deploy 名に使用＆infra が service 束ね） / `subdomain`（role マップ） |
+| `domains.<domain>.rate_limit.contact.*` | ✋ | infra | `POST /api/contact` のエッジ流量しきい値 `period` / `requests_per_period` / `mitigation_timeout`（`ratelimit.tf` が読む。Free は timeout=period 固定） |
 | `domains.<domain>.{redirect_to,placeholder_ip}` | ✋ | infra | リダイレクト専用ドメイン |
 
 > `zone_id` / `account_id` は各ドメイン名から **data source で導出**（🤖）＝書かない。
@@ -56,6 +57,13 @@ Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-product
         "website": {
           "name": "website",                        // Worker 名。空=この role を束ねない。CI が deploy 名をこの値に上書き＋infra の service 束ねも一致
           "subdomain": ""                           // 束ねるサブドメイン（空=apex）。例 "admin"→admin.niqostudio.com
+        }
+      },
+      "rate_limit": {                               // エッジ流量制限のしきい値（ratelimit.tf が読む）
+        "contact": {
+          "period": 10,                             // 集計窓（秒）
+          "requests_per_period": 5,                 // 窓あたり許可リクエスト数（IP×colo 単位）
+          "mitigation_timeout": 10                  // ブロック継続（秒）。Free は period と同値のみ
         }
       }
     },
