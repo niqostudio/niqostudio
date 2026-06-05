@@ -1,54 +1,26 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { Work, Case, Service, Profile, PublicClient, Database } from '../types/database';
+import type { Service, Profile, Case, Database } from '../types/database';
 
-export type WorkRow = Work & { clients: PublicClient | null };
-export type CaseRow = Case & { clients: PublicClient | null };
+// 公開ケーススタディは DB の単一 view `showcases`（showcase_entries を投影。client 解決・deliverables/metrics 集約済み）。
+// website 側では Case と呼ぶ（projection 境界での翻訳）。
+export type CaseRow = Case;
 
-// anon は clients を列限定でしか SELECT できない（real_name 等は不可）
-const CLIENT_COLS = 'public_name, industry';
+// view が公開してよい列のみを明示 SELECT（内部表は anon 権限なし＝直読みは権限エラーで fail-fast）。
+const CASE_COLS =
+  'slug, title, summary, thumbnail_url, period, display_order, project_id, tech_stack, testimonial, client_name, client_industry, problems, deliverables, metrics';
 
 // fallback / モックは持たない。接続不可や取得失敗は throw してビルドを止める。
 // 「公開対象が無い（空配列）」「該当 slug 無し（null）」は正常な状態であり error ではない。
 
-export async function fetchWorks(): Promise<WorkRow[]> {
-  const { data, error } = await supabase
-    .from('works')
-    .select(`*, clients(${CLIENT_COLS})`)
-    .eq('status', 'published')
-    .order('display_order');
-  if (error) throw error;
-  return (data ?? []) as unknown as WorkRow[];
-}
-
-export async function fetchWorkBySlug(slug: string): Promise<WorkRow | null> {
-  const { data, error } = await supabase
-    .from('works')
-    .select(`*, clients(${CLIENT_COLS})`)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .maybeSingle();
-  if (error) throw error;
-  return (data as unknown as WorkRow) ?? null;
-}
-
 export async function fetchCases(): Promise<CaseRow[]> {
-  const { data, error } = await supabase
-    .from('cases')
-    .select(`*, clients(${CLIENT_COLS})`)
-    .eq('status', 'published')
-    .order('display_order');
+  const { data, error } = await supabase.from('showcases').select(CASE_COLS).order('display_order');
   if (error) throw error;
   return (data ?? []) as unknown as CaseRow[];
 }
 
 export async function fetchCaseBySlug(slug: string): Promise<CaseRow | null> {
-  const { data, error } = await supabase
-    .from('cases')
-    .select(`*, clients(${CLIENT_COLS})`)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .maybeSingle();
+  const { data, error } = await supabase.from('showcases').select(CASE_COLS).eq('slug', slug).maybeSingle();
   if (error) throw error;
   return (data as unknown as CaseRow) ?? null;
 }

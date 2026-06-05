@@ -23,7 +23,7 @@ const { title = SITE.name, description, width = 'prose', cta = true, structuredD
 const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
-// OG 画像は固定6ページ分のみ生成。詳細は親セクションにフォールバック（/works/<slug> → /og/works.png）。
+// OG 画像は固定ページ分のみ生成。詳細は親セクションにフォールバック（/cases/<slug> → /og/cases.png）。
 const ogKey = Astro.url.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || 'index';
 const ogImage = new URL(`/og/${ogKey}.png`, Astro.site);
 

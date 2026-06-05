@@ -26,6 +26,8 @@ export default defineConfig({
   adapter: cloudflare(),
   // URL は末尾スラッシュなしに統一（canonical / リンク / 遷移を一貫させる）。
   trailingSlash: 'never',
+  // 旧 /works は「ケーススタディ」1セクション（/cases）に統合済み。旧 URL は /cases へ寄せる。
+  redirects: { '/works': '/cases' },
   // 現状は日本語のみ。英語は将来必要になった時点で方式から検討する（未着手）。
   integrations: [
     sitemap({

@@ -1,6 +1,7 @@
 ---
 import type { CaseView } from '../../types/views';
 import Card from '../ui/Card.astro';
+import Chip from '../ui/Chip.astro';
 import Jp from '../ui/Jp.astro';
 
 interface Props {
@@ -8,7 +9,19 @@ interface Props {
 }
 
 const { caseItem } = Astro.props;
-const lead = caseItem.summary ?? caseItem.problem;
+const meta = [caseItem.client?.name, caseItem.client?.industry].filter(Boolean).join(' · ');
+const lead = caseItem.summary ?? caseItem.problems[0]?.problem;
+// 成果見出し（最重要を先頭に）。数値が物語の入口になるよう先頭へ。
+const headline = caseItem.metrics[0];
+const KIND_LABELS: Record<string, string> = {
+  public_web: '公開Web',
+  cms: 'CMS',
+  business_system: '業務システム',
+  operations: '運用',
+  app: 'アプリ',
+  docs: 'ドキュメント',
+};
+const tags = [...new Set(caseItem.deliverables.map((d) => KIND_LABELS[d.kind] ?? d.kind))];
 ---
 
 <Card href={`/cases/${caseItem.slug}`} class="flex flex-col h-full min-h-64 p-7">
@@ -22,7 +35,30 @@ const lead = caseItem.summary ?? caseItem.problem;
       />
     )
   }
-  <h3 class="font-semibold text-xl tracking-tight">{caseItem.title}</h3>
-  {caseItem.client && <p class="text-sm text-muted mt-2">{caseItem.client.name}</p>}
-  {lead && <p class="text-sm text-muted mt-3 line-clamp-4"><Jp text={lead} /></p>}
+  {
+    headline && (
+      <p class="font-mono text-sm text-accent flex flex-wrap items-center gap-x-1.5">
+        <span>{headline.label}</span>
+        {headline.previous && (
+          <Fragment>
+            <span>{headline.previous}</span>
+            <span class="relative -top-px" aria-hidden="true">→</span>
+          </Fragment>
+        )}
+        <span>{headline.achieved}{headline.unit ? ` ${headline.unit}` : ''}</span>
+      </p>
+    )
+  }
+  <h3 class="font-semibold text-xl tracking-tight mt-1">{caseItem.title}</h3>
+  {meta && <p class="text-sm text-muted mt-2">{meta}</p>}
+  {lead && <p class="text-sm text-muted mt-3 line-clamp-3"><Jp text={lead} /></p>}
+  {
+    tags.length > 0 && (
+      <ul class="flex flex-wrap gap-1.5 mt-auto pt-6">
+        {tags.map((t) => (
+          <Chip>{t}</Chip>
+        ))}
+      </ul>
+    )
+  }
 </Card>

@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getWorks, getProfile, getServices } from '../lib/content';
+import { getCases, getProfile, getServices } from '../lib/content';
 import { SITE, HOME } from '../config/site';
-import { WorkCard, ServiceCard, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
+import { CaseCard, ServiceCard, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
 
-const works = (await getWorks()).slice(0, 3);
+const cases = (await getCases()).slice(0, 3);
 const services = await getServices();
 const profile = await getProfile();
 
@@ -83,15 +83,15 @@ const steps = [
   }
 
   {
-    works.length > 0 && (
+    cases.length > 0 && (
       <section class="py-12 border-t border-border">
         <div class="flex items-baseline justify-between">
-          <SectionLabel as="h2">Works</SectionLabel>
-          <ArrowLink href="/works" class="text-sm text-muted hover:text-accent transition-colors">実績一覧を見る</ArrowLink>
+          <SectionLabel as="h2">Cases</SectionLabel>
+          <ArrowLink href="/cases" class="text-sm text-muted hover:text-accent transition-colors">ケーススタディ一覧を見る</ArrowLink>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-          {works.map((work) => (
-            <WorkCard work={work} />
+          {cases.map((caseItem) => (
+            <CaseCard caseItem={caseItem} />
           ))}
         </div>
       </section>

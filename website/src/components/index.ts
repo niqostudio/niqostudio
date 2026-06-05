@@ -18,7 +18,6 @@ export { default as RichText } from './ui/RichText.astro';
 // cards — ドメインのカード
 export { default as CaseCard } from './cards/CaseCard.astro';
 export { default as ServiceCard } from './cards/ServiceCard.astro';
-export { default as WorkCard } from './cards/WorkCard.astro';
 
 // layout — ページのクロム
 export { default as Header } from './layout/Header.astro';

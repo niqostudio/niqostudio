@@ -1,51 +1,37 @@
-import type { Service, Profile, PublicClient, CaseMetric, SocialLink } from '../types/database';
-import type { WorkRow, CaseRow } from './core';
+import type { Service, Profile, SocialLink } from '../types/database';
+import type { CaseRow } from './core';
 import { ENTRY_SERVICE_SLUG } from '../config/site';
 import type {
-  WorkView,
   CaseView,
   ServiceView,
   ProfileView,
   ClientRef,
+  Metric,
+  Problem,
+  Deliverable,
+  Testimonial,
   ContentLink,
   Pricing,
 } from '../types/views';
 
-// anon は real_name を取得できないため、公開表示名は public_name 固定。
-function toClientRef(client: PublicClient | null): ClientRef | null {
-  if (!client) return null;
-  return { name: client.public_name, industry: client.industry };
-}
-
-export function toWorkView(row: WorkRow, relatedCases: ContentLink[] = []): WorkView {
+// 公開 view 行 → ケースビューモデル。client は view が同意解決済み（name は匿名時 null・hidden 時は両方 null）。
+// problems / deliverables / metrics は NDA カテゴリ許可 ∩ 選択分の集約（view で解決済み）。
+export function toCaseView(row: CaseRow, related: ContentLink[] = []): CaseView {
+  const client: ClientRef | null =
+    row.client_name || row.client_industry ? { name: row.client_name, industry: row.client_industry } : null;
   return {
-    slug: row.slug,
-    title: row.title,
-    client: toClientRef(row.clients),
+    slug: row.slug!,
+    title: row.title!,
+    summary: row.summary,
+    client,
+    problems: (row.problems as unknown as Problem[] | null) ?? [],
+    metrics: (row.metrics as unknown as Metric[] | null) ?? [],
+    deliverables: (row.deliverables as unknown as Deliverable[] | null) ?? [],
+    techStack: row.tech_stack ?? [],
+    testimonial: (row.testimonial as unknown as Testimonial | null) ?? null,
     period: row.period,
-    scope: row.scope,
-    techStack: row.tech_stack,
-    summary: row.summary,
     thumbnail: row.thumbnail_url,
-    images: row.image_urls,
-    publicUrl: row.public_url,
-    relatedCases,
-  };
-}
-
-export function toCaseView(row: CaseRow): CaseView {
-  return {
-    slug: row.slug,
-    title: row.title,
-    summary: row.summary,
-    client: toClientRef(row.clients),
-    problem: row.problem,
-    solution: row.solution,
-    outcome: row.outcome,
-    metrics: (row.metrics as unknown as CaseMetric[] | null) ?? [],
-    techDetails: row.tech_details,
-    thumbnail: row.thumbnail_url,
-    images: row.image_urls,
+    related,
   };
 }
 

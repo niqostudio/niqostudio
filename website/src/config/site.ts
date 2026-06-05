@@ -19,19 +19,12 @@ export const ENTRY_SERVICE_SLUG = 'discovery';
 
 // 各ページ: href / label=ナビ英語 / navJa=ナビ日本語(短) / title=<title>(日) / description=meta
 export const PAGES = {
-  works: {
-    href: '/works',
-    label: 'Works',
-    navJa: '実績',
-    title: '実績',
-    description: `設計・実装・運用を一貫して手がけた ${SITE.name} の公開実績。Web サイト・業務システムの構築事例。`,
-  },
   cases: {
     href: '/cases',
     label: 'Cases',
     navJa: 'ケーススタディ',
     title: 'ケーススタディ',
-    description: `課題・解決策・成果でたどる ${SITE.name} のケーススタディ。中小事業者・スタートアップの業務改善事例。`,
+    description: `課題から成果までを数値とともにたどる ${SITE.name} のケーススタディ。Web・業務システムの改善事例。`,
   },
   services: {
     href: '/services',
@@ -63,11 +56,10 @@ export const PAGES = {
   },
 } as const;
 
-// ヘッダー / フッターのナビ順
+// ヘッダー / フッターのナビ順。提供内容を先頭に（トップの構成 Process→Services→Cases と一致）。
 export const NAV = [
-  PAGES.works,
-  PAGES.cases,
   PAGES.services,
+  PAGES.cases,
   PAGES.about,
   PAGES.contact,
 ] as const;

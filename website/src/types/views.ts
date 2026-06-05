@@ -1,35 +1,28 @@
 // website のドメイン語彙で表したビューモデル。core の行型とは独立。
 
-export type ClientRef = { name: string; industry: string };
-export type Metric = { label: string; before: string; after: string };
+export type ClientRef = { name: string | null; industry: string | null };
+export type Metric = { label: string; achieved: string; previous: string | null; unit: string | null; kind: string };
+// 課題→対応→結果のトリプル（現状は problem の文脈に含む）。
+export type Problem = { problem: string; solution: string | null; outcome: string | null };
+export type Deliverable = { kind: string; name: string; url: string | null; images: string[] };
+export type Testimonial = { quote: string; role: string | null };
 export type ContentLink = { slug: string; title: string };
 
-export type WorkView = {
-  slug: string;
-  title: string;
-  client: ClientRef | null;
-  period: string | null;
-  scope: string[];
-  techStack: string[];
-  summary: string | null;
-  thumbnail: string | null;
-  images: string[];
-  publicUrl: string | null;
-  relatedCases: ContentLink[];
-};
-
+// 公開ケーススタディ1件（成果起点の物語）。core の showcases view 由来。
 export type CaseView = {
   slug: string;
   title: string;
   summary: string | null;
   client: ClientRef | null;
-  problem: string | null;
-  solution: string | null;
-  outcome: string | null;
+  problems: Problem[];
   metrics: Metric[];
-  techDetails: string | null;
+  deliverables: Deliverable[];
+  techStack: string[];
+  testimonial: Testimonial | null;
+  period: string | null;
   thumbnail: string | null;
-  images: string[];
+  // 同じ案件（project）に属する他のケース。
+  related: ContentLink[];
 };
 
 export type PricingTier = { name: string; price: string; scope?: string };
