@@ -2,6 +2,10 @@
 import { CTA } from '../../config/site';
 import Button from '../ui/Button.astro';
 import Jp from '../ui/Jp.astro';
+
+// 副 CTA（サービス導線）は /services 上では自己参照になるため出さない。
+const path = Astro.url.pathname;
+const showServicesLink = !(path === '/services' || path.startsWith('/services/'));
 ---
 
 <section class="border-t border-border">
@@ -10,7 +14,7 @@ import Jp from '../ui/Jp.astro';
     <p class="text-muted mt-3 max-w-xl mx-auto"><Jp text={CTA.body} /></p>
     <div class="flex flex-wrap gap-4 justify-center mt-8">
       <Button href="/contact">無料相談する</Button>
-      <Button href="/services" variant="secondary">サービスを見る</Button>
+      {showServicesLink && <Button href="/services" variant="secondary">サービスを見る</Button>}
     </div>
   </div>
 </section>
