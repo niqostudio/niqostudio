@@ -2,69 +2,92 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { PAGES, SITE } from '../config/site';
 import { getProfile } from '../lib/content';
-import { PageHeader } from '../components';
+import { PageHeader, SectionLabel, Wordmark } from '../components';
 
 const profile = await getProfile();
 const email = profile?.contactEmail ?? SITE.email;
 
-const h2 = 'text-lg font-semibold mt-10';
-const list = 'bullet-list mt-3 space-y-1.5';
+// /about と同じ定義リスト体裁（左ラベル＋右本文・薄い区切り線で仕切る）。
+const row =
+  'py-8 border-t border-border-subtle first:border-0 first:pt-0 sm:grid sm:grid-cols-[10rem_1fr] sm:gap-x-10 sm:items-center';
+const list = 'bullet-list space-y-1.5';
 ---
 
 <BaseLayout title={PAGES.privacy.title} cta={false} noindex>
   <PageHeader title={PAGES.privacy.title}>
     <p class="text-muted mt-3">
-      {SITE.name}（以下「当方」）における個人情報の取り扱いについて定めます。
+      <Wordmark />（以下「当方」）における個人情報の取り扱いについて定めます。
     </p>
   </PageHeader>
 
-  <div class="mt-12 leading-relaxed">
-    <h2 class={h2}>取得する情報</h2>
-    <p class="mt-2">お問い合わせフォームの利用時に、以下を取得します。</p>
-    <ul class={list}>
-      <li>お名前</li>
-      <li>会社名（任意）</li>
-      <li>メールアドレス</li>
-      <li>お問い合わせ内容</li>
-    </ul>
+  <dl class="mt-12">
+    <div class={row}>
+      <SectionLabel as="dt">取得する情報</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">
+        <p>お問い合わせフォームの利用時に、以下を取得します。</p>
+        <ul class={list}>
+          <li>お名前</li>
+          <li>会社名（任意）</li>
+          <li>メールアドレス</li>
+          <li>お問い合わせ内容</li>
+        </ul>
+      </dd>
+    </div>
 
-    <h2 class={h2}>利用目的</h2>
-    <ul class={list}>
-      <li>お問い合わせへの回答・ご連絡のため</li>
-      <li>ご依頼内容の確認・お見積もりのため</li>
-    </ul>
+    <div class={row}>
+      <SectionLabel as="dt">利用目的</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">
+        <ul class={list}>
+          <li>お問い合わせへの回答・ご連絡のため</li>
+          <li>ご依頼内容の確認・お見積もりのため</li>
+        </ul>
+      </dd>
+    </div>
 
-    <h2 class={h2}>第三者提供</h2>
-    <p class="mt-2">法令に基づく場合を除き、ご本人の同意なく第三者に提供しません。</p>
+    <div class={row}>
+      <SectionLabel as="dt">第三者提供</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">法令に基づく場合を除き、ご本人の同意なく第三者に提供しません。</dd>
+    </div>
 
-    <h2 class={h2}>外部サービスの利用</h2>
-    <p class="mt-2">
-      本サイトのホスティング・フォーム送信・メール配信・データ保管に外部サービス（Cloudflare、
-      Supabase、Resend 等）を利用しており、各サービスの規約・ポリシーに基づいて情報が処理される
-      場合があります。
-    </p>
+    <div class={row}>
+      <SectionLabel as="dt">外部サービスの利用</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">
+        本サイトのホスティング・フォーム送信・メール配信・データ保管に外部サービス（Cloudflare、Supabase、Resend
+        等）を利用しており、各サービスの規約・ポリシーに基づいて情報が処理される場合があります。
+      </dd>
+    </div>
 
-    <h2 class={h2}>Cookie・ローカルストレージ</h2>
-    <p class="mt-2">
-      表示設定の保持など、必要最小限の範囲で Cookie / ローカルストレージを使用する場合があります。
-    </p>
+    <div class={row}>
+      <SectionLabel as="dt">Cookie・ローカルストレージ</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">
+        表示設定の保持など、必要最小限の範囲で Cookie / ローカルストレージを使用する場合があります。
+      </dd>
+    </div>
 
-    <h2 class={h2}>安全管理</h2>
-    <p class="mt-2">取得した情報は適切に管理し、漏洩・滅失・毀損の防止に努めます。</p>
+    <div class={row}>
+      <SectionLabel as="dt">安全管理</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">取得した情報は適切に管理し、漏洩・滅失・毀損の防止に努めます。</dd>
+    </div>
 
-    <h2 class={h2}>開示・訂正・削除</h2>
-    <p class="mt-2">
-      ご本人からのご請求に応じ、合理的な範囲で開示・訂正・削除に対応します。下記窓口までご連絡ください。
-    </p>
+    <div class={row}>
+      <SectionLabel as="dt">開示・訂正・削除</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">
+        ご本人からのご請求に応じ、合理的な範囲で開示・訂正・削除に対応します。下記窓口までご連絡ください。
+      </dd>
+    </div>
 
-    <h2 class={h2}>お問い合わせ窓口</h2>
-    <p class="mt-2">
-      <a href={`mailto:${email}`} class="text-accent hover:underline">{email}</a>
-    </p>
+    <div class={row}>
+      <SectionLabel as="dt">お問い合わせ窓口</SectionLabel>
+      <dd class="mt-2 sm:mt-0">
+        <a href={`mailto:${email}`} class="text-accent hover:underline">{email}</a>
+      </dd>
+    </div>
 
-    <h2 class={h2}>改定</h2>
-    <p class="mt-2">本ポリシーは必要に応じて改定します。</p>
+    <div class={row}>
+      <SectionLabel as="dt">改定</SectionLabel>
+      <dd class="leading-relaxed mt-2 sm:mt-0">本ポリシーは必要に応じて改定します。</dd>
+    </div>
+  </dl>
 
-    <p class="text-sm text-muted mt-10">事業者: {SITE.name}</p>
-  </div>
+  <p class="text-sm text-muted mt-10">事業者: <Wordmark /></p>
 </BaseLayout>
