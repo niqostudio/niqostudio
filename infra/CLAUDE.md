@@ -5,7 +5,7 @@ Terraform で管理する。アプリ実装は持たない。
 
 ## 責任範囲
 
-- **管理する**: Cloudflare（DNS / Email Routing / Worker のカスタムドメイン / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定・keep-alive、Terraform state。
+- **管理する**: Cloudflare（DNS / Email Routing / Worker のカスタムドメイン / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定（`stacks/supabase`＝`supabase_settings` の api 露出スキーマ）・keep-alive、Terraform state。
 - **管理しない**: アプリのコード/ビルド/Worker スクリプト本体（→ website の `wrangler deploy`）、core のスキーマ/RLS（→ core）、シークレットの**値**（→ CI Secret / Environment / `wrangler secret`。state にも残さない）。
 
 ## 構成

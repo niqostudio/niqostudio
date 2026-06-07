@@ -20,7 +20,7 @@ jobs:
       - name: terraform-docs check
         uses: terraform-docs/gh-actions@v1
         with:
-          working-dir: infra/modules/cloudflare-dns-records,infra/modules/cloudflare-email-routing,infra/modules/cloudflare-redirect,infra/stacks/niqostudio-com,infra/stacks/niqo-studio
+          working-dir: infra/modules/cloudflare-dns-records,infra/modules/cloudflare-email-routing,infra/modules/cloudflare-redirect,infra/stacks/niqostudio-com,infra/stacks/niqo-studio,infra/stacks/supabase
           config-file: infra/.terraform-docs.yml
           output-file: README.md
           output-method: inject
