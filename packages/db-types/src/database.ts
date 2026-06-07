@@ -728,13 +728,6 @@ export type Database = {
             foreignKeyName: "projects_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
-            referencedRelation: "public_services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -1121,7 +1114,6 @@ export type Database = {
           skills: string[] | null
           social_links: Json | null
           tagline: string | null
-          updated_at: string | null
         }
         Insert: {
           bio?: string | null
@@ -1134,7 +1126,6 @@ export type Database = {
           skills?: string[] | null
           social_links?: Json | null
           tagline?: string | null
-          updated_at?: string | null
         }
         Update: {
           bio?: string | null
@@ -1147,15 +1138,12 @@ export type Database = {
           skills?: string[] | null
           social_links?: Json | null
           tagline?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
       public_services: {
         Row: {
           coverage: string[] | null
-          created_at: string | null
-          currency: string | null
           deliverables: string[] | null
           details: string | null
           display_priority: number | null
@@ -1163,21 +1151,15 @@ export type Database = {
           exclusions: string[] | null
           followups: string[] | null
           headline: string | null
-          id: string | null
-          is_active: boolean | null
           name: string | null
           name_ja: string | null
-          price_min: number | null
           pricing: Json | null
           slug: string | null
           summary: string | null
           target_pains: string[] | null
-          updated_at: string | null
         }
         Insert: {
           coverage?: string[] | null
-          created_at?: string | null
-          currency?: string | null
           deliverables?: string[] | null
           details?: string | null
           display_priority?: number | null
@@ -1185,21 +1167,15 @@ export type Database = {
           exclusions?: string[] | null
           followups?: string[] | null
           headline?: string | null
-          id?: string | null
-          is_active?: boolean | null
           name?: string | null
           name_ja?: string | null
-          price_min?: number | null
           pricing?: Json | null
           slug?: string | null
           summary?: string | null
           target_pains?: string[] | null
-          updated_at?: string | null
         }
         Update: {
           coverage?: string[] | null
-          created_at?: string | null
-          currency?: string | null
           deliverables?: string[] | null
           details?: string | null
           display_priority?: number | null
@@ -1207,16 +1183,12 @@ export type Database = {
           exclusions?: string[] | null
           followups?: string[] | null
           headline?: string | null
-          id?: string | null
-          is_active?: boolean | null
           name?: string | null
           name_ja?: string | null
-          price_min?: number | null
           pricing?: Json | null
           slug?: string | null
           summary?: string | null
           target_pains?: string[] | null
-          updated_at?: string | null
         }
         Relationships: []
       }

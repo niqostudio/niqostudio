@@ -29,7 +29,6 @@ export async function fetchServices(): Promise<Service[]> {
   const { data, error } = await supabase
     .from('public_services')
     .select('*')
-    .eq('is_active', true)
     .order('display_priority', { ascending: false });
   if (error) throw error;
   // public_services view は全列 nullable 型だが実体は非 null（services 由来）＝Service へキャスト。
