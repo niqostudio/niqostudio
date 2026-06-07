@@ -33,7 +33,7 @@
 
 publishable key 経由で anon が読めてしまう情報漏洩が脅威。
 
-- [x] 全テーブル RLS 有効（ポリシー無し＝deny 既定） — `core/supabase/migrations/`（各テーブル定義）
+- [x] 全テーブル RLS 有効（ポリシー無し＝deny 既定） — `core/migrations/`（各テーブル定義）
 - [x] 機密列の遮断：`real_name` / `internal_notes` は anon に列 GRANT しない — `…000000_security_hardening_rls.sql`
 - [x] 顧客の公開同意：`is_public_name_allowed = true` を RLS で必須化（未同意は `public_name` も出さない） — `…000000_…_rls.sql`
 - [x] 多層防御：公開 view 以外（生テーブル）への anon 表特権を REVOKE — `…000000_…_rls.sql`
@@ -60,7 +60,7 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 公開リポへの秘密値の混入・流出。
 
 - [x] `.env` / `*.tfvars` / state / 鍵を gitignore（雛形 `*.example` のみ追跡） — ルート / 各モジュールの `.gitignore`
-- [x] `signing_keys.json`（JWT 署名の秘密鍵）を gitignore — `core/supabase/.gitignore`
+- [x] `signing_keys.json`（JWT 署名の秘密鍵）を gitignore — `infra/supabase/.gitignore`
 - [x] gitleaks で誤コミットを CI 検出 — `.github/workflows/secret-scan.yml`
 - [x] 監査で追跡ファイルへの実値混入なしを確認 — （手動監査）
 
@@ -70,7 +70,7 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 
 - [x] CF/CI トークンは対象スコープ＋必要権限のみ（infra=Workers Scripts/DNS/Email、website=Workers Scripts） — 正本 [変数の配置](variables.md)
 - [x] PII（転送先・通知宛先）は Secret、公開 DNS は Variable に分離 — `infra-apply.yml` / `website.yml`
-- [x] 本番反映（terraform apply / db push / deploy）は承認ゲート付き Environment — `infra-apply.yml` / `core-migrate.yml` / `website.yml`
+- [x] 本番反映（terraform apply / dbmate up / deploy）は承認ゲート付き Environment — `infra-apply.yml` / `db-migrate.yml` / `website.yml`
 - [x] Environment はモジュール別（`<module>-<env>`）にスコープ＝ジョブが他モジュールの secret を読めない — [ADR 0003](adr/0003-environment-per-module.md)
 
 ## 攻撃面: メール認証（SPF / DKIM / DMARC）

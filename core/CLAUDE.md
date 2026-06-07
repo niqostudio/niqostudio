@@ -1,17 +1,18 @@
 # CLAUDE.md — core
 
-NIQO STUDIO のデータ層（Supabase / PostgreSQL 17・IaC）。スキーマ・RLS・マイグレーションの正本。
+NIQO STUDIO のデータ層（PostgreSQL 17）。スキーマ・RLS・migration の正本。
+migration の適用は **dbmate**、ローカルスタックと型生成は **infra の supabase** が担う（core は supabase に依存しない）。
 他モジュール（website 等）はこの DB を読む。型は [packages/db-types](../packages/db-types/) に生成する。
 
 ## コマンド（pnpm）
 
 - ローカル（要 Docker）: root から `pnpm db:start` → `pnpm db:reset`（DB は core / studio 両スキーマを含み、reset が両方を作り直す）。
-- 本番反映は CI（`.github/workflows/`）。手順は [docs/core/operations.md](../docs/core/operations.md)。
+- 本番反映は CI（`.github/workflows/`）。手順は [docs/database.md](../docs/database.md)。
 
 ## スキーマ / マイグレーション
 
-- 正本は `supabase/migrations/`。**DDL は migration 経由のみ**（Studio で直接変更しない・適用済みは編集しない）。push 前に root の `pnpm db:reset` で検証する。
-- 構造: [docs/core/schema.md](../docs/core/schema.md)。
+- 正本は `core/migrations/`（dbmate・適用は `public.core_migrations` で追跡）。**DDL は migration 経由のみ**（Studio で直接変更しない・適用済みは編集しない）。検証は root の `pnpm db:reset`。
+- 構造: [docs/core/schema.md](../docs/core/schema.md)。設計判断: [docs/adr/](../docs/adr/)。
 
 ## このモジュールの規約（DB / RLS）
 

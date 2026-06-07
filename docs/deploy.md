@@ -2,7 +2,7 @@
 
 > 全モジュール（core / infra / website）の**反映手順**を横断でまとめる。初回だけのブートストラップと
 > 通常の反映を分ける。プラットフォーム固有の ✋ 手順は [Cloudflare 手順](infra/cloudflare.md) /
-> [Resend 手順](infra/resend.md) / [core 運用](core/operations.md) に委譲し、ここは overview とオーケストレーション
+> [Resend 手順](infra/resend.md) / [core 運用](database.md) に委譲し、ここは overview とオーケストレーション
 > （順序・どの段で何が落ちるか・検証）に徹する。値の配置は [変数の配置](variables.md)、設計は [アーキテクチャ](architecture.md)。
 
 ## 前提ツール
@@ -25,13 +25,13 @@
 8. **GitHub Environments を作成**（`core-production` / `infra-production` / `website-production`・Required reviewers）→ 各 Environment に Secret / Variable を設定（一覧は [変数の配置](variables.md)。`RESEND_DNS_RECORDS` 含む）。
 
 ### B. 反映（CI・依存順）
-9. `core: migrate`（apply=true）：スキーマ＋ `inquiry_writer` ロールを作る。
-10. **`profile` singleton を投入**（Studio）：website ビルドは実データ前提（profile 欠落で throw）。→ [core 運用](core/operations.md)
+9. `db: migrate`（apply=true）：スキーマ＋ `inquiry_writer` ロールを作る。
+10. **`profile` singleton を投入**（Studio）：website ビルドは実データ前提（profile 欠落で throw）。→ [core 運用](database.md)
 11. `inquiry_writer` JWT を発行 → `SUPABASE_INQUIRY_WRITER_JWT` を設定（ロール作成後）。→ [Supabase 手順](infra/supabase.md)
 12. `website: build & deploy` を dispatch：**Worker の箱を作る**（`wrangler deploy`）。JWT / Turnstile secret も投入。fail-closed のため 11・Turnstile・`PUBLIC_*` 値が前提。
 13. `infra: apply` を dispatch：DNS（SPF / DMARC / DKIM / `send.`）＋ **Worker カスタムドメイン束ね**。束ねは Worker 実体が要るので **12 の後**。
 14. 検証：Resend verify・`dig`・フォーム疎通（下の「apply 後の検証」）。
-15. `core: migrate`（apply=true）で **anon の INSERT 剥奪**（JWT 経路の疎通を確認した後・別 migration）。
+15. `db: migrate`（apply=true）で **anon の INSERT 剥奪**（JWT 経路の疎通を確認した後・別 migration）。
 16. DMARC を `quarantine`→`reject` へ段階強化。→ [メール設計](infra/email.md)
 
 > 肝の依存：ゾーン委譲 → 以降の DNS 操作すべて／ 受信 Email Routing 先行（→ 自動 SPF 削除）／ R2 は infra apply の前提／ ロール作成・JWT 発行・`profile` 投入 → website build/deploy（fail-closed・実データ前提）／ website が箱を作ってから infra がドメイン束ね／ JWT 経路の疎通確認後に anon 剥奪。
@@ -41,7 +41,7 @@
 
 | 対象 | トリガ | 実行内容 |
 | --- | --- | --- |
-| core スキーマ | `core: migrate` を dispatch（apply=true） | Session pooler 経由で `supabase db push` |
+| core スキーマ | `db: migrate` を dispatch（apply=true） | Session pooler 経由で `dbmate up` |
 | infra | `infra: apply` を dispatch | `terraform apply`（承認ゲート） |
 | website | `website: build & deploy` を dispatch | build → `wrangler deploy` → `wrangler secret bulk` |
 
@@ -54,11 +54,11 @@
 | 段 | ワークフロー | 落とすもの |
 | --- | --- | --- |
 | PR（秘密なし） | `website: build & deploy`（build） | 型・ビルド（`pnpm build` / `pnpm check`） |
-| PR | `core: types check` | migration 適用可否（local Supabase 起動で実適用）・型ドリフト |
+| PR | `db: check` | migration 適用可否（local Supabase 起動で実適用）・型ドリフト |
 | PR | `infra: validate` | `terraform fmt` / `validate` |
 | deploy（承認後） | `website: build & deploy`（deploy） | Turnstile / JWT の構成整合（fail-closed）・deploy 失敗 |
 | apply（承認後） | `infra: apply` | `terraform apply`（plan 段の取りこぼしはここで顕在化） |
-| migrate（承認後） | `core: migrate` | 本番 `db push` |
+| migrate（承認後） | `db: migrate` | 本番 `db push` |
 
 - infra は PR で `plan` を走らせない（state / secret が要・fork-safe 優先）＝ plan 段の差分は apply で出る。
 - secret は該当モジュールの Environment にしか無いため、secret 整合（Turnstile / JWT）は deploy job で検査する。

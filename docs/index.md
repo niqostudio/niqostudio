@@ -7,7 +7,7 @@ NIQO STUDIO のシステム（website / core / infra）のドキュメント。1
 - **全体像をつかむ** → [アーキテクチャ](architecture.md)（図でモジュールと値の流れ）
 - **値の置き場・命名・配置の原則** → [変数の配置](variables.md)（config.\<env\>.json / Secret / Variable のどこに何を置くか＋原則）
 - **用語が不安** → [用語集](infra/glossary.md)
-- **データ層** → [スキーマ](core/schema.md) / [運用](core/operations.md)
+- **データ層** → [スキーマ](core/schema.md) / [運用](database.md)
 - **デプロイ・反映する** → [デプロイ手順](deploy.md)（初回ブートストラップ / 通常反映 / 検証）
 - **プラットフォーム手順** → [Cloudflare](infra/cloudflare.md) / [Resend](infra/resend.md)
 - **メールを設定する** → [メール設計](infra/email.md)（Resend × Cloudflare の混ぜ方）

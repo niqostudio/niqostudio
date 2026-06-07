@@ -2,17 +2,17 @@
 
 > Supabase コンソール / CLI での ✋ 手順（プロジェクト準備と資格情報の発行）。Supabase は core が使う
 > プラットフォームのためここ（infra）に置く。日々の運用（マイグレーション・db push・型生成・RLS 検証）は
-> [core 運用](../core/operations.md)、値の置き場は [変数の配置](../variables.md)、反映の順序は [デプロイ手順](../deploy.md)。
+> [core 運用](../database.md)、値の置き場は [変数の配置](../variables.md)、反映の順序は [デプロイ手順](../deploy.md)。
 
 ## プロジェクト / 接続
 - プロジェクトを作成し、`PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_PUBLISHABLE_KEY`（公開鍵）を控える（配置は [変数の配置](../variables.md)）。
-- 本番 `db push` 用の接続文字列は Database → Connection string → **Session pooler**（CI は IPv4 のみ）。`SUPABASE_DB_URL` に設定。詳細は [core 運用](../core/operations.md)。
+- 本番 `db push` 用の接続文字列は Database → Connection string → **Session pooler**（CI は IPv4 のみ）。`SUPABASE_DB_URL` に設定。詳細は [core 運用](../database.md)。
 
 ## 署名鍵と問い合わせ用 JWT の発行（ES256）
 `/api/contact`・`/api/email-events` は最小権限ロールの自前 JWT で DB にアクセスする
 （`SUPABASE_INQUIRY_WRITER_JWT`＝`inquiry_writer`／`SUPABASE_INQUIRY_READER_JWT`＝`inquiry_reader`）。
 署名できるのは**自分で持つ秘密鍵**だけなので、Supabase 生成鍵ではなく**自前の鍵ペアを作って import** する
-（Supabase が生成した鍵の秘密鍵は取り出せない＝署名に使えない）。ロール本体は migration で作成済み（`core/supabase/migrations/`）。
+（Supabase が生成した鍵の秘密鍵は取り出せない＝署名に使えない）。ロール本体は migration で作成済み（`core/migrations/`）。
 
 **前提**：Docker 起動＋ローカルスタック（`pnpm -F @niqostudio/core exec supabase start`）。署名はローカル CLI を使う（本番接続は不要）。config.toml は**ローカル開発用の共有設定**で本番には効かない。
 
@@ -20,8 +20,8 @@
    ```sh
    pnpm -F @niqostudio/core exec supabase gen signing-key --algorithm ES256
    ```
-   出力を `core/supabase/signing_keys.json` に保存（**gitignore 済み**・JSON 配列 `[ { ... } ]` 形式）。
-2. **一時的に** `core/supabase/config.toml` の `# signing_keys_path = "./signing_keys.json"` を uncomment し、`supabase start`（起動済みなら再起動）で反映。**コミットしない**：鍵は gitignore のため committed にすると CI / 他クローンの `supabase start` が鍵不在で壊れる。
+   出力を `infra/supabase/signing_keys.json` に保存（**gitignore 済み**・JSON 配列 `[ { ... } ]` 形式）。
+2. **一時的に** `infra/supabase/config.toml` の `# signing_keys_path = "./signing_keys.json"` を uncomment し、`supabase start`（起動済みなら再起動）で反映。**コミットしない**：鍵は gitignore のため committed にすると CI / 他クローンの `supabase start` が鍵不在で壊れる。
 3. ダッシュボードへ import：Authentication → JWT Keys → **Create Standby Key →「Import an existing private key」を ON** → 秘密鍵を貼付 → **Rotate** で現行鍵へ昇格（本番がこの公開鍵で検証できるようにする）。
 4. 2つの JWT を発行（同じ鍵で署名・import は 3 の1回でよい）。`exp` は必須（無期限にしない）：
    ```sh
@@ -29,7 +29,7 @@
    pnpm -F @niqostudio/core exec supabase gen bearer-jwt --role inquiry_reader --valid-for 8760h
    ```
    それぞれ Secret `SUPABASE_INQUIRY_WRITER_JWT` / `SUPABASE_INQUIRY_READER_JWT`（`website-production`）に設定。
-5. **後始末**：`git checkout core/supabase/config.toml` で signing_keys_path をコメントへ戻す（永続差分を残さない）。
+5. **後始末**：`git checkout infra/supabase/config.toml` で signing_keys_path をコメントへ戻す（永続差分を残さない）。
 
 これで `/api/contact` は最小権限（INSERT のみ）で INSERT し、`/api/email-events` は最小権限（SELECT＋`delivery_status` UPDATE のみ）で到達状況を反映する。設計は [セキュリティ](../security.md)。
 
