@@ -5,12 +5,12 @@
 
 ## 環境の見立て（モジュール × 環境）
 どのモジュールがどの環境を持つか。環境は branch で選ぶ（`main`→production / `develop`→staging）。現状は production 単一。
-Environment 名は **`<module>-<env>`**（例 `core-production`・`infra-production`／将来 `core-staging`）。設計は [ADR 0003](adr/0003-environment-per-module.md)。
+Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-production`／将来 `infra-staging`）。設計は [ADR 0003](adr/0003-environment-per-module.md)・[ADR 0005](adr/0005-supabase-into-infra-platform.md)。
 
 | モジュール | 環境の単位 | 現状 | 複数環境を持つ場合 |
 | --- | --- | --- | --- |
-| infra | 共有 Cloudflare アカウント（単一） | `infra-production` のみ | 共有のため分割しない |
-| core | Supabase プロジェクト単位 | `core-production` のみ | staging は別プロジェクト＝`core-staging`（同名 secret を Environment で出し分け） |
+| infra | 共有 Cloudflare アカウント＋Supabase（infra 所有） | `infra-production` のみ | 共有のため分割しない（staging は `infra-staging`） |
+| core | Supabase プロジェクト（infra 所有） | 専用 env なし＝`infra-production` を借用 | supabase が infra 所有のため infra に従う（[ADR 0005](adr/0005-supabase-into-infra-platform.md)） |
 | website | デプロイ単位 | production のみ | staging サイトを `website-staging` で出し分け |
 | core-types | 環境なし（build 時の型生成） | — | — |
 
@@ -79,15 +79,12 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 
 ## GitHub Environment Secret（承認ゲート・モジュール別）
 
-### `core-production`
-| 値 | 配置 | 必要とするモジュール | 備考 |
-| --- | --- | --- | --- |
-| `SUPABASE_DB_URL` | ✋ | core | Session pooler 接続文字列。db push（承認ゲート） |
-| `SUPABASE_SECRET_KEY`（admin API がある場合のみ） | ✋ | core | `sb_secret_`・BYPASSRLS。migration には不要 |
-
 ### `infra-production`
 | 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
 | --- | --- | --- | --- | --- |
+| `SUPABASE_DB_URL` | ✋ | core（`db: migrate`） | Session pooler 接続文字列。dbmate 適用（承認ゲート）。**CI は IPv4 のみ** | DB ロール（migration 適用） |
+| `SUPABASE_ACCESS_TOKEN` | ✋ | infra | Supabase Management API トークン（`supabase_settings` apply）。発行＝Account → Access Tokens | Management API（対象プロジェクト） |
+| `SUPABASE_SECRET_KEY`（必要時のみ） | ✋ | core | `sb_secret_`・BYPASSRLS。migration には不要 | — |
 | `CF_TERRAFORM_TOKEN` | ✋ | infra | TF が CF 操作。最小権限。発行名 `infra-terraform`（→ `CLOUDFLARE_API_TOKEN`） | Account(NIQO STUDIO)<br>　Workers Scripts: Edit<br>　Email Routing Addresses: Edit<br>　Account Rulesets: Edit<br>Zone(niqostudio.com / niqo.studio)<br>　DNS: Edit<br>　Email Routing Rules: Edit<br>　Dynamic URL Redirects: Edit<br>　Zone: Read |
 | `R2_TFSTATE_KEY_ID` / `R2_TFSTATE_SECRET_KEY` | ✋ | infra | S3 鍵ペア（ID も機密）。発行名 `infra-tfstate` | バケット `niqostudio-tfstate`<br>　Object: Read & Write |
 | `EMAIL_FORWARD_TO` | ✋ | infra | 転送先メール（PII）→ `TF_VAR_forward_to` | — |
@@ -111,6 +108,7 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | 値 | 配置 | 必要とするモジュール | 備考 |
 | --- | --- | --- | --- |
 | `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
+| `SUPABASE_PROJECT_REF` | ✋ | infra | `supabase_settings` の対象プロジェクト参照 ID（→ `TF_VAR_project_ref`）。ダッシュボード URL の `<ref>`（半公開） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS。**JSON 配列のみ**（`resend_dns_records =` の代入頭は付けない）。CI が `.auto.tfvars.json` に包んで渡す。ローカルは `terraform.tfvars`（HCL）側に書く |
 
 > website のメール送信元・宛先（noreply / hi@）は GitHub Variable ではなく config.json（`email.addresses`・astro.config が inline 注入）に集約。

@@ -1,6 +1,6 @@
 # ADR 0003: 環境モデル（モジュール別 Environment・環境独立・branch 切替）
 
-- ステータス: 採用
+- ステータス: 採用（`db-migrate → core-production` の割当は [ADR 0005](0005-supabase-into-infra-platform.md) で更新）
 - 決定日: 2026-06-03
 
 ## 背景

@@ -7,8 +7,8 @@
 
 ## 前提ツール
 - Node / pnpm（`.nvmrc` 準拠）。
-- Terraform CLI（CI は 1.15.5）。ローカルは validate / plan のみ（apply は CI）。
-- Supabase CLI（core の devDependency。`pnpm -F @niqostudio/core exec supabase ...`）。
+- Terraform（infra の npm devDependency `@jahed/terraform`・`pnpm -F @niqostudio/infra exec terraform ...`・1.15.5）。ローカルは validate / plan のみ（apply は CI）。
+- Supabase CLI（infra の devDependency。`pnpm -F @niqostudio/infra exec supabase ...`）。
 - 各プラットフォームのアカウント（Cloudflare / Supabase / Resend）。
 
 ## 初回ブートストラップ（一度きり）
@@ -22,7 +22,7 @@
 5. **R2**：state バケット作成＋ tfstate トークン発行（infra apply の backend 前提）。→ [Cloudflare 手順](infra/cloudflare.md)
 6. CF API トークン（`infra-terraform` / `website-worker-deploy`）と Turnstile キーを発行。→ [Cloudflare 手順](infra/cloudflare.md)
 7. Supabase：プロジェクト作成 → 署名鍵を import→rotate。→ [Supabase 手順](infra/supabase.md)
-8. **GitHub Environments を作成**（`core-production` / `infra-production` / `website-production`・Required reviewers）→ 各 Environment に Secret / Variable を設定（一覧は [変数の配置](variables.md)。`RESEND_DNS_RECORDS` 含む）。
+8. **GitHub Environments を作成**（`infra-production` / `website-production`・Required reviewers）→ 各 Environment に Secret / Variable を設定（一覧は [変数の配置](variables.md)。`RESEND_DNS_RECORDS` 含む）。`db: migrate` も `infra-production` を使う（[ADR 0005](adr/0005-supabase-into-infra-platform.md)）。
 
 ### B. 反映（CI・依存順）
 9. `db: migrate`（apply=true）：スキーマ＋ `inquiry_writer` ロールを作る。

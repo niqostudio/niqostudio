@@ -16,7 +16,7 @@ jobs:
   migrate:
     if: github.repository == 'niqostudio/niqostudio'
     runs-on: ubuntu-latest
-    environment: core-production # 承認ゲート + secret をスコープ（最小権限）
+    environment: infra-production # 承認ゲート + secret をスコープ（supabase は infra 所有のため infra-production を借りる）
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
