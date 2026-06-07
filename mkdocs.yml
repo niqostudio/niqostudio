@@ -54,3 +54,4 @@ nav:
       - 0003 環境モデル: adr/0003-environment-per-module.md
       - 0004 migration ツール: adr/0004-migration-tooling.md
       - 0005 Supabase を infra へ: adr/0005-supabase-into-infra-platform.md
+      - 0006 公開 view の SECURITY DEFINER: adr/0006-public-views-security-definer.md
