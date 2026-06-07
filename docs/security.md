@@ -36,9 +36,9 @@ publishable key 経由で anon が読めてしまう情報漏洩が脅威。
 - [x] 全テーブル RLS 有効（ポリシー無し＝deny 既定） — `core/supabase/migrations/`（各テーブル定義）
 - [x] 機密列の遮断：`real_name` / `internal_notes` は anon に列 GRANT しない — `…000000_security_hardening_rls.sql`
 - [x] 顧客の公開同意：`is_public_name_allowed = true` を RLS で必須化（未同意は `public_name` も出さない） — `…000000_…_rls.sql`
-- [x] 多層防御：公開読みテーブル（works/cases/services）の anon 書込み表特権を REVOKE — `…000000_…_rls.sql`
-- [x] `profile` を全列開放から**公開列のみ GRANT**（将来 internal 列の暗黙露出を防止） — `…000000_…_rls.sql`
+- [x] 多層防御：公開 view 以外（生テーブル）への anon 表特権を REVOKE — `…000000_…_rls.sql`
 - [x] 書込み最小権限：`inquiry_writer` に inquiries の INSERT 列のみ GRANT、anon の INSERT は剥奪 — `…000100_inquiry_writer_role.sql`／ `…000200_revoke_anon_inquiry_insert.sql`
+- [x] **名前空間分離**：業務データを `core` スキーマへ集約し `public` を無効化（API 非公開・`REVOKE`）。anon は `core` に Supabase 既定権限を持たず、明示した `public_showcases` / `public_services` / `public_profile` view だけ SELECT（生テーブルは REVOKE） — `…000200_named_schema_core.sql`
 
 説明：RLS のポリシー有無だけに頼らず、表 GRANT でも書込みを遮断する二段構え。
 

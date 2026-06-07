@@ -1,5 +1,5 @@
 site_name: NIQO STUDIO docs
-site_description: NIQO STUDIO システム（website / core / infra）のドキュメント
+site_description: NIQO STUDIO システム（website / core / studio / infra）のドキュメント
 site_url: https://niqostudio.github.io/niqostudio/
 docs_dir: docs
 

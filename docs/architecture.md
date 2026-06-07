@@ -3,7 +3,7 @@
 > **責務**：全体像を**図**で示す（システム / 秘密境界 / CI）。変数の置き場の一覧表は
 > [variables.md](variables.md)、用語は [glossary.md](infra/glossary.md)、手順は [デプロイ手順](deploy.md)。
 
-1つの monorepo（`niqostudio/niqostudio`）に website / core / infra / packages をモジュールとして持ち、
+1つの monorepo（`niqostudio/niqostudio`）に website / studio / core / infra / packages をモジュールとして持ち、
 外部サービス（Cloudflare / Resend / Supabase）と連携する。モジュールは独立し、共有は root の規約・docs と、
 root の `config.<env>.json`（公開定数・env ごとに1ファイル・committed）だけ。**リポ跨ぎの配布機構は持たない**。
 
@@ -12,10 +12,11 @@ root の `config.<env>.json`（公開定数・env ごとに1ファイル・commi
 ```mermaid
 flowchart TB
   subgraph repo["GitHub: niqostudio/niqostudio（public・monorepo）"]
-    website["website/<br/>Astro（公開サイト）"]
+    website["website/<br/>Astro（公開サイト・読む）"]
+    studio["studio/<br/>Next.js（業務システム・書く）"]
     core["core/<br/>Supabase schema / RLS"]
     infra["infra/<br/>Terraform / IaC"]
-    pkg["packages/db-types"]
+    pkg["packages/db-types・ui"]
     cfg["config.&lt;env&gt;.json<br/>公開定数の正本"]
     env[("Environments<br/>Secrets / Variables")]
   end
@@ -34,6 +35,8 @@ flowchart TB
   infra -->|認証用 DNS| resend
   infra <-->|state 読み書き| r2
   website -->|wrangler deploy| worker
+  website -->|anon: public_* view 読取| supabase
+  studio -->|service_role: core schema 読み書き| supabase
   core -->|migrations| supabase
   infra -->|keep-alive ping| supabase
   cfg -.->|直読| infra
