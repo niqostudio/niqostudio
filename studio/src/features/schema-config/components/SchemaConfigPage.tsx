@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getCollection } from '@/composition/collections';
-import { coreStructure } from '@/adapters/supabase/structure';
-import type { FieldKind } from '@/shared/records/schema';
+import { coreStructure } from '@/adapters/domain-store/supabase/structure';
+import type { FieldKind } from '@/features/domain-overlay/schema';
 import { SchemaConfigForm, type EditableSemantics } from './SchemaConfigForm';
 
 // live 構造＋現在の実効スキーマから「編集可能な semantics」を起こして configurator に渡す（pre-fill）。

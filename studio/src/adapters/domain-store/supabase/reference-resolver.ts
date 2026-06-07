@@ -1,5 +1,5 @@
 import 'server-only';
-import type { ReferenceOption, ReferenceResolver } from '@/shared/records/reference';
+import type { ReferenceOption, ReferenceResolver } from '@/ports/domain-store';
 import { resolveSupabaseConfig, createDynamicCoreClient, type CoreClient, type SupabaseConfig } from './client';
 import { coreStructure } from './structure';
 

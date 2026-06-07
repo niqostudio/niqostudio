@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card, StatusBadge, SearchField } from '@/shared/ui/primitives';
-import type { CollectionRecord } from '@/shared/records/record';
-import type { CollectionSchema } from '@/shared/records/schema';
+import type { CollectionRecord } from '@/shared/model/record';
+import type { CollectionSchema } from '@/features/domain-overlay/schema';
 import { asString, type Fields } from '../collection';
 import { t } from '@/shared/i18n';
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BackLink, Input } from '@/shared/ui/primitives';
 import { FieldInput, asText, defaultFor } from '@/shared/ui/fields';
-import type { CollectionSchema, FieldDescriptor } from '@/shared/records/schema';
+import type { CollectionSchema, FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t, type MessageKey } from '@/shared/i18n';
 import { toast } from '@/features/feedback/toast';
 import { openTerminal, openTerminalWithRun } from '@/features/terminal/panel';

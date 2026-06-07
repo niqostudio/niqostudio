@@ -1,4 +1,4 @@
-import type { CollectionSemantics } from '@/shared/records/overlay';
+import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 
 // inquiries（問い合わせ）の意味。構造は core から live。status は core 値をそのまま扱う（text）。
 export const inquiriesSemantics: CollectionSemantics = {

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getCollection } from '@/composition/collections';
-import type { ReferenceOption } from '@/shared/records/reference';
+import type { ReferenceOption } from '@/ports/domain-store';
 import RecordPaneEditor from './RecordPaneEditor';
 
 // 1レコードのエディタ画面（server）。各 collection の route が collection＋id を渡す。

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import type { CollectionRecord } from '@/shared/records/record';
+import type { CollectionRecord } from '@/shared/model/record';
 import { getCollection } from '@/composition/collections';
 import type { Fields } from '../collection';
 import { createRecordAction } from '../actions';

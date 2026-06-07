@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Pencil } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
-import type { FieldDescriptor } from '@/shared/records/schema';
+import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';

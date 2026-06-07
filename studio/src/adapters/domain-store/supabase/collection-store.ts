@@ -1,7 +1,7 @@
 import 'server-only';
-import type { CollectionStore } from '@/shared/records/ports';
-import type { CollectionRecord } from '@/shared/records/record';
-import type { StructuralCollection } from '@/shared/records/overlay';
+import type { CollectionStore } from '@/ports/domain-store';
+import type { CollectionRecord } from '@/shared/model/record';
+import type { StructuralCollection } from '@/features/domain-overlay/overlay';
 import { resolveSupabaseConfig, createDynamicCoreClient, type CoreClient, type SupabaseConfig } from './client';
 import { coreStructure } from './structure';
 

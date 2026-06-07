@@ -1,4 +1,4 @@
-import type { Source } from '@/shared/records/source';
+import type { Source } from '@/ports/domain-store';
 
 // git 射影の seam。抽出（事実→クラスタ）は target 非依存＝汎用。写像（クラスタ→F）だけが target 特化。
 // 源（Source）の契約は shared/records が持つ＝この feature は「源をどう読み・射影するか」を担う。

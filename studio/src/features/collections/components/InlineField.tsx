@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil } from 'lucide-react';
 import { FieldInput } from '@/shared/ui/fields';
-import type { FieldDescriptor } from '@/shared/records/schema';
+import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { setFieldAction } from '../actions';
 import { toast } from '@/features/feedback/toast';
 import { t } from '@/shared/i18n';

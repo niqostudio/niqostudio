@@ -1,5 +1,5 @@
 import { parse } from 'pgsql-ast-parser';
-import type { CollectionSchema, FieldDescriptor, FieldKind } from '@/shared/records/schema';
+import type { CollectionSchema, FieldDescriptor, FieldKind } from '@/features/domain-overlay/schema';
 
 // Supabase の migration SQL 群から collection の schema 記述子を生成する（顧客の既存スキーマ接続）。
 // CREATE TABLE / ALTER TABLE を畳み込み、FK(ON DELETE CASCADE) を親子、それ以外を別 collection と見なす。

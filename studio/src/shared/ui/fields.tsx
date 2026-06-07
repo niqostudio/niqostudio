@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Input, Select, Textarea } from './primitives';
-import type { FieldDescriptor } from '@/shared/records/schema';
+import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t } from '@/shared/i18n';
 
 // schema 駆動のフィールド描画（記述子1つで入力欄を出す）。collection 詳細・子編集で共有。

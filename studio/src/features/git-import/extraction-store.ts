@@ -4,7 +4,7 @@ import {
   resolveStudioStoreConfig,
   type StudioStoreClient,
   type StudioStoreConfig,
-} from '@/adapters/studio-store/client';
+} from '@/adapters/studio-store/supabase/client';
 
 export interface StoredExtraction {
   id: string;

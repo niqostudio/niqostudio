@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@niqostudio/db-types';
-import type { SourceRegistry, SourceInput } from '@/shared/records/source';
-import type { Source } from '@/shared/records/source';
-import { createCoreClient, resolveSupabaseConfig, type SupabaseConfig } from '@/adapters/supabase/client';
+import type { SourceRegistry, SourceInput } from '@/ports/domain-store';
+import type { Source } from '@/ports/domain-store';
+import { createCoreClient, resolveSupabaseConfig, type SupabaseConfig } from './client';
 
 // core.project_repositories（案件の進行中開発の正本リポ）を Source として写像する。
 export class CoreProjectSourceRegistry implements SourceRegistry {

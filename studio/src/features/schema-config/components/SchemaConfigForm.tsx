@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BackLink, Input, Select } from '@/shared/ui/primitives';
-import type { FieldKind } from '@/shared/records/schema';
-import type { CollectionSemantics, FieldSemantics } from '@/shared/records/overlay';
+import type { FieldKind } from '@/features/domain-overlay/schema';
+import type { CollectionSemantics, FieldSemantics } from '@/features/domain-overlay/overlay';
 import { saveSemantics } from '../actions';
 
 const KINDS: FieldKind[] = ['text', 'textarea', 'select', 'date', 'list', 'boolean', 'reference'];

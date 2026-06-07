@@ -1,5 +1,5 @@
 import 'server-only';
-import type { WorkflowProvider, WorkflowState } from '@/shared/records/workflow';
+import type { WorkflowProvider, WorkflowState } from '@/ports/domain-store';
 import { resolveSupabaseConfig, createDynamicCoreClient, type CoreClient, type SupabaseConfig } from './client';
 
 type StatusRow = { code: string; label: string; is_initial: boolean; sort_order: number };

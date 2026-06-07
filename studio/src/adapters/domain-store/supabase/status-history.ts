@@ -1,5 +1,5 @@
 import 'server-only';
-import type { RecordTimeline, TimelineEntry } from '@/shared/records/timeline';
+import type { RecordTimeline, TimelineEntry } from '@/ports/domain-store';
 import { resolveSupabaseConfig, createDynamicCoreClient, type CoreClient, type SupabaseConfig } from './client';
 
 type EventRow = { from_status: string | null; to_status: string; changed_at: string };

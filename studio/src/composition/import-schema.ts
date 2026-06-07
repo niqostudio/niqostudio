@@ -20,7 +20,7 @@ for (const c of collections) {
 mkdirSync(OUT_DIR, { recursive: true });
 const out = `// 自動生成（pnpm --filter @niqostudio/studio run import-schema）。
 // core の migration から起こした collection schema の下書き。見直して採用する。
-import type { CollectionSchema } from '@/shared/records/schema';
+import type { CollectionSchema } from '@/features/domain-overlay/schema';
 
 export const importedCollections: { table: string; schema: CollectionSchema }[] = ${JSON.stringify(collections, null, 2)};
 `;

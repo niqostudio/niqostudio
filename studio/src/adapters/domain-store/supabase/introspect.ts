@@ -1,7 +1,7 @@
 import 'server-only';
 import { resolveSupabaseConfig, type SupabaseConfig } from './client';
-import type { StructuralField } from '@/shared/records/overlay';
-import type { FieldKind } from '@/shared/records/schema';
+import type { StructuralField } from '@/features/domain-overlay/overlay';
+import type { FieldKind } from '@/features/domain-overlay/schema';
 
 // PostgREST の OpenAPI（GET /rest/v1/）から public スキーマの構造を live で取る（core 変更ゼロ）。
 // 列の型→基底種別、FK は列 description の <fk table='..'/> から。グルーピング/精緻化は overlay 側。

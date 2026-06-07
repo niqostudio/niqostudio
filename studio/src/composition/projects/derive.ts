@@ -2,7 +2,7 @@ import type { GitRepositoryProjection } from '@/features/git-import/ingestion';
 import { StudioExtractionStore } from '@/features/git-import/extraction-store';
 import { getCollection } from '@/composition/collections';
 import { INSTANCE_ID } from '@/composition/instance';
-import { ProjectsProjectionTarget } from '@/domain/projects/projection';
+import { ProjectsProjectionTarget } from './projection';
 
 // 指定 project の源リポ（複数）を集約して射影し、その案件の下書き（1:1・id=projectId）に反映する。
 // engine（GitRepositoryProjection）は注入（アダプタの構築は composition が持つ）。

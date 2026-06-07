@@ -1,5 +1,5 @@
-import type { DraftStore } from '@/shared/records/ports';
-import type { CollectionRecord } from '@/shared/records/record';
+import type { DraftStore } from '@/ports/studio-store';
+import type { CollectionRecord } from '@/shared/model/record';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,

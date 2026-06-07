@@ -1,5 +1,5 @@
 import 'server-only';
-import { structureFor, type StructuralCollection, type StructuralField } from '@/shared/records/overlay';
+import { structureFor, type StructuralCollection, type StructuralField } from '@/features/domain-overlay/overlay';
 import { introspectCore } from './introspect';
 import type { SupabaseConfig } from './client';
 

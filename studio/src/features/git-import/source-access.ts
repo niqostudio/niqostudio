@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import type { SourceAccess, CommitGraph, Commit } from '@/features/git-import/ingestion';
-import type { Source } from '@/shared/records/source';
+import type { Source } from '@/ports/domain-store';
 
 const exec = promisify(execFile);
 

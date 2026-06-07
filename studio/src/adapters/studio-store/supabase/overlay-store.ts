@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
-import type { CollectionSemantics } from '@/shared/records/overlay';
+import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,

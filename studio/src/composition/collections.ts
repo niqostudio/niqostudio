@@ -1,18 +1,18 @@
-import type { CollectionBinding } from '@/shared/records/collection';
+import type { CollectionBinding } from '@/features/collections/collection';
 import type { Fields } from '@/features/collections/collection';
-import type { CollectionSemantics } from '@/shared/records/overlay';
-import { buildSchema } from '@/shared/records/overlay';
-import { coreStructure } from '@/adapters/supabase/structure';
-import { CoreCollectionStore } from '@/adapters/supabase/collection-store';
-import { CoreReferenceResolver } from '@/adapters/supabase/reference-resolver';
-import { CoreProjectStatusHistory } from '@/adapters/supabase/status-history';
-import { CoreProjectWorkflow } from '@/adapters/supabase/project-workflow';
-import { StudioDraftStore } from '@/adapters/studio-store/draft-store';
-import { StudioVersionStore } from '@/adapters/studio-store/version-store';
-import { StudioOverlayStore } from '@/adapters/studio-store/overlay-store';
-import { CoreProjectSourceRegistry } from './adapters/core-project-source-registry';
-import { clientsSemantics } from '@/domain/clients/semantics';
-import { inquiriesSemantics } from '@/domain/inquiries/semantics';
+import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
+import { buildSchema } from '@/features/domain-overlay/overlay';
+import { coreStructure } from '@/adapters/domain-store/supabase/structure';
+import { CoreCollectionStore } from '@/adapters/domain-store/supabase/collection-store';
+import { CoreReferenceResolver } from '@/adapters/domain-store/supabase/reference-resolver';
+import { CoreProjectStatusHistory } from '@/adapters/domain-store/supabase/status-history';
+import { CoreProjectWorkflow } from '@/adapters/domain-store/supabase/project-workflow';
+import { StudioDraftStore } from '@/adapters/studio-store/supabase/draft-store';
+import { StudioVersionStore } from '@/adapters/studio-store/supabase/version-store';
+import { StudioOverlayStore } from '@/adapters/studio-store/supabase/overlay-store';
+import { CoreProjectSourceRegistry } from '@/adapters/domain-store/supabase/source-registry';
+import { clientsSemantics } from '@/composition/semantics/clients';
+import { inquiriesSemantics } from '@/composition/semantics/inquiries';
 import { INSTANCE_ID } from './instance';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、

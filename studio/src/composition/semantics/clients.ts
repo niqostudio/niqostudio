@@ -1,4 +1,4 @@
-import type { CollectionSemantics } from '@/shared/records/overlay';
+import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 
 // clients（顧客）の意味。構造は core から live。
 export const clientsSemantics: CollectionSemantics = {

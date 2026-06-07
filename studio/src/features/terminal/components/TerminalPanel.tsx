@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { subscribeTerminal, isTerminalOpen, toggleTerminal, getActiveRunId } from '@/features/terminal/panel';
 import { listRuns } from '@/features/terminal/actions';
-import type { CommandRun, RunStatus } from '@/adapters/studio-store/run-store';
+import type { CommandRun, RunStatus } from '@/adapters/studio-store/supabase/run-store';
 import { t } from '@/shared/i18n';
 
 // 開いている間だけ実行履歴をポーリングする間隔。実行＝daemon なので更新ボタンは持たず自動反映する。

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { CollectionBinding } from '@/shared/records/collection';
-import { StudioRunStore } from '@/adapters/studio-store/run-store';
+import type { CollectionBinding } from '@/features/collections/collection';
+import { StudioRunStore } from '@/adapters/studio-store/supabase/run-store';
 import { getCollection } from '@/composition/collections';
 import { INSTANCE_ID } from '@/composition/instance';
 import type { Fields } from './collection';

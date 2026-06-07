@@ -1,4 +1,4 @@
-import type { VersionStore, RecordVersion } from '@/shared/records/versioning';
+import type { VersionStore, RecordVersion } from '@/ports/studio-store';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,
