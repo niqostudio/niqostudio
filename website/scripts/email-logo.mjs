@@ -24,8 +24,8 @@ let mark = null;
   const url = process.env.PUBLIC_SUPABASE_URL;
   const key = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (url && key) {
-    const supabase = createClient(url, key);
-    const { data } = await supabase.from('profile').select('logo_svg').eq('id', 'singleton').single();
+    const supabase = createClient(url, key, { db: { schema: 'core' } });
+    const { data } = await supabase.from('public_profile').select('logo_svg').eq('id', 'singleton').single();
     const svg = data?.logo_svg;
     if (svg) {
       const resolved = svg

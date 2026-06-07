@@ -22,8 +22,8 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const supabase = createClient(url, key);
-const { data } = await supabase.from('profile').select('logo_svg').eq('id', 'singleton').single();
+const supabase = createClient(url, key, { db: { schema: 'core' } });
+const { data } = await supabase.from('public_profile').select('logo_svg').eq('id', 'singleton').single();
 const logo = data?.logo_svg;
 if (!logo) {
   console.error('org-icon: profile.logo_svg が無い');
