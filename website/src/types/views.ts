@@ -8,11 +8,16 @@ export type Deliverable = { kind: string; name: string; url: string | null; imag
 export type Testimonial = { quote: string; role: string | null };
 export type ContentLink = { slug: string; title: string };
 
+// 被写体の種別。project＝有期の客先案件 / product＝継続の自社プロダクト。
+export type SubjectKind = 'project' | 'product';
+
 // 公開ケーススタディ1件（成果起点の物語）。core の showcases view 由来。
 export type CaseView = {
   slug: string;
   title: string;
   summary: string | null;
+  // 被写体が project か product か。今は /cases に一本化、将来 /products 分割の分岐点。
+  subjectKind: SubjectKind;
   client: ClientRef | null;
   problems: Problem[];
   metrics: Metric[];

@@ -3,6 +3,7 @@ import type { CaseRow } from './core';
 import { ENTRY_SERVICE_SLUG } from '../config/site';
 import type {
   CaseView,
+  SubjectKind,
   ServiceView,
   ProfileView,
   ClientRef,
@@ -23,6 +24,7 @@ export function toCaseView(row: CaseRow, related: ContentLink[] = []): CaseView 
     slug: row.slug!,
     title: row.title!,
     summary: row.summary,
+    subjectKind: (row.subject_kind as SubjectKind | null) ?? 'project',
     client,
     problems: (row.problems as unknown as Problem[] | null) ?? [],
     metrics: (row.metrics as unknown as Metric[] | null) ?? [],

@@ -8,7 +8,7 @@ export type CaseRow = Case;
 
 // view が公開してよい列のみを明示 SELECT（内部表は anon 権限なし＝直読みは権限エラーで fail-fast）。
 const CASE_COLS =
-  'slug, title, summary, thumbnail_url, period, display_priority, project_id, tech_stack, testimonial, client_name, client_industry, problems, deliverables, metrics';
+  'slug, title, summary, thumbnail_url, period, display_priority, project_id, product_id, subject_kind, tech_stack, testimonial, client_name, client_industry, problems, deliverables, metrics';
 
 // fallback / モックは持たない。接続不可や取得失敗は throw してビルドを止める。
 // 「公開対象が無い（空配列）」「該当 slug 無し（null）」は正常な状態であり error ではない。
