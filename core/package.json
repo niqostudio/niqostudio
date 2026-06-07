@@ -14,7 +14,7 @@
     "db:diff": "supabase db diff -f",
     "db:push": "supabase db push",
     "db:pull": "supabase db pull",
-    "db:types": "supabase gen types typescript --local --schema public > ../packages/db-types/src/database.ts",
+    "db:types": "supabase gen types typescript --local --schema core > ../packages/db-types/src/database.ts",
     "seed:dev": "psql $SUPABASE_DB_URL -f seeds/dev.sql",
     "functions:serve": "supabase functions serve",
     "functions:deploy": "supabase functions deploy"
