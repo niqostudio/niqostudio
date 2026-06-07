@@ -24,8 +24,9 @@ Thumbs.db
 .vscode/
 .idea/
 
-# 本番データは Studio で管理（リポジトリで追跡しない）
-seeds/production-initial.sql
+# seed は dev.sql（ダミー）のみ追跡。実データ seed は追跡しない。
+seeds/*.sql
+!seeds/dev.sql
 
 # Claude Code（ローカル設定・状態は無視、rules のみ追跡）
 .claude/*
