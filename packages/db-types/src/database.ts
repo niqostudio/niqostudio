@@ -68,7 +68,8 @@ export type Database = {
           image_urls: string[]
           kind: string
           name: string
-          project_id: string
+          product_id: string | null
+          project_id: string | null
           updated_at: string
           url: string | null
         }
@@ -79,7 +80,8 @@ export type Database = {
           image_urls?: string[]
           kind: string
           name: string
-          project_id: string
+          product_id?: string | null
+          project_id?: string | null
           updated_at?: string
           url?: string | null
         }
@@ -90,11 +92,19 @@ export type Database = {
           image_urls?: string[]
           kind?: string
           name?: string
-          project_id?: string
+          product_id?: string | null
+          project_id?: string | null
           updated_at?: string
           url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deliverables_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deliverables_project_id_fkey"
             columns: ["project_id"]
@@ -177,7 +187,8 @@ export type Database = {
           kind: string
           label: string
           previous: string | null
-          project_id: string
+          product_id: string | null
+          project_id: string | null
           unit: string | null
           updated_at: string
         }
@@ -190,7 +201,8 @@ export type Database = {
           kind?: string
           label: string
           previous?: string | null
-          project_id: string
+          product_id?: string | null
+          project_id?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -203,7 +215,8 @@ export type Database = {
           kind?: string
           label?: string
           previous?: string | null
-          project_id?: string
+          product_id?: string | null
+          project_id?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -213,6 +226,13 @@ export type Database = {
             columns: ["deliverable_id"]
             isOneToOne: false
             referencedRelation: "deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metrics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -297,7 +317,8 @@ export type Database = {
           id: string
           outcome: string | null
           problem: string
-          project_id: string
+          product_id: string | null
+          project_id: string | null
           solution: string | null
           updated_at: string
         }
@@ -306,7 +327,8 @@ export type Database = {
           id?: string
           outcome?: string | null
           problem: string
-          project_id: string
+          product_id?: string | null
+          project_id?: string | null
           solution?: string | null
           updated_at?: string
         }
@@ -315,11 +337,19 @@ export type Database = {
           id?: string
           outcome?: string | null
           problem?: string
-          project_id?: string
+          product_id?: string | null
+          project_id?: string | null
           solution?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "problems_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "problems_project_id_fkey"
             columns: ["project_id"]
@@ -335,6 +365,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          internal_notes: string | null
+          launched_on: string | null
+          name: string
+          slug: string
+          status: string
+          summary: string | null
+          tech_stack: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          launched_on?: string | null
+          name: string
+          slug: string
+          status?: string
+          summary?: string | null
+          tech_stack?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          launched_on?: string | null
+          name?: string
+          slug?: string
+          status?: string
+          summary?: string | null
+          tech_stack?: string[]
+          updated_at?: string
+        }
+        Relationships: []
       }
       profile: {
         Row: {
@@ -595,9 +664,11 @@ export type Database = {
         Row: {
           client_id: string | null
           created_at: string
+          due_on: string | null
           ended_on: string | null
           id: string
           internal_notes: string | null
+          product_id: string | null
           service_id: string | null
           started_on: string | null
           status: string
@@ -609,9 +680,11 @@ export type Database = {
         Insert: {
           client_id?: string | null
           created_at?: string
+          due_on?: string | null
           ended_on?: string | null
           id?: string
           internal_notes?: string | null
+          product_id?: string | null
           service_id?: string | null
           started_on?: string | null
           status?: string
@@ -623,9 +696,11 @@ export type Database = {
         Update: {
           client_id?: string | null
           created_at?: string
+          due_on?: string | null
           ended_on?: string | null
           id?: string
           internal_notes?: string | null
+          product_id?: string | null
           service_id?: string | null
           started_on?: string | null
           status?: string
@@ -640,6 +715,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -864,7 +946,8 @@ export type Database = {
           display_priority: number
           id: string
           period: string | null
-          project_id: string
+          product_id: string | null
+          project_id: string | null
           slug: string
           status: string
           summary: string | null
@@ -878,7 +961,8 @@ export type Database = {
           display_priority?: number
           id?: string
           period?: string | null
-          project_id: string
+          product_id?: string | null
+          project_id?: string | null
           slug: string
           status?: string
           summary?: string | null
@@ -892,7 +976,8 @@ export type Database = {
           display_priority?: number
           id?: string
           period?: string | null
-          project_id?: string
+          product_id?: string | null
+          project_id?: string | null
           slug?: string
           status?: string
           summary?: string | null
@@ -901,6 +986,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "showcase_entries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "showcase_entries_project_id_fkey"
             columns: ["project_id"]
@@ -1137,8 +1229,10 @@ export type Database = {
           metrics: Json | null
           period: string | null
           problems: Json | null
+          product_id: string | null
           project_id: string | null
           slug: string | null
+          subject_kind: string | null
           summary: string | null
           tech_stack: string[] | null
           testimonial: Json | null
@@ -1146,6 +1240,13 @@ export type Database = {
           title: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "showcase_entries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "showcase_entries_project_id_fkey"
             columns: ["project_id"]
