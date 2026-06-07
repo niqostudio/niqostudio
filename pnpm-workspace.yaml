@@ -1,6 +1,7 @@
 packages:
   - "website"
   - "core"
+  - "studio"
   - "packages/*"
 # これらは prebuilt バイナリで動作するためビルドスクリプトは実行しない（postinstall 不要）。
 allowBuilds:

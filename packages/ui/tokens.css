@@ -1,0 +1,24 @@
+/* NIQO STUDIO デザイントークンの正本（website / studio が共有）。
+   色・角丸・コンテナ・ブレークポイント。配色は warm 単一。
+   fonts はロード機構がアプリごとに違う（Astro fonts / next/font）ため各アプリ側で定義する。 */
+@theme {
+  --color-bg: #faf9f8;
+  --color-surface: #ffffff;
+  --color-surface-dark: #211d19;
+  --color-fg: #1c1917;
+  --color-muted: #57534e;
+  --color-border: #d6d3d1;
+  --color-border-subtle: #eae7e3;
+  --color-border-strong: #292524;
+  --color-border-dark: #34302c;
+  --color-accent: #15803d;
+  --color-gold: #dcb441;
+  --color-error: #dc2626;
+  --color-on-dark: #faf9f7;
+  --color-on-dark-muted: #d6d3d1;
+
+  --radius-sm: 0.125rem;
+  --container-page: 80rem;
+  --container-readable: 48rem;
+  --breakpoint-sm: 768px;
+}

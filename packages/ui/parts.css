@@ -1,0 +1,39 @@
+/* UI パーツのスキンベース（website / studio が共有）。
+   色・枠・角丸・形だけを定義し、中身や中身ごとのレイアウトには関与しない。
+   各アプリは薄いラッパー（.astro / .tsx）でこれらを着せ、中身と配置はそちらが持つ。 */
+@layer components {
+  /* ボタン：形（角丸・枠・余白）。primary も透明 border を持たせ secondary と高さを揃える。 */
+  .btn {
+    @apply inline-block rounded-md border px-5 py-2.5 text-sm;
+  }
+  .btn-primary {
+    @apply border-transparent bg-accent text-bg transition-opacity hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply border-border-subtle bg-surface transition-colors hover:border-border;
+  }
+
+  /* カード面：色・枠・角丸のみ。内側 padding やレイアウトは持たない。 */
+  .card {
+    @apply rounded-sm border border-border-subtle bg-surface;
+  }
+  .card-interactive {
+    @apply transition-colors hover:border-accent;
+  }
+
+  /* チップ：枠付きの小さなタグの形。 */
+  .chip {
+    @apply rounded-sm border text-xs text-muted;
+  }
+  .chip-mono {
+    @apply border-border px-2 py-0.5 font-mono;
+  }
+  .chip-soft {
+    @apply border-border-subtle px-2 py-1;
+  }
+
+  /* セクションラベル：mono の小見出しタイポ。サイズ・ティック等の構成は利用側。 */
+  .section-label {
+    @apply font-mono uppercase tracking-wide text-muted;
+  }
+}
