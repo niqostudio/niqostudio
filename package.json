@@ -8,7 +8,9 @@
     "db:stop": "pnpm --filter @niqostudio/infra run db:stop",
     "db:status": "pnpm --filter @niqostudio/infra run db:status",
     "db:reset": "node scripts/db-reset.mjs",
-    "db:types": "pnpm --filter @niqostudio/infra run types"
+    "db:types": "pnpm --filter @niqostudio/infra run types",
+    "dev:website": "pnpm --filter @niqostudio/website run dev",
+    "dev:studio": "pnpm --filter @niqostudio/studio run dev"
   },
   "engines": {
     "node": ">=24"
