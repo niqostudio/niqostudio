@@ -38,9 +38,9 @@ nav:
   - 変数の配置: variables.md
   - デプロイ手順: deploy.md
   - セキュリティ: security.md
-  - core:
+  - データベース:
       - スキーマ: core/schema.md
-      - 運用: core/operations.md
+      - 運用: database.md
   - infra:
       - Cloudflare 手順: infra/cloudflare.md
       - Resend 手順: infra/resend.md
@@ -52,3 +52,5 @@ nav:
       - 0001 モノリポ構成: adr/0001-monorepo.md
       - 0002 config domain-centric: adr/0002-config-domain-centric.md
       - 0003 環境モデル: adr/0003-environment-per-module.md
+      - 0004 migration ツール: adr/0004-migration-tooling.md
+      - 0005 Supabase を infra へ: adr/0005-supabase-into-infra-platform.md

@@ -9,7 +9,7 @@
 - 本番 migration（dbmate）用の接続文字列は Database → Connection string → **Session pooler**（CI は IPv4 のみ）。`SUPABASE_DB_URL` に設定。詳細は [core 運用](../database.md)。
 
 ## 設定の IaC（terraform `supabase_settings`）
-プロジェクト設定は [`infra/stacks/supabase`](../../infra/stacks/supabase/) で terraform 管理する。まず **api ブロック**
+プロジェクト設定は `infra/stacks/supabase`（terraform stack）で管理する。まず **api ブロック**
 （Data API が露出するスキーマ＝`core` / `studio` / `graphql_public`）だけを管理する。`supabase_settings` は宣言した
 block のみ partial 更新し、未宣言の設定には触れない（delete は no-op）。auth / storage / network は据え置き（後日 additive）。
 
