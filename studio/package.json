@@ -9,9 +9,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "import-schema": "tsx src/composition/import-schema.ts",
-    "db:migrate": "node store/run.mjs migrate",
-    "db:seed": "node store/run.mjs seed"
+    "import-schema": "tsx src/composition/import-schema.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -28,7 +26,6 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "pg": "^8.21.0",
     "pgsql-ast-parser": "^12.0.2",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.20.0",

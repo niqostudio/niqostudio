@@ -6,9 +6,18 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      dbmate:
+        specifier: 2.33.0
+        version: 2.33.0
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
 
-  core:
+  core: {}
+
+  infra:
     devDependencies:
       supabase:
         specifier: ^2.104.0
@@ -57,9 +66,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.16)
-      pg:
-        specifier: ^8.21.0
-        version: 8.21.0
       pgsql-ast-parser:
         specifier: ^12.0.2
         version: 12.0.2
@@ -260,6 +266,41 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@dbmate/darwin-arm64@2.33.0':
+    resolution: {integrity: sha512-YbB2IYigcHV+5qo35wvHoKdRXPQdtXv+tUoiEEhXX9gmJm8t/OqsPguR5m7+6rRHE7hsBEtxruykBOKVArqc0A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@dbmate/darwin-x64@2.33.0':
+    resolution: {integrity: sha512-6y4BSqUj6m9halhUi6PNVOUBmsciRjCFAlXWk0WFu35Eg7ojZWWW3BRD7bRcQwZcsmjKn6uCb/k5hFci5/gkxQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@dbmate/linux-arm64@2.33.0':
+    resolution: {integrity: sha512-HFYIGBKTI+BQC8Ps6nzj1Zb8w7I61IGstveNeEQYKTxkV1CPDMajYX52heJ7Jv3ignOrzzy054YhV+z+j6xV8g==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@dbmate/linux-arm@2.33.0':
+    resolution: {integrity: sha512-Xm6w63BjPtab0LgAleDqzhSDIvFJOqN7v8RMJaydPlrPNIBauJwEOWKu5nSnUGNKi9PHZXIHCu0hI8m0fAI6eQ==}
+    cpu: [arm]
+    os: [linux]
+
+  '@dbmate/linux-ia32@2.33.0':
+    resolution: {integrity: sha512-tyVbpGPRds5Rf5AbP5W1+ip319GZTWqy+jjMWKVyAuEbH/6Kjn88RhVqG6f7NsOvHgS3aekOQIBW6ZMkm0crEw==}
+    cpu: [ia32]
+    os: [linux]
+
+  '@dbmate/linux-x64@2.33.0':
+    resolution: {integrity: sha512-SxzgU1TzWA37N2GuOUCcV2JjQKiEdzQzfI7k15YRxPw2K3UZc2hueFtF1l2HAoilDi8ekOV2JFUb9XmfqhgSrA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@dbmate/win32-x64@2.33.0':
+    resolution: {integrity: sha512-1axw11wBuJ6mLByBtJg4o7fxUkyX+Vz435N3vfdH8OdSPWnpygp/nVyo3iz58SR7XnJkCJBzoKjtsRONeAsO2g==}
+    cpu: [x64]
+    os: [win32]
 
   '@emmetio/abbreviation@2.3.3':
     resolution: {integrity: sha512-mgv58UrU3rh4YgbE/TzgLQwJ3pFsHHhCLqY20aJq+9comytTXUDNGG/SMtSeMJdkpxgXSXunBGLD8Boka3JyVA==}
@@ -1794,6 +1835,10 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  dbmate@2.33.0:
+    resolution: {integrity: sha512-UNyMVmEt+AS0xXrcPIHtSRF8eMgh9YJDUyW2S/l8QO/yB8uGT4eO1g18g+4GKdkPWVY9NHUTA1584jvWHK57JQ==}
+    hasBin: true
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -3663,6 +3708,27 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
+  '@dbmate/darwin-arm64@2.33.0':
+    optional: true
+
+  '@dbmate/darwin-x64@2.33.0':
+    optional: true
+
+  '@dbmate/linux-arm64@2.33.0':
+    optional: true
+
+  '@dbmate/linux-arm@2.33.0':
+    optional: true
+
+  '@dbmate/linux-ia32@2.33.0':
+    optional: true
+
+  '@dbmate/linux-x64@2.33.0':
+    optional: true
+
+  '@dbmate/win32-x64@2.33.0':
+    optional: true
+
   '@emmetio/abbreviation@2.3.3':
     dependencies:
       '@emmetio/scanner': 1.0.4
@@ -4864,6 +4930,16 @@ snapshots:
   cssom@0.5.0: {}
 
   csstype@3.2.3: {}
+
+  dbmate@2.33.0:
+    optionalDependencies:
+      '@dbmate/darwin-arm64': 2.33.0
+      '@dbmate/darwin-x64': 2.33.0
+      '@dbmate/linux-arm': 2.33.0
+      '@dbmate/linux-arm64': 2.33.0
+      '@dbmate/linux-ia32': 2.33.0
+      '@dbmate/linux-x64': 2.33.0
+      '@dbmate/win32-x64': 2.33.0
 
   debug@4.4.3:
     dependencies:

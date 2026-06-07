@@ -1,0 +1,24 @@
+{
+  "name": "@niqostudio/infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Platform provisioning: Supabase project (local stack) and Terraform (DNS/email/Pages/state)",
+  "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "login": "supabase login",
+    "link": "supabase link",
+    "types": "supabase gen types typescript --local --schema core > ../packages/db-types/src/database.ts",
+    "tf:init": "terraform init",
+    "tf:plan": "terraform plan",
+    "tf:apply": "terraform apply"
+  },
+  "devDependencies": {
+    "supabase": "^2.104.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

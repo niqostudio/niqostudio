@@ -2,8 +2,9 @@ packages:
   - "website"
   - "core"
   - "studio"
+  - "infra"
   - "packages/*"
-# これらは prebuilt バイナリで動作するためビルドスクリプトは実行しない（postinstall 不要）。
+# prebuilt バイナリで動くためビルドスクリプト不要（postinstall 等は実行しない）。
 allowBuilds:
   esbuild: false
   sharp: false

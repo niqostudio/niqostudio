@@ -64,12 +64,9 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-# シードは core/seeds/ に置く（supabase ディレクトリの1つ上）。
-sql_paths = ["../seeds/dev.sql"]
+# seed は root の db:reset オーケストレータが dbmate 適用後に pg で投入する（supabase 自動 seed は無効）。
+enabled = false
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.

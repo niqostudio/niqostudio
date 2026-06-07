@@ -24,3 +24,7 @@ npm-debug.log*
 
 # ブランドアイコン生成物（gen:icon の出力・手動アップロード用・追跡しない）
 org-icon.png
+
+# ローカルツール（Atlas バイナリ）・一時検証物（追跡しない）
+.bin/
+.tmp-baseline/

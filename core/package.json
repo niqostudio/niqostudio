@@ -2,26 +2,7 @@
   "name": "@niqostudio/core",
   "version": "0.1.0",
   "private": true,
-  "description": "Data layer (Supabase IaC) for NIQO STUDIO",
-  "packageManager": "pnpm@11.5.0",
-  "scripts": {
-    "login": "supabase login",
-    "link": "supabase link",
-    "db:start": "supabase start",
-    "db:stop": "supabase stop",
-    "db:status": "supabase status",
-    "db:reset": "supabase db reset",
-    "db:diff": "supabase db diff -f",
-    "db:push": "supabase db push",
-    "db:pull": "supabase db pull",
-    "db:types": "supabase gen types typescript --local --schema core > ../packages/db-types/src/database.ts",
-    "db:seed": "psql $SUPABASE_DB_URL -f seeds/dev.sql",
-    "functions:serve": "supabase functions serve",
-    "functions:deploy": "supabase functions deploy"
-  },
-  "devDependencies": {
-    "supabase": "^2.104.0"
-  },
+  "description": "Data layer: schema (dbmate migrations) and RLS for NIQO STUDIO",
   "engines": {
     "node": ">=24"
   }

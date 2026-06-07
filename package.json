@@ -4,13 +4,17 @@
   "private": true,
   "packageManager": "pnpm@11.5.0",
   "scripts": {
-    "db:start": "pnpm --filter @niqostudio/core run db:start",
-    "db:stop": "pnpm --filter @niqostudio/core run db:stop",
-    "db:status": "pnpm --filter @niqostudio/core run db:status",
-    "db:reset": "pnpm --filter @niqostudio/core run db:reset && pnpm --filter @niqostudio/studio run db:migrate",
-    "db:types": "pnpm --filter @niqostudio/core run db:types"
+    "db:start": "pnpm --filter @niqostudio/infra run db:start",
+    "db:stop": "pnpm --filter @niqostudio/infra run db:stop",
+    "db:status": "pnpm --filter @niqostudio/infra run db:status",
+    "db:reset": "node scripts/db-reset.mjs",
+    "db:types": "pnpm --filter @niqostudio/infra run types"
   },
   "engines": {
     "node": ">=24"
+  },
+  "devDependencies": {
+    "dbmate": "2.33.0",
+    "pg": "^8.21.0"
   }
 }
