@@ -1,5 +1,5 @@
 // core（Supabase）の生成型（@niqostudio/db-types）を唯一の正にし、画面で使う別名・サブ型をここに集約する。
-// 生成は core 側 `pnpm --filter @niqostudio/core run db:types`（スキーマ変更時）。
+// 生成は root `pnpm db:types`（infra の local スキーマから・スキーマ変更時）。
 import type { Database } from '@niqostudio/db-types';
 
 export type { Database };

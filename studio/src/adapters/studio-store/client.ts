@@ -2,7 +2,7 @@ import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
 // studio 自前 store のスキーマ型。core（@niqostudio/db-types）とは独立に持つ＝接続を別 Supabase へ
-// 差し替えられるようにするため。スキーマ定義は studio/store/migrations。
+// 差し替えられるようにするため。スキーマ定義は studio/migrations。
 // supabase-js の型は public スキーマ前提が強く studio スキーマと噛み合わないため、ここでは
 // クライアントを素のまま使い、行の形は RecordRow で adapter 境界に型を与える。
 type Json = string | number | boolean | null | { [k: string]: Json } | Json[];

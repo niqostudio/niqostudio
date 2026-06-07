@@ -22,9 +22,6 @@ npm-debug.log*
 # 生成 OG 画像（prebuild で都度生成）
 public/og/
 
-# Supabase CLI のローカル状態
-supabase/.temp/
-
 # OS / IDE
 .DS_Store
 .vscode/

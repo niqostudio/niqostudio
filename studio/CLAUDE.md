@@ -34,7 +34,7 @@ app（薄いルート）→ features → shared / domain ← adapters
 
 - `pnpm --filter @niqostudio/studio dev` / `build` / `typecheck`。
 - 実データ表示は core 起動＋`studio/.env.local`（`SUPABASE_URL` / `SUPABASE_SECRET_KEY` ＝ `db:status`）。
-- 型は core 側で生成（`@niqostudio/db-types` を参照）。
+- 型は root `pnpm db:types`（infra の local スキーマから）で生成（`@niqostudio/db-types` を参照）。
 
 ## 共通規約
 
