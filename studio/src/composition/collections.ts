@@ -50,6 +50,7 @@ const projects: CollectionBinding<Fields> = {
 
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
+  products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
   clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
   inquiries: coreCollection('inquiries', '問い合わせ', inquiriesSemantics) as CollectionBinding<unknown>,
 };
