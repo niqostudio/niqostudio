@@ -12,6 +12,7 @@ Terraform で管理する。アプリ実装は持たない。
 
 - `modules/<name>` … 再利用モジュール（`main.tf` / `variables.tf` / `outputs.tf`）。
 - `stacks/<name>` … ドメイン/環境ごとの合成。**state は stack 単位**で分離する。
+- **toolchain は infra が npm で所有**（`supabase` / `@jahed/terraform`）。env グローバル CLI に依存せず、版は `infra/package.json` 一本。terraform は `pnpm --filter @niqostudio/infra exec terraform`（初回実行時に HashiCorp 署名付きバイナリを取得・キャッシュ）。local も CI も同経路。
 - 定数の正本は root の [config.\<env\>.json](../config.production.json)（env ごとに1ファイル・committed。各 stack が `var.env` で選んで `jsondecode` で読む）。website も同じファイルを直読する。
 - 手順・設計: [docs/deploy.md](../docs/deploy.md) / [docs/infra/cloudflare.md](../docs/infra/cloudflare.md) / [docs/infra/resend.md](../docs/infra/resend.md) / [docs/infra/email.md](../docs/infra/email.md) / [docs/architecture.md](../docs/architecture.md) / [docs/variables.md](../docs/variables.md)。
 

@@ -2,6 +2,7 @@ name: "infra: apply"
 
 # 本番 infra を apply する。シークレットを使うため dispatch のみ（fork PR からは動かない）。
 # 跨ぎ配布（publish-contract）は monorepo では不要なので持たない。
+# terraform は infra 所有の npm（@jahed/terraform）を使う＝版は infra/package.json 一本。
 on:
   workflow_dispatch:
 
@@ -12,6 +13,10 @@ permissions:
 concurrency:
   group: terraform-apply
   cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: infra
 
 jobs:
   apply:
@@ -24,12 +29,17 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_TFSTATE_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v6
-      - uses: hashicorp/setup-terraform@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
-          terraform_version: "1.15.5"
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # terraform バイナリは @jahed/terraform が初回実行時に取得（HashiCorp 署名＋checksum 検証）。
+      - name: install
+        run: pnpm install --frozen-lockfile --filter @niqostudio/infra
 
       - name: apply niqostudio-com
-        working-directory: infra/stacks/niqostudio-com
         # 機微(PII)は Secret、公開DNS(Resend)は Variable に分離して env 経由で渡す。
         env:
           R2_TFSTATE_BUCKET:   ${{ vars.R2_TFSTATE_BUCKET }}
@@ -39,25 +49,24 @@ jobs:
         run: |
           # 公開DNS(Resend)は JSON 配列の Variable。TF_VAR は HCL 解釈で JSON object を受けないため、
           # terraform が native JSON で読む .auto.tfvars.json に包んで渡す（未設定は空リスト）。
-          printf '{"resend_dns_records": %s}' "${RESEND_DNS_RECORDS:-[]}" > resend.auto.tfvars.json
-          cat > backend.tfbackend <<EOF
+          printf '{"resend_dns_records": %s}' "${RESEND_DNS_RECORDS:-[]}" > stacks/niqostudio-com/resend.auto.tfvars.json
+          cat > stacks/niqostudio-com/backend.tfbackend <<EOF
           bucket    = "$R2_TFSTATE_BUCKET"
           key       = "niqostudio-com/terraform.tfstate"
           endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
           EOF
-          terraform init -backend-config=backend.tfbackend -input=false
-          terraform apply -auto-approve -input=false
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqostudio-com init -backend-config=backend.tfbackend -input=false
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqostudio-com apply -auto-approve -input=false
 
       - name: apply niqo-studio
-        working-directory: infra/stacks/niqo-studio
         env:
           R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
           CF_ACCOUNT_ID:     ${{ vars.CF_ACCOUNT_ID }}
         run: |
-          cat > backend.tfbackend <<EOF
+          cat > stacks/niqo-studio/backend.tfbackend <<EOF
           bucket    = "$R2_TFSTATE_BUCKET"
           key       = "niqo-studio/terraform.tfstate"
           endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
           EOF
-          terraform init -backend-config=backend.tfbackend -input=false
-          terraform apply -auto-approve -input=false
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqo-studio init -backend-config=backend.tfbackend -input=false
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqo-studio apply -auto-approve -input=false
