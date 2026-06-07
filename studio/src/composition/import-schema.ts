@@ -2,9 +2,9 @@ import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { importSupabaseSchema } from '@/features/supabase-import';
 
-// 顧客 SoR＝core(Supabase) の migration から collection schema 下書きを起こす。
+// 顧客 SoR＝core の migration から collection schema 下書きを起こす。
 // 生成物は見直して採用する前提（status の選択肢・参照・ラベルは要調整）。生成物は gitignore。
-const MIGRATIONS = '../core/supabase/migrations';
+const MIGRATIONS = '../core/migrations';
 const OUT_DIR = 'src/composition/generated';
 
 const files = readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort();
