@@ -9,12 +9,19 @@ NIQO STUDIO core（Supabase IaC）の運用手順。
 
 ## ローカル開発
 
-| 操作 | コマンド |
+DB ライフサイクルは**リポジトリ root から**実行する（root が core / studio に委譲）。
+
+| 操作 | コマンド（root） |
 |---|---|
-| ローカル Supabase 起動 | `pnpm run db:start` |
-| 全マイグレーション再適用（リセット） | `pnpm run db:reset` |
-| 状態・接続情報の表示（ローカル専用キー） | `pnpm run db:status` |
-| 停止 | `pnpm run db:stop` |
+| ローカル Supabase 起動 | `pnpm db:start` |
+| 全マイグレーション再適用（リセット） | `pnpm db:reset` |
+| 状態・接続情報の表示（ローカル専用キー） | `pnpm db:status` |
+| 停止 | `pnpm db:stop` |
+| 型再生成（local スキーマから） | `pnpm db:types` |
+
+DB は **core スキーマと studio スキーマの両方**を含む。`db:reset` はその両方を作り直す＝core の migration 再適用（＋`dev.sql`）に続けて `studio` スキーマを再作成する。後者を欠くと PostgREST がスキーマキャッシュを構築できず（`db-schemas` に `studio` を含むため）公開 view も含め全 REST が 503 になるため、root の `db:reset` が一手で両方を面倒見る。
+
+migration 作成系（`db:diff` / `db:push` / `db:pull` / `link`）は core 文脈で実行する（`pnpm --filter @niqostudio/core run ...`）。
 
 ## マイグレーション
 
@@ -23,7 +30,7 @@ NIQO STUDIO core（Supabase IaC）の運用手順。
 ### 手順
 
 1. `supabase/migrations/` に `YYYYMMDDHHMMSS_説明.sql` を追加。
-2. ローカル検証：`pnpm run db:reset`（エラーなく適用されるか）。
+2. ローカル検証：`pnpm db:reset`（root・エラーなく適用されるか）。
 3. 本番反映：db push（後述）。
 4. consumer（website 等）で型再生成（後述）。
 
@@ -75,7 +82,7 @@ NIQO STUDIO core（Supabase IaC）の運用手順。
 
 ## 型生成（packages/db-types）
 
-- **core が local スキーマから生成**する：`pnpm run db:start`（migrations 適用）→ `pnpm run db:types`（`supabase gen types --local` を `packages/db-types/src/database.ts` に書き出し）。consumer（website 等）は workspace 依存 `@niqostudio/db-types` を参照する。
+- **local スキーマから生成**する：`pnpm db:start`（migrations 適用）→ `pnpm db:types`（root・`supabase gen types --local` を `packages/db-types/src/database.ts` に書き出し）。consumer（website 等）は workspace 依存 `@niqostudio/db-types` を参照する。
 - 型の正本は **migrations**（live プロジェクトでなく local の適用結果を introspection）。**CI（`core: types` workflow）が migrations と生成型のドリフトを検知**するので、スキーマ変更時は再生成してコミットする。
 
 ## keep-alive

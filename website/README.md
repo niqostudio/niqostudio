@@ -35,7 +35,7 @@ pnpm dev
 
 core スキーマの生成型は workspace パッケージ `@niqostudio/db-types`（正本）。
 `src/types/database.ts` はそれを読み込み、画面で使う別名・サブ型に集約する薄い層。
-型の再生成は core 側で `pnpm --filter @niqostudio/core run db:types`（スキーマ変更時・local スキーマから）。
+型の再生成は root の `pnpm db:types`（スキーマ変更時・core の local スキーマから）。
 
 ## 環境変数
 

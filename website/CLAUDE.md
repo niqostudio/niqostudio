@@ -26,7 +26,7 @@ NIQO STUDIO の公開サイト。core データ層を「ビュー」として見
 ## 開発
 
 - `pnpm dev` / `pnpm build`（prebuild で OG 画像・favicon を生成）/ `pnpm check`
-- 型の再生成は core 側（`pnpm --filter @niqostudio/core run db:types`・local スキーマから）。website は生成しない。
+- 型の再生成は root の `pnpm db:types`（core の local スキーマから生成）。website は生成しない。
 - **ビルドは実データ前提（fail-fast）**：Supabase 公開値（`.env`）が未設定、または root の `config.<env>.json`（canonical ドメイン）が読めなければ停止する。生成物は本番相当（モック・placeholder を出さない）。
 
 ## 共通規約
