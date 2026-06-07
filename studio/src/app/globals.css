@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* studio は業務システム＝白ベースの中立トークン（website のブランド warm とは分離）。
+   色は機能（accent＝操作・status＝success/error/warning/info）に絞り、面は白/淡灰。
+   fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
+@theme {
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-fg: #1c2024;
+  --color-muted: #6b7280;
+  --color-border: #e3e6ea;
+  --color-border-subtle: #eef0f3;
+  --color-accent: #2563eb;
+  --color-error: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+
+  --radius-sm: 0;
+  --container-readable: 48rem;
+  --breakpoint-sm: 768px;
+
+  --font-sans: var(--font-inter), var(--font-noto-jp), system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+}
+
+/* UI パーツのスキン（色・枠・角丸・形のみ）。中立トークンで描く。 */
+@layer components {
+  .btn {
+    @apply inline-block rounded-sm border px-4 py-2 text-sm;
+  }
+  .btn-primary {
+    @apply border-transparent bg-accent text-surface transition-opacity hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply border-border bg-surface transition-colors hover:border-muted;
+  }
+  .card {
+    @apply border border-border bg-surface;
+  }
+  .chip {
+    @apply border text-xs text-muted;
+  }
+  /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus 枠色は下のグローバル規則。 */
+  .field {
+    @apply rounded-sm border border-border bg-surface px-2 py-1.5 text-sm;
+  }
+  .chip-mono {
+    @apply border-border px-2 py-0.5 font-mono;
+  }
+  .section-label {
+    @apply font-mono uppercase tracking-wide text-muted;
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* フォーカスは枠線の色だけ変える（太い既定アウトラインは出さない）。 */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

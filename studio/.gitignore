@@ -1,0 +1,17 @@
+# dependencies / build
+/node_modules/
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets / env（値は追跡しない・names は .env.example）
+.env
+.env.*
+!.env.example
+
+# import-schema 等の生成物（見直して採用する前提・regenerable）
+src/composition/generated/
+
+# git CLI remote 取得の cache（bare clone）
+/.repo-cache/
