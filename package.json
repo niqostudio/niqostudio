@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@11.5.0",
+  "scripts": {
+    "db:start": "pnpm --filter @niqostudio/core run db:start",
+    "db:stop": "pnpm --filter @niqostudio/core run db:stop",
+    "db:status": "pnpm --filter @niqostudio/core run db:status",
+    "db:reset": "pnpm --filter @niqostudio/core run db:reset && pnpm --filter @niqostudio/studio run db:migrate",
+    "db:types": "pnpm --filter @niqostudio/core run db:types"
+  },
   "engines": {
     "node": ">=24"
   }

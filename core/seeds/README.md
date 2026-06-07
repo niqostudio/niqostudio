@@ -8,4 +8,4 @@
 
 ## 使い方
 
-- 開発用ダミー投入：`pnpm run seed:dev`
+- 開発用ダミー投入：`pnpm --filter @niqostudio/core run db:seed`（通常は root `pnpm db:reset` 時に自動投入されるため不要）

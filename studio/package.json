@@ -10,8 +10,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "import-schema": "tsx src/composition/import-schema.ts",
-    "store:migrate": "node store/run.mjs migrate",
-    "store:seed": "node store/run.mjs seed"
+    "db:migrate": "node store/run.mjs migrate",
+    "db:seed": "node store/run.mjs seed"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
