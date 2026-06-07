@@ -8,31 +8,32 @@ export type CaseRow = Case;
 
 // view が公開してよい列のみを明示 SELECT（内部表は anon 権限なし＝直読みは権限エラーで fail-fast）。
 const CASE_COLS =
-  'slug, title, summary, thumbnail_url, period, display_order, project_id, tech_stack, testimonial, client_name, client_industry, problems, deliverables, metrics';
+  'slug, title, summary, thumbnail_url, period, display_priority, project_id, tech_stack, testimonial, client_name, client_industry, problems, deliverables, metrics';
 
 // fallback / モックは持たない。接続不可や取得失敗は throw してビルドを止める。
 // 「公開対象が無い（空配列）」「該当 slug 無し（null）」は正常な状態であり error ではない。
 
 export async function fetchCases(): Promise<CaseRow[]> {
-  const { data, error } = await supabase.from('showcases').select(CASE_COLS).order('display_order');
+  const { data, error } = await supabase.from('public_showcases').select(CASE_COLS).order('display_priority', { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as CaseRow[];
 }
 
 export async function fetchCaseBySlug(slug: string): Promise<CaseRow | null> {
-  const { data, error } = await supabase.from('showcases').select(CASE_COLS).eq('slug', slug).maybeSingle();
+  const { data, error } = await supabase.from('public_showcases').select(CASE_COLS).eq('slug', slug).maybeSingle();
   if (error) throw error;
   return (data as unknown as CaseRow) ?? null;
 }
 
 export async function fetchServices(): Promise<Service[]> {
   const { data, error } = await supabase
-    .from('services')
+    .from('public_services')
     .select('*')
     .eq('is_active', true)
-    .order('display_order');
+    .order('display_priority', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  // public_services view は全列 nullable 型だが実体は非 null（services 由来）＝Service へキャスト。
+  return (data ?? []) as unknown as Service[];
 }
 
 export type InquiryInput = {
@@ -48,7 +49,7 @@ export type InquiryInput = {
 // autoReplyId は自動返信の Resend email id（webhook が到達状況で行を相関するため）。
 export async function submitInquiry(
   input: InquiryInput,
-  client: SupabaseClient<Database> = supabase,
+  client: SupabaseClient<Database, 'core'> = supabase,
   autoReplyId: string | null = null,
 ): Promise<void> {
   const { error } = await client.from('inquiries').insert({
@@ -68,7 +69,7 @@ export type InquiryDelivery = Required<Pick<InquiryInput, 'name' | 'email'>> &
 // 自動返信の Resend email id で inquiry を引く（webhook 用・最小権限 inquiry_reader クライアントを渡す）。
 // 該当が無い（自動返信以外の email）場合は null。
 export async function findInquiryByAutoReplyId(
-  client: SupabaseClient<Database>,
+  client: SupabaseClient<Database, 'core'>,
   autoReplyId: string,
 ): Promise<InquiryDelivery | null> {
   const { data, error } = await client
@@ -82,7 +83,7 @@ export async function findInquiryByAutoReplyId(
 
 // 到達状況の更新（webhook 用）。auto_reply_id で対象行を特定する。
 export async function setDeliveryStatus(
-  client: SupabaseClient<Database>,
+  client: SupabaseClient<Database, 'core'>,
   autoReplyId: string,
   status: 'delivered' | 'bounced',
 ): Promise<void> {
@@ -92,7 +93,8 @@ export async function setDeliveryStatus(
 
 // profile は singleton（必須）。欠落・接続失敗は throw（本番相当の前提）。
 export async function fetchProfile(): Promise<Profile> {
-  const { data, error } = await supabase.from('profile').select('*').eq('id', 'singleton').single();
+  const { data, error } = await supabase.from('public_profile').select('*').eq('id', 'singleton').single();
   if (error) throw error;
-  return data;
+  // public_profile view は全列 nullable 型だが実体は非 null（profile 由来）＝Profile へキャスト。
+  return data as unknown as Profile;
 }

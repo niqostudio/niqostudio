@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@niqostudio/ui/tokens.css";
+@import "@niqostudio/ui/parts.css";
 
 /* Inter のメトリクス一致フォールバック（Arial 基準）。Astro の optimizedFallbacks は generic
    family が対象で和文を Noto 前で食うため使わず、欧文専用のこれを手動で先頭に置く。
@@ -25,69 +27,11 @@
 }
 
 @theme {
-  /* === 既定テーマ: cool（寒色 / slate・navy + blue）===
-     配色は data-theme で切替（下の [data-theme='...'] が値を上書き）。
-     ここはユーティリティ生成元かつ cool の既定値。 */
-  --color-bg: #f7f9fb;
-  /* 寒色寄りの地 */
-  --color-surface: #ffffff;
-  /* カード・入力・ボタン面 */
-  --color-surface-dark: #1e293b;
-  /* ヘッダー/フッターの暗色面（navy slate-800） */
-  --color-fg: #0f172a;
-  /* slate-900 */
-  --color-muted: #475569;
-  /* slate-600 */
-  --color-border: #cbd5e1;
-  /* slate-300 */
-  --color-border-subtle: #e2e8f0;
-  /* slate-200: カード/ボタンの控えめ枠 */
-  --color-border-strong: #0f172a;
-  --color-border-dark: #334155;
-  /* slate-700: 暗色面上の境界 */
-  --color-accent: #2563eb;
-  /* blue-600: 主アクセント（ボタン・リンク・フォーカス） */
-  --color-gold: #d4af37;
-  /* 暗色面のアクセント（navy×gold） */
-  --color-error: #dc2626;
-  --color-on-dark: #f8fafc;
-  /* slate-50 */
-  --color-on-dark-muted: #cbd5e1;
-  /* slate-300 */
-
-  /* Astro Fonts(astro:fonts)が self-host＋メトリクス最適化フォールバックを生成。
-     ラテン=Inter（欧文系フォールバックのみ）→ 和文=Noto Sans JP の順で、
-     和文が手前の system フォントに食われないようにする。 */
+  /* 色・角丸・コンテナ・ブレークポイントは共有トークン（@niqostudio/ui）へ。
+     fonts は Astro Fonts(astro:fonts)由来の変数を参照するためここに残す。
+     ラテン=Inter → 和文=Noto Sans JP の順で和文が system に食われないようにする。 */
   --font-sans: var(--font-inter), var(--font-noto-jp);
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
-
-  /* 角丸はほぼソリッド（全 rounded-sm がこの値を参照） */
-  --radius-sm: 0.125rem;
-
-  /* ページ幅: page=グリッド/シェル, readable=読み物 */
-  --container-page: 80rem;
-  --container-readable: 48rem;
-
-  /* モバイル↔それ以上の切替を 768px に（sm を既定 640→768）。lg(1024) はグリッド拡張で据え置き。 */
-  --breakpoint-sm: 768px;
-}
-
-/* === テーマ切替: <html data-theme="warm"> 等で配色セットを差し替え === */
-[data-theme='warm'] {
-  --color-bg: #faf9f8;
-  --color-surface: #ffffff;
-  --color-surface-dark: #211d19;
-  --color-fg: #1c1917;
-  --color-muted: #57534e;
-  --color-border: #d6d3d1;
-  --color-border-subtle: #eae7e3;
-  --color-border-strong: #292524;
-  --color-border-dark: #34302c;
-  --color-accent: #15803d;
-  /* green */
-  --color-gold: #dcb441;
-  --color-on-dark: #faf9f7;
-  --color-on-dark-muted: #d6d3d1;
 }
 
 html {

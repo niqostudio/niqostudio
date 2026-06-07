@@ -1,7 +1,7 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 
-// カード面の共通プリミティブ。href があればリンク化し hover で緑枠。
+// カード面。href があればリンク化し hover で緑枠（.card-interactive）。
 // as で要素を切替（div 既定 / article / section）。余白・レイアウトは class で指定。
 interface Props extends HTMLAttributes<'a'> {
   href?: string;
@@ -11,12 +11,11 @@ interface Props extends HTMLAttributes<'a'> {
 
 const { href, as = 'div', class: className, ...rest } = Astro.props;
 const Tag = href ? 'a' : as;
-const base = 'bg-surface border border-border-subtle rounded-sm';
 ---
 
 <Tag
   href={href}
-  class:list={[base, href && 'hover:border-accent transition-colors', className]}
+  class:list={['card', href && 'card-interactive', className]}
   {...rest}
 >
   <slot />

@@ -10,8 +10,8 @@ export const SITE = {
   email: __MAIL__.contact,
 } as const;
 
-// 配色テーマ（global.css の [data-theme] と対応）。既定 'cool'（寒色）/ 代替 'warm'
-export const THEME: 'cool' | 'warm' = 'warm';
+// 配色テーマ。warm 単一（トークンは @niqostudio/ui）。data-theme は将来テーマ追加用のフック。
+export const THEME = 'warm' as const;
 
 // 全案件の固定の入口となるサービス。一覧では別扱い（入口グループ）にし、
 // 見出しは英語のプラン名を主に出す（他サービスは日本語名が主）。

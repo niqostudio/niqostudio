@@ -13,12 +13,16 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export const supabase: SupabaseClient<Database> = createClient<Database>(supabaseUrl, supabaseKey);
+// 業務データ層は core スキーマ。anon は core.public_* view だけ読める。
+export const supabase: SupabaseClient<Database, 'core'> = createClient<Database, 'core'>(supabaseUrl, supabaseKey, {
+  db: { schema: 'core' },
+});
 
 // 問い合わせ INSERT 専用クライアント。apikey は publishable のまま、Authorization に最小権限ロール
 // inquiry_writer を名乗る JWT を載せる（JWT は実行時 secret＝公開値でない）。Worker からのみ使う。
-export function inquiryClient(jwt: string): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, supabaseKey, {
+export function inquiryClient(jwt: string): SupabaseClient<Database, 'core'> {
+  return createClient<Database, 'core'>(supabaseUrl, supabaseKey, {
+    db: { schema: 'core' },
     global: { headers: { Authorization: `Bearer ${jwt}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
