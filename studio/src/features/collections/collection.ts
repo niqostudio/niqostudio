@@ -66,6 +66,8 @@ export interface CollectionBinding<F> {
   recordActions?: RecordAction[];
   // この collection 専用の詳細ビュー（汎用 RecordDetail を上書き）。composition が差す（例：NDA 読み合わせ）。
   detail?: (props: { collection: string; id: string }) => ReactNode | Promise<ReactNode>;
+  // 汎用詳細の中に足す読み取りの補助表示（例：案件の総工数・打ち合わせ一覧）。composition が差す（複数可）。
+  detailExtras?: ((props: { id: string }) => ReactNode | Promise<ReactNode>)[];
 }
 
 // 詳細ペインの record 単位アクション（例：問い合わせ→顧客 転換）。run は server action。

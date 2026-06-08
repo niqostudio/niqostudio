@@ -25,6 +25,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   const timeline = binding.history ? await binding.history.list(id).catch(() => []) : [];
   const nextStates = binding.workflow ? await binding.workflow.nextStates(status || null).catch(() => []) : [];
   const transitions = binding.workflow ? await binding.workflow.transitions().catch(() => []) : [];
+  const detailExtras = binding.detailExtras ?? [];
 
   // 読み取り表示するフィールド（status は workflow 側・hidden は overlay で除外済み）。
   const viewFields = schema.fields.filter((f) => f.key !== schema.statusField);
@@ -103,6 +104,10 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           />
         </section>
       )}
+
+      {detailExtras.map((Extra, i) => (
+        <Extra key={i} id={id} />
+      ))}
 
       {createRelated.length > 0 && (
         <section className="flex flex-wrap gap-2">

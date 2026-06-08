@@ -8,8 +8,8 @@ export interface NavGroup {
 }
 
 export const NAV_GROUPS: NavGroup[] = [
-  { labelKey: 'business', ids: ['inquiries', 'clients', 'projects'] },
-  { labelKey: 'publishing', ids: ['showcase_entries', 'ndas', 'services', 'products', 'profile'] },
+  { labelKey: 'business', ids: ['inquiries', 'contacts', 'clients', 'projects', 'meetings', 'work_logs'] },
+  { labelKey: 'publishing', ids: ['showcase_entries', 'ndas', 'services', 'products', 'profile', 'metric_definitions'] },
 ];
 
 const NAV_IDS = NAV_GROUPS.flatMap((g) => g.ids);
