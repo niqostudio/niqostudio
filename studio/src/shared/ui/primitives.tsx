@@ -131,13 +131,23 @@ export function BackLink({ href, children, className }: { href: string; children
   );
 }
 
-// ステータスバッジ（presentation のみ）。studio は status 値の意味を知らないため中立の soft 面で出す。
-// ラベルは overlay 由来を呼び出し側が渡す（label）。色分けが要るなら overlay に色を持たせて渡す方針。
-export function StatusBadge({ status, label }: { status: string; label?: string }) {
+// バッジの色トーン（soft 面＋solid 文字）。studio は status の意味を知らないので既定は中立。
+// 意味を知る呼び出し側（composition）が tone で色を渡す（例：入金済=success / 期日超過=error）。
+export type BadgeTone = 'neutral' | 'success' | 'warning' | 'error' | 'info' | 'accent';
+const BADGE_TONE: Record<BadgeTone, string> = {
+  neutral: 'bg-surface-2 text-muted',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warning-soft text-warning',
+  error: 'bg-error-soft text-error',
+  info: 'bg-info-soft text-info',
+  accent: 'bg-accent-soft text-accent',
+};
+
+export function StatusBadge({ status, label, tone = 'neutral' }: { status: string; label?: string; tone?: BadgeTone }) {
   // 値が無ければ何も出さない（空の四角を描かない）。
   if (!status) return null;
   return (
-    <span className="inline-flex items-center rounded-sm bg-surface-2 px-2 py-0.5 text-xs text-muted">{label ?? status}</span>
+    <span className={cn('inline-flex items-center rounded-sm px-2 py-0.5 text-xs', BADGE_TONE[tone])}>{label ?? status}</span>
   );
 }
 

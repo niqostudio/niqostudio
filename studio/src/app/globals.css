@@ -5,19 +5,19 @@
    ・各 status は solid（文字・罫・図形）と soft（淡い背景）の対で持ち、チップ等は soft 面＋solid 文字で出す。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
-  /* 面（奥→手前）と subtle な塗り（ヘッダ・hover・inset） */
-  --color-bg: #f4f4f4;
+  /* 面（奥→手前）と subtle な塗り（ヘッダ・hover・inset）。寒色寄りニュートラル。 */
+  --color-bg: #f6f7f9;
   --color-surface: #ffffff;
-  --color-surface-2: #efefef;
+  --color-surface-2: #eceef2;
 
-  /* 文字（主→副→三次） */
-  --color-fg: #171717;
-  --color-muted: #525252;
-  --color-faint: #8e8e8e;
+  /* 文字（主→副→三次）。寒色寄りの near-black。 */
+  --color-fg: #14161a;
+  --color-muted: #596170;
+  --color-faint: #899099;
 
-  /* 罫 */
-  --color-border: #d6d6d6;
-  --color-border-subtle: #e6e6e6;
+  /* 罫：ヘアライン（細く薄く＝箱で囲わずトーンと余白で分ける）。 */
+  --color-border: #e3e6eb;
+  --color-border-subtle: #edeff3;
 
   /* ブランド＝操作・選択・現在・focus（indigo） */
   --color-accent: #4f46e5;
@@ -35,7 +35,8 @@
   --color-info: #0284c7;
   --color-info-soft: #e2f1fb;
 
-  --radius-sm: 0.25rem;
+  /* 角丸は solid（2px）＝共有 @niqostudio/ui と同値。website のカードと一致させる。 */
+  --radius-sm: 0.125rem;
   --container-readable: 48rem;
   --breakpoint-sm: 768px;
 
@@ -54,8 +55,9 @@
   .btn-secondary {
     @apply border-border bg-surface transition-colors hover:border-muted hover:bg-surface-2;
   }
+  /* カード＝website / 共有 ui と同一スキン（角丸 solid・ヘアライン罫・影なし）。 */
   .card {
-    @apply rounded-sm border border-border bg-surface;
+    @apply rounded-sm border border-border-subtle bg-surface;
   }
   .chip {
     @apply rounded-sm border text-xs text-muted;
@@ -103,7 +105,7 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

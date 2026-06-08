@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="min-h-dvh grid place-items-center bg-bg p-6">
-      <div className="w-full max-w-sm rounded-md border border-border bg-surface p-6">
+      <div className="card w-full max-w-sm p-6">
         <h1 className="font-semibold tracking-tight">NIQO STUDIO</h1>
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-0.5 mb-4">studio ログイン</p>
         {error === 'not_allowed' && (
