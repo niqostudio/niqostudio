@@ -16,6 +16,27 @@ export function defaultFor(d: FieldDescriptor): unknown {
   return d.kind === 'list' ? [] : d.kind === 'boolean' ? false : null;
 }
 
+// 2カラム配置の行分割。背の高い項目（textarea/list）は全幅、それ以外は2つずつ対にする。
+// 日付は「日付同士」でのみ対にして、開始/終了のような対称データを必ず左右に並べる
+// （手前の全幅項目で auto-flow のパリティが崩れて対が割れるのを防ぐ）。
+export function packFieldRows<T extends { kind?: string }>(items: T[]): T[][] {
+  const wide = (d: T) => d.kind === 'textarea' || d.kind === 'list';
+  const rows: T[][] = [];
+  let i = 0;
+  while (i < items.length) {
+    const f = items[i];
+    const next = items[i + 1];
+    if (!wide(f) && next && !wide(next) && (f.kind === 'date' ? next.kind === 'date' : next.kind !== 'date')) {
+      rows.push([f, next]);
+      i += 2;
+    } else {
+      rows.push([f]);
+      i += 1;
+    }
+  }
+  return rows;
+}
+
 // ラベルを1つずつ足すタグ入力（text[] 用）。確定チップは入力欄の外に出し、クリックで削除。
 function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const [pending, setPending] = useState('');

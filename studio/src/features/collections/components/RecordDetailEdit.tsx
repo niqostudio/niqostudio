@@ -4,7 +4,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, X } from 'lucide-react';
 import { Action } from '@/shared/ui/primitives';
-import { FieldControl, asText, type RefOption } from '@/shared/ui/fields';
+import { FieldControl, asText, packFieldRows, type RefOption } from '@/shared/ui/fields';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { setFieldsAction, publishAction } from '../actions';
 import { toast } from '@/features/feedback/toast';
@@ -136,8 +136,10 @@ export function DetailFields({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {fields.map((f) => {
+    <div className="flex flex-col gap-3">
+      {packFieldRows(fields).map((row, ri) => (
+        <div key={ri} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {row.map((f) => {
         const v = work[f.key];
         const changed = !eq(v, values[f.key]);
         const wide = f.kind === 'textarea' || f.kind === 'list';
@@ -194,7 +196,9 @@ export function DetailFields({
             )}
           </div>
         );
-      })}
+          })}
+        </div>
+      ))}
     </div>
   );
 }

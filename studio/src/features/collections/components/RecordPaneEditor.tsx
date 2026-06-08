@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BackLink, Input } from '@/shared/ui/primitives';
-import { FieldInput, asText, defaultFor } from '@/shared/ui/fields';
+import { FieldInput, asText, defaultFor, packFieldRows } from '@/shared/ui/fields';
 import type { CollectionSchema, FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t, type MessageKey } from '@/shared/i18n';
 import { toast } from '@/features/feedback/toast';
@@ -128,22 +128,24 @@ export default function RecordPaneEditor(props: {
 
         <div className="flex flex-col gap-4 p-5">
           {/* 対称な情報（開始/終了 等）が左右に並ぶよう2カラム。背の高い項目は全幅。 */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {schema.fields
-              .filter((d) => d.key !== props.workflowField)
-              .map((d) => {
-                const wide = d.kind === 'textarea' || d.kind === 'list';
-                return (
-                  <div key={d.key} className={wide ? 'sm:col-span-2' : undefined}>
-                    <FieldInput
-                      d={d}
-                      value={fields[d.key]}
-                      refOptions={props.referenceOptions?.[d.key]}
-                      onChange={(v) => setField(d.key, v)}
-                    />
-                  </div>
-                );
-              })}
+          <div className="flex flex-col gap-4">
+            {packFieldRows(schema.fields.filter((d) => d.key !== props.workflowField)).map((row, ri) => (
+              <div key={ri} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {row.map((d) => {
+                  const wide = d.kind === 'textarea' || d.kind === 'list';
+                  return (
+                    <div key={d.key} className={wide ? 'sm:col-span-2' : undefined}>
+                      <FieldInput
+                        d={d}
+                        value={fields[d.key]}
+                        refOptions={props.referenceOptions?.[d.key]}
+                        onChange={(v) => setField(d.key, v)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           <div className="mt-2 flex flex-col gap-1">
