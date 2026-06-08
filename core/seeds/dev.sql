@@ -128,26 +128,6 @@ insert into core.inquiries (id, name, company, email, subject, message, status, 
   ('dddddddd-dddd-4ddd-8ddd-ddddddddddd5', '架空 四子', '架空デザイン', 'shiko@example.com',
    'コーポレートサイト制作', 'ダミーの本文。会社案内サイトを作りたい。', 'new', null, 'bounced');
 
--- state machine と outcome を例示する案件（client_id は null＝自主/匿名でも可）。
--- closed は履歴の closed 直前から outcome を派生するため、遷移を辿って作る（直接 closed では履歴が無く lost 既定になる）。
-insert into core.projects (id, client_id, title) values
-  ('22222222-2222-4222-8222-222222222201', null, '架空クリニックの予約サイト相談');               -- 既定 consultation
-
-insert into core.projects (id, client_id, title) values
-  ('22222222-2222-4222-8222-222222222202', null, '架空工務店のコーポレートサイト構築');
-update core.projects set status = 'discovery' where id = '22222222-2222-4222-8222-222222222202';
-update core.projects set status = 'active'    where id = '22222222-2222-4222-8222-222222222202';
-
-insert into core.projects (id, client_id, title) values
-  ('22222222-2222-4222-8222-222222222203', null, '架空税理士事務所の問い合わせ改善');
-update core.projects set status = 'discovery' where id = '22222222-2222-4222-8222-222222222203';
-update core.projects set status = 'active'    where id = '22222222-2222-4222-8222-222222222203';
-update core.projects set status = 'delivered' where id = '22222222-2222-4222-8222-222222222203';
-update core.projects set status = 'closed'    where id = '22222222-2222-4222-8222-222222222203';  -- outcome=completed
-
-insert into core.projects (id, client_id, title) values
-  ('22222222-2222-4222-8222-222222222204', null, '架空アパレルの EC 出店相談');
-update core.projects set status = 'closed' where id = '22222222-2222-4222-8222-222222222204';       -- consultation→closed=lost
 
 -- === 追加ダミー（バリエーション）：services / clients / products / projects / inquiries ===
 
