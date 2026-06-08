@@ -145,6 +145,7 @@ export function DetailFields({
           <div key={f.key} className={wide ? 'sm:col-span-2' : undefined}>
             <span className="flex items-center gap-1 text-xs text-muted">
               {f.label}
+              {f.required && <span className="text-error">*</span>}
               {changed && <span className="inline-block size-1.5 rounded-full bg-accent" title={t('unsaved')} />}
             </span>
             {f.kind === 'boolean' ? (

@@ -119,7 +119,10 @@ export function FieldInput({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-sm text-muted">{d.label}</span>
+      <span className="text-sm text-muted">
+        {d.label}
+        {d.required && <span className="text-error"> *</span>}
+      </span>
       <FieldControl d={d} value={value} onChange={onChange} refOptions={refOptions} />
     </label>
   );
