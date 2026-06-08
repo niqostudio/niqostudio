@@ -162,6 +162,12 @@ insert into core.clients (id, slug, public_name, real_name, is_public_name_allow
   ('11111111-1111-4111-8111-111111111103', 'fic-apparel', '架空アパレル', 'ダミー商号（非公開）', false, '小売', 'medium', '開発用ダミー（匿名）。'),
   ('11111111-1111-4111-8111-111111111104', 'fic-saas', '架空ソフトウェア', 'ダミー株式会社', true, 'IT', 'large', '開発用ダミー。');
 
+-- 顧客担当者（contacts・会社に紐づく人。問い合わせ変換・案件化で生成される想定）
+insert into core.contacts (id, client_id, name, email, phone, role, notes) values
+  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', '11111111-1111-4111-8111-111111111111', '架空 太郎', 'taro@example.com', '090-0000-0001', '店主', '架空ベーカリーの担当者。'),
+  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', '11111111-1111-4111-8111-111111111102', '架空 五郎', 'goro@example.com', null, '事務長', '架空クリニックの担当者（問い合わせ由来）。'),
+  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', null, '架空 見込', 'midumi@example.com', null, null, '会社未割当の見込み担当者（無料相談前）。');
+
 -- 自社プロダクト（active / maintained / sunset の3状態）
 insert into core.products (id, slug, name, summary, status, tech_stack, launched_on, internal_notes) values
   ('77777777-7777-4777-8777-777777777701', 'reserve-hub', '予約ハブ', '店舗向け予約管理 SaaS（ダミー）。', 'active', array['Next.js','Supabase','Cloudflare Workers'], '2026-02-01', '開発用ダミー製品。'),
@@ -206,7 +212,28 @@ insert into core.problems (id, project_id, problem, solution, outcome) values
 insert into core.requirements (id, project_id, content, note) values
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb301', '22222222-2222-4222-8222-222222222301', 'LINE で予約を受けたい', 'すり合わせ初回');
 
--- 問い合わせ追加（converted は converted_client_id で顧客に紐付け）
-insert into core.inquiries (id, name, company, email, subject, message, status, converted_client_id, internal_notes, delivery_status) values
-  ('dddddddd-dddd-4ddd-8ddd-ddddddddddd6', '架空 五郎', '架空クリニック', 'goro@example.com', '予約システムの相談', 'ダミー本文。予約・問診を統合したい。', 'converted', '11111111-1111-4111-8111-111111111102', '無料相談→案件化。', 'delivered'),
+-- 問い合わせ追加（converted は converted_contact_id で担当者に紐付け）
+insert into core.inquiries (id, name, company, email, subject, message, status, converted_contact_id, internal_notes, delivery_status) values
+  ('dddddddd-dddd-4ddd-8ddd-ddddddddddd6', '架空 五郎', '架空クリニック', 'goro@example.com', '予約システムの相談', 'ダミー本文。予約・問診を統合したい。', 'converted', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', '無料相談→案件化。', 'delivered'),
   ('dddddddd-dddd-4ddd-8ddd-ddddddddddd7', '架空 六美', null, 'rokumi@example.com', '料金プランの質問', 'ダミー本文。', 'responded', null, '一次返信済み。', 'delivered');
+
+-- === 新機能のダミー（contacts 紐付け・工数・打合せ・返信） ===
+
+-- 案件の主担当者（C: projects.contact_id）
+update core.projects set contact_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1' where id = '22222222-2222-4222-8222-222222222222';
+update core.projects set contact_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2' where id = '22222222-2222-4222-8222-222222222301';
+
+-- 工数（work_logs）
+insert into core.work_logs (id, project_id, worked_on, hours, task) values
+  ('f0000000-0000-4000-8000-000000000001', '22222222-2222-4222-8222-222222222222', '2026-01-12', 6.0, '要件ヒアリング'),
+  ('f0000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', '2026-02-05', 8.5, 'サイト実装'),
+  ('f0000000-0000-4000-8000-000000000003', '22222222-2222-4222-8222-222222222222', '2026-03-01', 4.0, '予約システム調整');
+
+-- 打ち合わせ（meetings・顧客/案件/問い合わせのいずれにも紐づく）
+insert into core.meetings (id, client_id, project_id, inquiry_id, title, met_on, duration_min, status, notes) values
+  ('f1000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', null, 'キックオフ', '2026-01-10', 60, 'done', 'ダミー議事録。'),
+  ('f1000000-0000-4000-8000-000000000002', null, null, 'dddddddd-dddd-4ddd-8ddd-ddddddddddd2', '無料相談', '2026-06-15', 30, 'scheduled', '問い合わせ由来の無料相談。');
+
+-- 問い合わせ返信ログ（inquiry_replies）
+insert into core.inquiry_replies (id, inquiry_id, body) values
+  ('f2000000-0000-4000-8000-000000000001', 'dddddddd-dddd-4ddd-8ddd-ddddddddddd2', 'お問い合わせありがとうございます。無料相談の日程を調整させてください。');

@@ -1,6 +1,6 @@
 # スキーマ
 
-NIQO STUDIO core のデータモデル。DDL の正本は `supabase/migrations/`、本書はそれを読みやすくまとめた参照。命名・トリガ等の共通規約は `.claude/rules/conventions.md`。
+NIQO STUDIO core のデータモデル。DDL の正本は `core/migrations/`（dbmate）、本書はそれを読みやすくまとめた参照。命名・トリガ等の共通規約は `.claude/rules/conventions.md`。
 
 ## 名前空間
 
@@ -55,8 +55,9 @@ erDiagram
     project_statuses ||--o{ projects      : "status (FK→code)"
     project_statuses ||--o{ project_status_transitions : "from/to_status"
     projects     ||--o{ project_status_events : "project_id"
-    clients      ||--o{ inquiries         : "converted_client_id"
+    contacts     ||--o{ inquiries         : "converted_contact_id"
     clients      ||--o{ contacts          : "client_id (任意)"
+    contacts     ||--o{ projects          : "contact_id (任意)"
     clients      ||--o{ meetings          : "client_id (任意)"
     projects     ||--o{ meetings          : "project_id (任意)"
     inquiries    ||--o{ meetings          : "inquiry_id (任意)"
@@ -109,7 +110,8 @@ erDiagram
 
 | 列 | 型 | 備考 |
 |---|---|---|
-| `client_id` | uuid FK→clients | null 可（自主プロジェクト） |
+| `client_id` | uuid FK→clients | null 可（自主プロジェクト）・ON DELETE SET NULL |
+| `contact_id` | uuid FK→contacts | 任意・ON DELETE SET NULL（主担当者・案件化で紐付け） |
 | `product_id` | uuid FK→products | 任意・ON DELETE SET NULL（自社製品開発の有期 project を product に紐付け） |
 | `service_id` | uuid FK→services | 任意・ON DELETE SET NULL（提供サービスへの単一リンク） |
 | `title` | text NOT NULL | |
@@ -320,7 +322,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 | `status` | text NOT NULL | new / responded / converted / archived |
 | `auto_reply_id` | text | 自動返信の相関キー |
 | `delivery_status` | text NOT NULL | pending / delivered / bounced |
-| `converted_client_id` | uuid FK→clients | 内部運用 |
+| `converted_contact_id` | uuid FK→contacts | 変換した担当者・ON DELETE SET NULL |
 | `internal_notes` | text | 内部運用 |
 
 ### meetings（業務記録・打ち合わせ）
@@ -328,7 +330,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 
 | 列 | 型 | 備考 |
 |---|---|---|
-| `client_id` | uuid FK→clients | 任意・ON DELETE CASCADE（顧客の打ち合わせ） |
+| `client_id` | uuid FK→clients | 任意・ON DELETE SET NULL（顧客の打ち合わせ） |
 | `project_id` | uuid FK→projects | 任意・ON DELETE SET NULL（案件文脈） |
 | `inquiry_id` | uuid FK→inquiries | 任意・ON DELETE SET NULL（無料相談＝問い合わせ由来。顧客化せず紐付け） |
 | `title` | text NOT NULL | 議題 |

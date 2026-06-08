@@ -169,7 +169,7 @@ export type Database = {
         Row: {
           auto_reply_id: string | null
           company: string | null
-          converted_client_id: string | null
+          converted_contact_id: string | null
           created_at: string
           delivery_status: string
           email: string
@@ -184,7 +184,7 @@ export type Database = {
         Insert: {
           auto_reply_id?: string | null
           company?: string | null
-          converted_client_id?: string | null
+          converted_contact_id?: string | null
           created_at?: string
           delivery_status?: string
           email: string
@@ -199,7 +199,7 @@ export type Database = {
         Update: {
           auto_reply_id?: string | null
           company?: string | null
-          converted_client_id?: string | null
+          converted_contact_id?: string | null
           created_at?: string
           delivery_status?: string
           email?: string
@@ -213,10 +213,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inquiries_converted_client_id_fkey"
-            columns: ["converted_client_id"]
+            foreignKeyName: "inquiries_converted_contact_id_fkey"
+            columns: ["converted_contact_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -917,6 +917,7 @@ export type Database = {
       projects: {
         Row: {
           client_id: string | null
+          contact_id: string | null
           contract_value: number | null
           created_at: string
           due_on: string | null
@@ -934,6 +935,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          contact_id?: string | null
           contract_value?: number | null
           created_at?: string
           due_on?: string | null
@@ -951,6 +953,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          contact_id?: string | null
           contract_value?: number | null
           created_at?: string
           due_on?: string | null
@@ -972,6 +975,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {

@@ -32,8 +32,8 @@ export async function convertInquiryToContact(recordId: string): Promise<void> {
   await contacts.drafts.save({ id: contactId, fields, draftState: 'draft', sourceId: null, updatedAt: today() });
   await contacts.versions?.append(contactId, fields, 'create');
 
-  // 問い合わせを converted に（下書き）。
-  const inqFields = { ...f, status: 'converted' };
+  // 問い合わせを converted に＋変換先の担当者を記録（下書き）。
+  const inqFields = { ...f, status: 'converted', converted_contact_id: contactId };
   await inquiries.drafts.save({ id: recordId, fields: inqFields, draftState: 'draft', sourceId: inq.sourceId, updatedAt: today() });
   await inquiries.versions?.append(recordId, inqFields, 'manual');
 

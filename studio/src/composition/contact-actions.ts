@@ -49,6 +49,7 @@ export async function createProjectFromContact(contactId: string): Promise<void>
     if (opts[0]) pf[statusDesc.key] = opts[0].value;
   }
   pf.client_id = clientId;
+  pf.contact_id = contactId;
   await projects.drafts.save({ id: projectId, fields: pf, draftState: 'draft', sourceId: null, updatedAt: today() });
   await projects.versions?.append(projectId, pf, 'create');
 
