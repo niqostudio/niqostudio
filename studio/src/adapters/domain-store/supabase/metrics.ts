@@ -13,11 +13,19 @@ export class CoreMetricsProvider implements MetricsProvider {
     return this.client;
   }
 
-  async count(table: string, filter?: CountFilter): Promise<number> {
-    const base = this.getClient().from(table).select('id', { count: 'exact', head: true });
-    const { count, error } = await (filter ? base.in(filter.column, filter.in) : base);
+  async count(table: string, filter?: CountFilter, before?: { column: string; value: string }): Promise<number> {
+    let q = this.getClient().from(table).select('id', { count: 'exact', head: true });
+    if (filter) q = q.in(filter.column, filter.in);
+    if (before) q = q.lte(before.column, before.value);
+    const { count, error } = await q;
     if (error) throw new Error(`${table}.count 失敗: ${error.message}`);
     return count ?? 0;
+  }
+
+  async rows(table: string, columns: string[]): Promise<Record<string, unknown>[]> {
+    const { data, error } = await this.getClient().from(table).select(columns.join(','));
+    if (error) throw new Error(`${table} の取得に失敗: ${error.message}`);
+    return (data ?? []) as unknown as Record<string, unknown>[];
   }
 
   async timestamps(table: string, column = 'created_at', since?: string): Promise<string[]> {

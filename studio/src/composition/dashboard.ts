@@ -79,6 +79,41 @@ export async function loadPipeline(): Promise<PipelineStage[]> {
   );
 }
 
+// パイプラインの健康度：納期リスク（進行中で due_on が dueWithinDays 以内/超過）＋滞留（現ステージに stuckDays 以上）。
+export interface PipelineHealth {
+  dueSoon: number;
+  stuck: number;
+  href: string;
+}
+
+export async function loadPipelineHealth(dueWithinDays = 14, stuckDays = 21): Promise<PipelineHealth> {
+  const metrics = new CoreMetricsProvider();
+  const now = new Date();
+  const dueLimit = new Date(now);
+  dueLimit.setDate(now.getDate() + dueWithinDays);
+  const dueSoon = await metrics.count(
+    'projects',
+    { column: 'status', in: IN_PROGRESS_STATUSES },
+    { column: 'due_on', value: dueLimit.toISOString().slice(0, 10) },
+  );
+  // 滞留：最新 status イベントの changed_at が古い進行中案件（イベントの to_status ＝現 status）。
+  const events = await metrics.rows('project_status_events', ['project_id', 'to_status', 'changed_at']);
+  const latest = new Map<string, { to: string; at: string }>();
+  for (const e of events) {
+    const pid = String(e.project_id);
+    const at = String(e.changed_at);
+    const cur = latest.get(pid);
+    if (!cur || at > cur.at) latest.set(pid, { to: String(e.to_status), at });
+  }
+  const cutoff = new Date(now);
+  cutoff.setDate(now.getDate() - stuckDays);
+  const cutoffIso = cutoff.toISOString();
+  const inProgress = new Set(IN_PROGRESS_STATUSES);
+  let stuck = 0;
+  for (const e of latest.values()) if (inProgress.has(e.to) && e.at < cutoffIso) stuck++;
+  return { dueSoon, stuck, href: '/projects' };
+}
+
 // 受注ファネル：問い合わせ→顧客→案件（件数）。どこで落ちるかを可視化。
 export async function loadFunnel(): Promise<FunnelStep[]> {
   const metrics = new CoreMetricsProvider();

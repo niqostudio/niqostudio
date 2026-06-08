@@ -6,6 +6,7 @@ import {
   loadPipeline,
   loadFunnel,
   loadTrend,
+  loadPipelineHealth,
   PIPELINE_TITLE,
   IN_PROGRESS_STATUSES,
 } from '@/composition/dashboard';
@@ -19,12 +20,13 @@ import { t } from '@/shared/i18n';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [kpis, delivery, pipeline, funnel, trend] = await Promise.all([
+  const [kpis, delivery, pipeline, funnel, trend, health] = await Promise.all([
     loadKpis(),
     loadDeliveryHealth(),
     loadPipeline(),
     loadFunnel(),
     loadTrend(),
+    loadPipelineHealth(),
   ]);
   const deployAvailable = getDeploy().available();
   const inProgress = new Set(IN_PROGRESS_STATUSES);
@@ -87,6 +89,14 @@ export default async function DashboardPage() {
         <Card className="p-4">
           <PipelineBar data={pipeline} />
         </Card>
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <Link href={health.href} className={`hover:underline ${health.dueSoon > 0 ? 'text-accent' : 'text-muted'}`}>
+            {t('dueRisk')}（≤14日/超過）：{health.dueSoon}
+          </Link>
+          <Link href={health.href} className={`hover:underline ${health.stuck > 0 ? 'text-accent' : 'text-muted'}`}>
+            {t('stuck')}（21日+）：{health.stuck}
+          </Link>
+        </div>
       </section>
 
       {/* 公開操作 ＋ 外部コンソール */}

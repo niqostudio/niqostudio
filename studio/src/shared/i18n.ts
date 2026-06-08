@@ -16,6 +16,8 @@ const MESSAGES = {
   salesFunnel: '受注ファネル',
   monthlyTrend: '月次推移',
   salesForecast: '受注予測',
+  dueRisk: '納期リスク',
+  stuck: '滞留',
   open: '開く',
   new: '新規作成',
   search: '検索',
