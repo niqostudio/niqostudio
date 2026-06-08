@@ -12,7 +12,8 @@
     "niqo:up": "node scripts/niqo-up.mjs",
     "niqo:down": "pnpm db:stop",
     "dev:website": "pnpm --filter @niqostudio/website run dev",
-    "dev:studio": "pnpm --filter @niqostudio/studio run dev"
+    "dev:studio": "pnpm --filter @niqostudio/studio run dev",
+    "test": "pnpm -r --if-present run test"
   },
   "engines": {
     "node": ">=24"
