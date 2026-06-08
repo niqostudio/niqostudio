@@ -89,7 +89,7 @@ export default async function DashboardPage() {
         <div className="flex items-baseline justify-between gap-3">
           <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
           <span className="text-sm text-muted">
-            {t('salesForecast')} <span className="font-semibold tabular-nums text-fg">¥{forecast.toLocaleString()}</span>
+            {t('salesForecast')} <span className="font-semibold tabular-nums text-success">¥{forecast.toLocaleString()}</span>
           </span>
         </div>
         <Card className="p-4">
