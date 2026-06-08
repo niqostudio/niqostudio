@@ -2,10 +2,10 @@ import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
-import { asString, asChildren } from '../collection';
+import { asString } from '../collection';
 import { WorkflowGraph } from './WorkflowGraph';
 import { CreateRelatedButton } from './CreateRelatedButton';
-import { RecordEditProvider, DetailActions, DetailFields } from './RecordDetailEdit';
+import { RecordEditProvider, DetailActions, DetailChildren, DetailFields } from './RecordDetailEdit';
 import { t } from '@/shared/i18n';
 
 // 一覧の右ペインに出す読み取り詳細＋ワークフロー操作（state machine の次状態へ進める）。
@@ -160,34 +160,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
 
       {viewFields.length > 0 && <DetailFields fields={viewFields} refOptions={refOptions} />}
 
-      {schema.children.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <p className="section-label text-xs">{t('related')}</p>
-          <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {schema.children.map((c) => {
-            const items = asChildren(fields[c.key]);
-            const labelKey = c.fields[0]?.key ?? 'id';
-            return (
-              <div key={c.key} className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span>{c.label}</span>
-                  <span className="text-xs text-muted tabular-nums">{items.length}</span>
-                </div>
-                {items.length > 0 && (
-                  <ul className="flex flex-col gap-0.5 border-l border-border-subtle pl-3">
-                    {items.map((row, i) => (
-                      <li key={i} className="truncate text-sm text-muted">
-                        {asString(row[labelKey]) || t('untitled')}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-          </div>
-        </section>
-      )}
+      {schema.children.length > 0 && <DetailChildren items={schema.children} />}
 
       {timeline.length > 0 && (
         <section className="flex flex-col gap-2">
