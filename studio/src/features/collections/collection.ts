@@ -20,6 +20,15 @@ export function asChildren(value: unknown): Fields[] {
   return Array.isArray(value) ? (value as Fields[]) : [];
 }
 
+// 値を canonical 順（order）で並べ、order 外は末尾に入力順のまま残す（安定ソート）。status タブの表示順などに使う。
+export function orderByList<T>(values: T[], order: T[]): T[] {
+  const rank = (v: T) => {
+    const i = order.indexOf(v);
+    return i < 0 ? order.length : i;
+  };
+  return [...values].sort((a, b) => rank(a) - rank(b));
+}
+
 // collection のメタ（nav / 見出し）。
 export interface CollectionMeta {
   id: string;
