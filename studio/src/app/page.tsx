@@ -86,11 +86,12 @@ export default async function DashboardPage() {
 
       {/* 案件パイプライン（受注額・バーをクリックで絞り込み一覧へ） */}
       <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-end justify-between gap-3">
           <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
-          <span className="text-sm text-muted">
-            {t('salesForecast')} <span className="font-semibold tabular-nums text-success">¥{forecast.toLocaleString()}</span>
-          </span>
+          <div className="text-right">
+            <p className="text-xs text-muted">{t('salesForecast')}</p>
+            <p className="text-3xl font-semibold tabular-nums text-success">¥{forecast.toLocaleString()}</p>
+          </div>
         </div>
         <Card className="p-4">
           <PipelineBar data={pipeline} />
