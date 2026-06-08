@@ -9,4 +9,8 @@ export const NAV: NavItem[] = [
   { id: 'products', href: '/products' },
   { id: 'clients', href: '/clients' },
   { id: 'inquiries', href: '/inquiries' },
+  { id: 'services', href: '/services' },
+  { id: 'showcase_entries', href: '/showcase_entries' },
+  { id: 'ndas', href: '/ndas' },
+  { id: 'profile', href: '/profile' },
 ];

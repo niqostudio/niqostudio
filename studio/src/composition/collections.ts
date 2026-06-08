@@ -13,6 +13,10 @@ import { StudioOverlayStore } from '@/adapters/studio-store/supabase/overlay-sto
 import { CoreProjectSourceRegistry } from '@/adapters/domain-store/supabase/source-registry';
 import { clientsSemantics } from '@/composition/semantics/clients';
 import { inquiriesSemantics } from '@/composition/semantics/inquiries';
+import { servicesSemantics } from '@/composition/semantics/services';
+import { showcaseEntriesSemantics } from '@/composition/semantics/showcase-entries';
+import { ndasSemantics } from '@/composition/semantics/ndas';
+import { profileSemantics } from '@/composition/semantics/profile';
 import { INSTANCE_ID } from './instance';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
@@ -48,11 +52,21 @@ const projects: CollectionBinding<Fields> = {
   },
 };
 
+// profile は singleton（id='singleton' 固定で1行）。一覧に「新規」を出さない。
+const profile: CollectionBinding<Fields> = {
+  ...coreCollection('profile', 'プロフィール', profileSemantics),
+  meta: { id: 'profile', label: 'プロフィール', singleton: true },
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
   products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
   clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
   inquiries: coreCollection('inquiries', '問い合わせ', inquiriesSemantics) as CollectionBinding<unknown>,
+  services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
+  showcase_entries: coreCollection('showcase_entries', '事例', showcaseEntriesSemantics) as CollectionBinding<unknown>,
+  ndas: coreCollection('ndas', 'NDA', ndasSemantics) as CollectionBinding<unknown>,
+  profile: profile as CollectionBinding<unknown>,
 };
 
 // collection id → 汎用 binding。各 collection の F は UI では Fields として扱う。

@@ -36,6 +36,8 @@ export interface CollectionMeta {
   // この collection を親 collection の画面から作る導線（案件←顧客 等）。
   // 指定があると一覧の新規ボタンは出さず、親の詳細に作成ボタンを出す（fk に親 id を入れる）。
   createVia?: { via: string; fk: string };
+  // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
+  singleton?: boolean;
 }
 
 // collection の配線。SoR store（確定の正本）と staging store（下書き）を別 seam で持つ。
