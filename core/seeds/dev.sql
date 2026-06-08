@@ -148,3 +148,65 @@ update core.projects set status = 'closed'    where id = '22222222-2222-4222-822
 insert into core.projects (id, client_id, title) values
   ('22222222-2222-4222-8222-222222222204', null, '架空アパレルの EC 出店相談');
 update core.projects set status = 'closed' where id = '22222222-2222-4222-8222-222222222204';       -- consultation→closed=lost
+
+-- === 追加ダミー（バリエーション）：services / clients / products / projects / inquiries ===
+
+-- サービス追加（is_active=false の保守も含む）
+insert into core.services (id, slug, name, name_ja, headline, summary, target_pains, coverage, deliverables, pricing, price_min, currency, duration, is_active, display_priority) values
+  ('66666666-6666-4666-8666-666666666602', 'biz-system', 'Business System', '業務システム構築', '社内業務の自動化と一元管理', 'ダミーのサービス概要。', array['手作業が多い','二重入力'], array['要件定義','実装','運用'], array['管理画面','DB 設計'], '{"plan":"system"}'::jsonb, 800000, 'JPY', '3ヶ月', true, 20),
+  ('66666666-6666-4666-8666-666666666603', 'maintenance', 'Maintenance', '保守・運用', '継続的な改善と安定運用', 'ダミーのサービス概要。', array['更新が滞る','障害対応'], array['監視','更新','改善'], array['月次レポート','改善対応'], '{"plan":"retainer"}'::jsonb, 30000, 'JPY', '月額', false, 5);
+
+-- クライアント追加（業種/規模バリエーション・1社は匿名 is_public_name_allowed=false）
+insert into core.clients (id, slug, public_name, real_name, is_public_name_allowed, industry, size, description) values
+  ('11111111-1111-4111-8111-111111111102', 'fic-clinic', '架空クリニック', 'ダミー医療法人', true, '医療', 'small', '開発用ダミー。'),
+  ('11111111-1111-4111-8111-111111111103', 'fic-apparel', '架空アパレル', 'ダミー商号（非公開）', false, '小売', 'medium', '開発用ダミー（匿名）。'),
+  ('11111111-1111-4111-8111-111111111104', 'fic-saas', '架空ソフトウェア', 'ダミー株式会社', true, 'IT', 'large', '開発用ダミー。');
+
+-- 自社プロダクト（active / maintained / sunset の3状態）
+insert into core.products (id, slug, name, summary, status, tech_stack, launched_on, internal_notes) values
+  ('77777777-7777-4777-8777-777777777701', 'reserve-hub', '予約ハブ', '店舗向け予約管理 SaaS（ダミー）。', 'active', array['Next.js','Supabase','Cloudflare Workers'], '2026-02-01', '開発用ダミー製品。'),
+  ('77777777-7777-4777-8777-777777777702', 'invoice-mini', '請求ミニ', '個人事業向け請求書 SaaS（ダミー）。', 'maintained', array['Astro','Supabase'], '2025-09-15', '開発用ダミー製品。'),
+  ('77777777-7777-4777-8777-777777777703', 'old-analytics', '旧アナリティクス', '提供終了したダミー製品。', 'sunset', array['Remix'], '2024-04-01', 'sunset 例。');
+
+-- プロダクト紐付けの課題/成果物/数値（product_id・project とは xor）
+insert into core.problems (id, product_id, problem, solution, outcome) values
+  ('88888888-8888-4888-8888-888888888701', '77777777-7777-4777-8777-777777777701', '店舗の予約が紙・電話で煩雑', '予約ハブで一元化', '取りこぼし減・処理短縮');
+insert into core.deliverables (id, product_id, kind, name, description, url, image_urls) values
+  ('33333333-3333-4333-8333-333333333701', '77777777-7777-4777-8777-777777777701', 'public_web', '予約ハブ LP', 'ダミー。', 'https://example.com/reserve', array['https://example.com/reserve-og.png']);
+insert into core.metrics (id, product_id, deliverable_id, label, achieved, previous, goal, unit, kind) values
+  ('44444444-4444-4444-8444-444444444701', '77777777-7777-4777-8777-777777777701', null, 'MRR', '120000', '80000', '200000', '円/月', 'business');
+
+-- プロダクト事例（published / draft）
+insert into core.showcase_entries (id, product_id, slug, title, summary, thumbnail_url, period, client_display, status, display_priority) values
+  ('55555555-5555-4555-8555-555555555561', '77777777-7777-4777-8777-777777777701', 'reserve-hub-launch', '自社プロダクト「予約ハブ」をローンチ', 'ダミーの事例（自社製品）。', 'https://example.com/reserve-og.png', '2026 Q1', 'hidden', 'published', 30),
+  ('55555555-5555-4555-8555-555555555562', '77777777-7777-4777-8777-777777777702', 'invoice-mini-intro', '請求ミニの紹介（下書き）', 'ダミー（下書き）。', null, '2025 Q3', 'hidden', 'draft', 5);
+insert into core.showcase_problems (showcase_id, problem_id, display_priority) values
+  ('55555555-5555-4555-8555-555555555561', '88888888-8888-4888-8888-888888888701', 10);
+insert into core.showcase_deliverables (showcase_id, deliverable_id, display_priority) values
+  ('55555555-5555-4555-8555-555555555561', '33333333-3333-4333-8333-333333333701', 10);
+insert into core.showcase_metrics (showcase_id, metric_id, display_priority) values
+  ('55555555-5555-4555-8555-555555555561', '44444444-4444-4444-8444-444444444701', 10);
+
+-- 受託案件追加（新規 client/service に紐付け・状態バリエーション）
+insert into core.projects (id, client_id, service_id, title, status, started_on, internal_notes, tech_stack) values
+  ('22222222-2222-4222-8222-222222222301', '11111111-1111-4111-8111-111111111102', '66666666-6666-4666-8666-666666666602', '架空クリニックの予約・問診システム', 'active', '2026-04-01', '開発用ダミー案件。', array['Next.js','Supabase']);
+insert into core.projects (id, client_id, service_id, title, status, started_on, ended_on, internal_notes, tech_stack, testimonial) values
+  ('22222222-2222-4222-8222-222222222302', '11111111-1111-4111-8111-111111111103', '66666666-6666-4666-8666-666666666666', '架空アパレルの EC サイト構築', 'delivered', '2025-11-01', '2026-02-10', '開発用ダミー案件。', array['Astro','Shopify'], '{"quote":"売上が伸びました。","role":"EC 担当"}'::jsonb);
+insert into core.projects (id, client_id, service_id, title, started_on, ended_on, internal_notes, tech_stack) values
+  ('22222222-2222-4222-8222-222222222303', '11111111-1111-4111-8111-111111111104', '66666666-6666-4666-8666-666666666602', '架空ソフトウェアの社内管理システム', '2025-06-01', '2025-12-20', '開発用ダミー案件。', array['Next.js','Supabase']);
+update core.projects set status = 'discovery' where id = '22222222-2222-4222-8222-222222222303';
+update core.projects set status = 'active'    where id = '22222222-2222-4222-8222-222222222303';
+update core.projects set status = 'delivered' where id = '22222222-2222-4222-8222-222222222303';
+update core.projects set status = 'closed'    where id = '22222222-2222-4222-8222-222222222303';
+
+-- 新案件の課題/要望（一覧に中身を持たせる）
+insert into core.problems (id, project_id, problem, solution, outcome) values
+  ('88888888-8888-4888-8888-888888888301', '22222222-2222-4222-8222-222222222301', '予約と問診が別々で患者対応に手間', '予約・問診を統合', '受付時間を短縮'),
+  ('88888888-8888-4888-8888-888888888302', '22222222-2222-4222-8222-222222222302', 'EC が無く店頭のみ', 'EC サイトを構築', 'オンライン売上が発生');
+insert into core.requirements (id, project_id, content, note) values
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb301', '22222222-2222-4222-8222-222222222301', 'LINE で予約を受けたい', 'すり合わせ初回');
+
+-- 問い合わせ追加（converted は converted_client_id で顧客に紐付け）
+insert into core.inquiries (id, name, company, email, subject, message, status, converted_client_id, internal_notes, delivery_status) values
+  ('dddddddd-dddd-4ddd-8ddd-ddddddddddd6', '架空 五郎', '架空クリニック', 'goro@example.com', '予約システムの相談', 'ダミー本文。予約・問診を統合したい。', 'converted', '11111111-1111-4111-8111-111111111102', '無料相談→案件化。', 'delivered'),
+  ('dddddddd-dddd-4ddd-8ddd-ddddddddddd7', '架空 六美', null, 'rokumi@example.com', '料金プランの質問', 'ダミー本文。', 'responded', null, '一次返信済み。', 'delivered');
