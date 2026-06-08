@@ -50,7 +50,7 @@ export default async function RecordList({
 
   return (
     <div className="flex h-full">
-      <div className="flex w-full max-w-md shrink-0 flex-col gap-8 overflow-y-auto border-r border-border-subtle p-5 md:p-8">
+      <div className="flex w-full max-w-xl shrink-0 flex-col gap-8 overflow-y-auto border-r border-border-subtle p-5 md:p-8">
         <header className="flex min-h-10 items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">{binding.meta.label}</h1>
           <div className="flex items-center gap-3">

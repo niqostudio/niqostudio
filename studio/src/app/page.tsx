@@ -31,9 +31,16 @@ export default async function DashboardPage() {
   const deployAvailable = getDeploy().available();
   const inProgress = new Set(IN_PROGRESS_STATUSES);
   const forecast = pipeline.filter((s) => inProgress.has(s.status)).reduce((a, s) => a + s.value, 0);
+  // 要対応＝動くべき件数を1グリッドに集約（散らばった行をやめる）。
+  const attention = [
+    ...kpis,
+    { label: t('dueRisk'), count: health.dueSoon, href: health.href },
+    { label: t('stuck'), count: health.stuck, href: health.href },
+    { label: t('deliveryFailed'), count: delivery.failed, href: delivery.href },
+  ];
 
   return (
-    <div className="flex flex-col gap-10 p-5 md:p-10">
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 p-5 md:p-10">
       <header>
         <SectionLabel>{t('dashboard')}</SectionLabel>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -41,25 +48,19 @@ export default async function DashboardPage() {
         </h1>
       </header>
 
-      {/* 要対応：今あなたが動くべきもの */}
+      {/* 要対応：今あなたが動くべき件数を1グリッドに */}
       <section className="flex flex-col gap-3">
         <SectionLabel>{t('attention')}</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {kpis.map((k) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {attention.map((k) => (
             <Link key={k.label} href={k.href} className="group">
-              <Card className="h-full p-5 transition-colors hover:border-accent">
-                <p className="text-3xl font-semibold tabular-nums">{k.count}</p>
+              <Card className="h-full p-4 transition-colors hover:border-accent">
+                <p className="text-2xl font-semibold tabular-nums">{k.count}</p>
                 <p className="mt-1 text-sm text-muted">{k.label}</p>
               </Card>
             </Link>
           ))}
         </div>
-        <Link
-          href={delivery.href}
-          className={`text-sm hover:underline ${delivery.failed > 0 ? 'text-accent' : 'text-muted'}`}
-        >
-          {t('deliveryFailed')}：{delivery.failed}
-        </Link>
       </section>
 
       {/* 可視化：受注ファネル ＋ 月次推移 */}
@@ -89,14 +90,6 @@ export default async function DashboardPage() {
         <Card className="p-4">
           <PipelineBar data={pipeline} />
         </Card>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <Link href={health.href} className={`hover:underline ${health.dueSoon > 0 ? 'text-accent' : 'text-muted'}`}>
-            {t('dueRisk')}（≤14日/超過）：{health.dueSoon}
-          </Link>
-          <Link href={health.href} className={`hover:underline ${health.stuck > 0 ? 'text-accent' : 'text-muted'}`}>
-            {t('stuck')}（21日+）：{health.stuck}
-          </Link>
-        </div>
       </section>
 
       {/* 公開操作 ＋ 外部コンソール */}
