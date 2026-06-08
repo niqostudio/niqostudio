@@ -9,6 +9,15 @@ export interface CollectionStore<F> {
   upsert(record: CollectionRecord<F>): Promise<void>;
 }
 
+// 集計（ダッシュボード KPI 等）。filter 省略＝全件、指定＝column IN values の件数。
+export interface CountFilter {
+  column: string;
+  in: string[];
+}
+export interface MetricsProvider {
+  count(table: string, filter?: CountFilter): Promise<number>;
+}
+
 // reference（外向き FK）の選択肢解決。value＝参照キー、label＝表示用に選んだ列。
 export interface ReferenceOption {
   value: string;
