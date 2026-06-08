@@ -128,19 +128,29 @@ export interface Finance {
 }
 
 export async function loadFinance(): Promise<Finance> {
-  const rows = await new CoreMetricsProvider().rows('invoices', ['subtotal', 'tax', 'status', 'due_on', 'paid_on']);
+  const rows = await new CoreMetricsProvider().rows('invoices', [
+    'subtotal',
+    'tax',
+    'withholding',
+    'paid_amount',
+    'status',
+    'due_on',
+    'paid_on',
+  ]);
   const today = new Date().toISOString().slice(0, 10);
   const n = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : 0);
   const s = (v: unknown) => (typeof v === 'string' ? v : '');
   const f: Finance = { revenue: 0, unpaid: 0, overdue: 0, overdueCount: 0 };
   for (const r of rows) {
-    const total = n(r.subtotal) + n(r.tax);
-    if (s(r.status) === 'paid') f.revenue += total;
-    else if (s(r.status) === 'sent' && !s(r.paid_on)) {
-      f.unpaid += total;
+    // 入金予定＝請求総額−源泉。売上は実入金（paid_amount）、無ければ入金予定で代替。
+    const expected = n(r.subtotal) + n(r.tax) - n(r.withholding);
+    if (s(r.status) === 'paid') {
+      f.revenue += r.paid_amount != null ? n(r.paid_amount) : expected;
+    } else if (s(r.status) === 'sent' && !s(r.paid_on)) {
+      f.unpaid += expected;
       const due = s(r.due_on);
       if (due && due < today) {
-        f.overdue += total;
+        f.overdue += expected;
         f.overdueCount++;
       }
     }

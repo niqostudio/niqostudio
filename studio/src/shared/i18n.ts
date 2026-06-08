@@ -21,7 +21,7 @@ const MESSAGES = {
   salesForecast: '受注予測',
   dueRisk: '納期リスク',
   stuck: '滞留',
-  revenue: '売上（入金済）',
+  revenue: '売上（実入金）',
   unpaid: '未入金',
   overdue: '期日超過',
   paymentOverdue: '入金期日超過',
