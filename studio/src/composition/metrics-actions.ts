@@ -84,7 +84,8 @@ export interface StageItem {
 // 成果物＋指標（label）で突き合わせて更新（重複しない）。achieved 必須なので after の無い行は対象外。
 // business（手動）の after は推移用に metric_measurements へも記録（technical は measure 済み）。
 export async function stageMetricsAction(subject: Subject, subjectId: string, items: StageItem[]): Promise<void> {
-  const valid = items.filter((m) => m.after.trim() !== '');
+  // achieved は nullable。before / target / after のいずれかが入っていれば反映する（事前設計＝before＋goal も保存）。
+  const valid = items.filter((m) => m.after.trim() !== '' || m.before.trim() !== '' || m.target.trim() !== '');
   if (valid.length === 0) return;
   const { getCollection } = await import('./collections');
   const binding = getCollection(subject);
@@ -101,7 +102,7 @@ export async function stageMetricsAction(subject: Subject, subjectId: string, it
     const row = {
       id: idx >= 0 ? rows[idx].id : crypto.randomUUID(),
       label: m.label,
-      achieved: m.after.trim(),
+      achieved: m.after.trim() || null,
       previous: m.before.trim() || null,
       goal: m.target.trim() || null,
       unit: m.unit,
@@ -117,7 +118,7 @@ export async function stageMetricsAction(subject: Subject, subjectId: string, it
 
   await Promise.all(
     valid
-      .filter((m) => m.kind === 'business')
+      .filter((m) => m.kind === 'business' && m.after.trim() !== '')
       .map((m) =>
         logMeasurement({ subject, subjectId, deliverableId: m.deliverableId, metricKey: m.key, phase: 'after', value: m.after.trim(), url: null }),
       ),

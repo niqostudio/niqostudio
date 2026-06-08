@@ -175,6 +175,32 @@ export function NdaChecklist({
             <Textarea value={asStr(work.notes)} rows={2} className="w-full" onChange={(e) => set('notes', e.target.value || null)} />
           )}
         </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted">PDF（保存した NDA の URL）</span>
+          {locked ? (
+            asStr(work.pdf_url) ? (
+              <a href={asStr(work.pdf_url)} target="_blank" rel="noreferrer" className="text-sm text-accent hover:underline">
+                PDF を開く
+              </a>
+            ) : (
+              <p className="text-sm">—</p>
+            )
+          ) : (
+            <>
+              <Input
+                value={asStr(work.pdf_url)}
+                className="w-full"
+                placeholder="https://（保存した PDF の URL）"
+                onChange={(e) => set('pdf_url', e.target.value || null)}
+              />
+              {asStr(work.pdf_url) && (
+                <a href={asStr(work.pdf_url)} target="_blank" rel="noreferrer" className="mt-0.5 text-xs text-accent hover:underline">
+                  PDF を開く
+                </a>
+              )}
+            </>
+          )}
+        </div>
       </section>
 
       {status !== 'agreed' && (

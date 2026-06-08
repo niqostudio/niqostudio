@@ -125,8 +125,8 @@ export function MetricsTool({
       target: target[d.key] ?? '',
       after: after[d.key] ?? '',
     }));
-    if (!items.some((i) => i.after.trim())) {
-      toast.error('after（実績）が無いと反映できません');
+    if (!items.some((i) => i.before.trim() || i.target.trim() || i.after.trim())) {
+      toast.error('入力された値がありません');
       return;
     }
     setSaving(true);
