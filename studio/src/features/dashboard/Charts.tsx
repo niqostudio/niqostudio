@@ -65,18 +65,18 @@ export function FunnelBar({ data }: { data: FunnelStep[] }) {
   );
 }
 
-// 案件パイプライン：status 別件数。バーをクリックで絞り込み一覧へドリルダウン。
+// 案件パイプライン：status 別の受注額（¥）。バーをクリックで絞り込み一覧へドリルダウン。
 export function PipelineBar({ data }: { data: PipelineDatum[] }) {
   const router = useRouter();
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -4 }}>
         <CartesianGrid stroke="var(--color-border-subtle)" vertical={false} />
         <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} />
-        <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} width={28} />
-        <Tooltip contentStyle={TOOLTIP} cursor={{ fill: 'var(--color-bg)' }} />
+        <YAxis tick={AXIS} tickLine={false} axisLine={false} width={40} tickFormatter={yen} />
+        <Tooltip content={<PipelineTooltip />} cursor={{ fill: 'var(--color-bg)' }} />
         <Bar
-          dataKey="count"
+          dataKey="value"
           fill="var(--color-accent)"
           cursor="pointer"
           onClick={(_: unknown, index: number) => {
@@ -86,5 +86,24 @@ export function PipelineBar({ data }: { data: PipelineDatum[] }) {
         />
       </BarChart>
     </ResponsiveContainer>
+  );
+}
+
+// ¥ 軸ラベル（万円表記）。
+function yen(v: number): string {
+  return v >= 10000 ? `${Math.round(v / 10000)}万` : `${v}`;
+}
+
+// パイプラインのツールチップ：受注額＋件数。
+function PipelineTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: PipelineDatum }> }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: 12 }} className="px-2 py-1">
+      <div>{d.label}</div>
+      <div className="text-muted">
+        ¥{d.value.toLocaleString()} ・ {d.count}件
+      </div>
+    </div>
   );
 }

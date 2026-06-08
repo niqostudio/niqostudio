@@ -18,6 +18,8 @@ export interface MetricsProvider {
   count(table: string, filter?: CountFilter): Promise<number>;
   // timestamp 列の値一覧（推移グラフの集計源）。since 以降に絞れる。
   timestamps(table: string, column?: string, since?: string): Promise<string[]>;
+  // 数値列の合計（filter で絞る）。受注額パイプライン等の金額集計に使う。
+  sum(table: string, column: string, filter?: CountFilter): Promise<number>;
 }
 
 // reference（外向き FK）の選択肢解決。value＝参照キー、label＝表示用に選んだ列。

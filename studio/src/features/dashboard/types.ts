@@ -14,5 +14,7 @@ export interface FunnelStep {
 export interface PipelineDatum {
   label: string;
   count: number;
+  // 受注額の合計（その stage の contract_value 合算）。
+  value: number;
   href: string;
 }

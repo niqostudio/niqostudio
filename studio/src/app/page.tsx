@@ -1,6 +1,14 @@
 import Link from 'next/link';
 import { APP_NAME } from '@/composition/instance';
-import { loadKpis, loadDeliveryHealth, loadPipeline, loadFunnel, loadTrend, PIPELINE_TITLE } from '@/composition/dashboard';
+import {
+  loadKpis,
+  loadDeliveryHealth,
+  loadPipeline,
+  loadFunnel,
+  loadTrend,
+  PIPELINE_TITLE,
+  IN_PROGRESS_STATUSES,
+} from '@/composition/dashboard';
 import { QUICK_LINKS } from '@/composition/links';
 import { DEPLOY_TARGETS, getDeploy } from '@/composition/deploy';
 import { DeployButton } from '@/features/deploy/DeployButton';
@@ -19,6 +27,8 @@ export default async function DashboardPage() {
     loadTrend(),
   ]);
   const deployAvailable = getDeploy().available();
+  const inProgress = new Set(IN_PROGRESS_STATUSES);
+  const forecast = pipeline.filter((s) => inProgress.has(s.status)).reduce((a, s) => a + s.value, 0);
 
   return (
     <div className="flex flex-col gap-10 p-5 md:p-10">
@@ -66,9 +76,14 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      {/* 案件パイプライン（バーをクリックで絞り込み一覧へ） */}
+      {/* 案件パイプライン（受注額・バーをクリックで絞り込み一覧へ） */}
       <section className="flex flex-col gap-3">
-        <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
+        <div className="flex items-baseline justify-between gap-3">
+          <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
+          <span className="text-sm text-muted">
+            {t('salesForecast')} <span className="font-semibold tabular-nums text-fg">¥{forecast.toLocaleString()}</span>
+          </span>
+        </div>
         <Card className="p-4">
           <PipelineBar data={pipeline} />
         </Card>

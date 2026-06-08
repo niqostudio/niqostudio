@@ -16,13 +16,16 @@ interface KpiDef {
   href: string;
 }
 
+// 進行中（受注予測の対象）の案件 status。KPI と受注予測で共用する。
+export const IN_PROGRESS_STATUSES = ['consultation', 'discovery', 'active'];
+
 // 業務 KPI はドメイン均等に1枚ずつ（問い合わせに寄せない）。
 const KPI_DEFS: KpiDef[] = [
   { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new' },
   {
     label: '進行中の案件',
     table: 'projects',
-    filter: { column: 'status', in: ['consultation', 'discovery', 'active'] },
+    filter: { column: 'status', in: IN_PROGRESS_STATUSES },
     href: '/projects',
   },
   { label: '公開待ちの事例', table: 'showcase_entries', filter: { column: 'status', in: ['draft'] }, href: '/showcase_entries?status=draft' },
@@ -49,6 +52,8 @@ export interface PipelineStage {
   label: string;
   status: string;
   count: number;
+  // その stage の受注額合計（contract_value 合算）。
+  value: number;
   href: string;
 }
 
@@ -63,11 +68,14 @@ const STAGES: { label: string; status: string }[] = [
 export async function loadPipeline(): Promise<PipelineStage[]> {
   const metrics = new CoreMetricsProvider();
   return Promise.all(
-    STAGES.map(async (s) => ({
-      ...s,
-      count: await metrics.count('projects', { column: 'status', in: [s.status] }),
-      href: `/projects?status=${s.status}`,
-    })),
+    STAGES.map(async (s) => {
+      const filter = { column: 'status', in: [s.status] };
+      const [count, value] = await Promise.all([
+        metrics.count('projects', filter),
+        metrics.sum('projects', 'contract_value', filter),
+      ]);
+      return { ...s, count, value, href: `/projects?status=${s.status}` };
+    }),
   );
 }
 

@@ -28,4 +28,14 @@ export class CoreMetricsProvider implements MetricsProvider {
       .map((r) => r[column])
       .filter((v): v is string => typeof v === 'string');
   }
+
+  async sum(table: string, column: string, filter?: CountFilter): Promise<number> {
+    const base = this.getClient().from(table).select(column);
+    const { data, error } = await (filter ? base.in(filter.column, filter.in) : base);
+    if (error) throw new Error(`${table}.${column} の合計取得に失敗: ${error.message}`);
+    return ((data ?? []) as unknown as Record<string, unknown>[]).reduce(
+      (acc, r) => acc + (typeof r[column] === 'number' ? (r[column] as number) : 0),
+      0,
+    );
+  }
 }
