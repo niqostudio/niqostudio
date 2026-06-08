@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { NAV } from '@/composition/nav';
+import { NAV_GROUPS, loadNavCounts } from '@/composition/nav';
 import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
+import { SectionLabel } from '@/shared/ui/primitives';
+import { t } from '@/shared/i18n';
 import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
 import { UnsavedProvider } from '@/shared/unsaved';
@@ -14,6 +16,7 @@ import { SignOutButton } from './SignOutButton';
 export async function AppShell({ children }: { children: ReactNode }) {
   const operator = await getOperator();
   if (!operator) return <>{children}</>;
+  const counts = await loadNavCounts();
 
   return (
     <UnsavedProvider>
@@ -25,11 +28,23 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-0.5">studio</p>
         </div>
-        <nav className="p-3 flex md:flex-col gap-1 md:flex-1">
-          {NAV.map((m) => (
-            <Link key={m.id} href={m.href} className="rounded-sm px-3 py-2 text-sm hover:bg-bg transition-colors">
-              {getCollection(m.id)?.meta.label ?? m.id}
-            </Link>
+        <nav className="flex flex-col gap-4 p-3 md:flex-1">
+          {NAV_GROUPS.map((g) => (
+            <div key={g.labelKey} className="flex flex-col gap-0.5">
+              <SectionLabel className="px-3 pb-1">{t(g.labelKey)}</SectionLabel>
+              {g.ids.map((id) => (
+                <Link
+                  key={id}
+                  href={`/${id}`}
+                  className="flex items-center justify-between rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-bg"
+                >
+                  <span>{getCollection(id)?.meta.label ?? id}</span>
+                  {counts[id] !== undefined && (
+                    <span className="text-xs tabular-nums text-muted">{counts[id]}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="px-3 py-3 border-t border-border-subtle">

@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Search } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
+import { t } from '@/shared/i18n';
 
 // studio 自前スキン（globals.css の .btn/.card/.chip 等）を着せる薄いラッパー。
 // 形・色は共有クラスが持ち、中身と中身ごとのレイアウトは呼び出し側が持つ。
@@ -105,6 +106,16 @@ export function SearchField({
 
 export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
   return <p className={cn('section-label text-xs', className)}>{children}</p>;
+}
+
+// 未実装ドメインの「あるべき場所」を示す枠。準備中バッジ＋何が入るかの一文。core を変えず UI 骨格を見せる。
+export function Placeholder({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 rounded-sm border border-dashed border-border p-4 text-sm text-muted">
+      <span className="chip chip-mono px-1.5 py-0.5">{t('comingSoon')}</span>
+      <span>{children}</span>
+    </div>
+  );
 }
 
 // 戻りリンク。矢印は SVG＋inline-flex items-center で文字メトリクスに依らず中央揃え（← 文字のズレ回避）。

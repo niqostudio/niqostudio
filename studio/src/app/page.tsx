@@ -1,22 +1,32 @@
 import Link from 'next/link';
-import { NAV } from '@/composition/nav';
 import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
-import { loadKpis, loadDeliveryHealth, loadPipeline, loadActivity, PIPELINE_TITLE } from '@/composition/dashboard';
+import {
+  loadKpis,
+  loadDeliveryHealth,
+  loadPipeline,
+  loadActivity,
+  loadFunnel,
+  loadTrend,
+  PIPELINE_TITLE,
+} from '@/composition/dashboard';
 import { QUICK_LINKS } from '@/composition/links';
 import { DEPLOY_TARGETS, getDeploy } from '@/composition/deploy';
 import { DeployButton } from '@/features/deploy/DeployButton';
-import { Card, SectionLabel } from '@/shared/ui/primitives';
+import { TrendChart, FunnelBar, PipelineBar } from '@/features/dashboard/Charts';
+import { Card, SectionLabel, Placeholder } from '@/shared/ui/primitives';
 import { t, type MessageKey } from '@/shared/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [kpis, delivery, pipeline, activity] = await Promise.all([
+  const [kpis, delivery, pipeline, activity, funnel, trend] = await Promise.all([
     loadKpis(),
     loadDeliveryHealth(),
     loadPipeline(),
     loadActivity(),
+    loadFunnel(),
+    loadTrend(),
   ]);
   const deployAvailable = getDeploy().available();
 
@@ -50,22 +60,31 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
-      {/* 案件パイプライン */}
+      {/* 可視化：受注ファネル ＋ 月次推移 */}
+      <div className="grid gap-10 lg:grid-cols-2">
+        <section className="flex flex-col gap-3">
+          <SectionLabel>{t('salesFunnel')}</SectionLabel>
+          <Card className="p-4">
+            <FunnelBar data={funnel} />
+          </Card>
+        </section>
+        <section className="flex flex-col gap-3">
+          <SectionLabel>{t('monthlyTrend')}</SectionLabel>
+          <Card className="p-4">
+            <TrendChart data={trend} />
+          </Card>
+        </section>
+      </div>
+
+      {/* 案件パイプライン（バーをクリックで絞り込み一覧へ） */}
       <section className="flex flex-col gap-3">
         <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
-        <div className="flex flex-wrap gap-2">
-          {pipeline.map((s) => (
-            <Link key={s.status} href={s.href} className="group">
-              <Card className="px-4 py-3 transition-colors hover:border-accent">
-                <span className="text-xs text-muted">{s.label}</span>
-                <span className="ml-2 text-lg font-semibold tabular-nums">{s.count}</span>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <Card className="p-4">
+          <PipelineBar data={pipeline} />
+        </Card>
       </section>
 
-      {/* 業務（左・広い）＋ 操作/導線（右・サイド） */}
+      {/* 最近の活動 ＋ 操作/導線 */}
       <div className="grid gap-10 lg:grid-cols-3">
         <section className="flex flex-col gap-3 lg:col-span-2">
           <SectionLabel>{t('recentActivity')}</SectionLabel>
@@ -106,21 +125,6 @@ export default async function DashboardPage() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <SectionLabel>{t('collections')}</SectionLabel>
-            <div className="flex flex-col">
-              {NAV.map((m) => (
-                <Link
-                  key={m.id}
-                  href={m.href}
-                  className="rounded-sm px-3 py-2 text-sm transition-colors hover:bg-bg"
-                >
-                  {getCollection(m.id)?.meta.label ?? m.id}
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-2">
             <SectionLabel>{t('consoles')}</SectionLabel>
             <div className="flex flex-wrap gap-2">
               {QUICK_LINKS.map((l) => (
@@ -137,6 +141,18 @@ export default async function DashboardPage() {
             </div>
           </section>
         </aside>
+      </div>
+
+      {/* 運用・財務：あるべき場所だけ先に置く（接続/テーブル整備後に実データ） */}
+      <div className="grid gap-10 sm:grid-cols-2">
+        <section className="flex flex-col gap-3">
+          <SectionLabel>{t('ops')}</SectionLabel>
+          <Placeholder>Supabase / Cloudflare / メール送達の状態・quota</Placeholder>
+        </section>
+        <section className="flex flex-col gap-3">
+          <SectionLabel>{t('finance')}</SectionLabel>
+          <Placeholder>売上 / 入金 / ランウェイ</Placeholder>
+        </section>
       </div>
     </div>
   );
