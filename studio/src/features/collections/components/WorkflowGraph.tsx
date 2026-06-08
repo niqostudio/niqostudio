@@ -84,7 +84,7 @@ export function WorkflowGraph({
               d={edgePath(a, b)}
               fill="none"
               stroke={on ? 'var(--color-accent)' : 'var(--color-border)'}
-              strokeWidth={on ? 2 : 1}
+              strokeWidth={on ? 1.5 : 1}
               markerEnd={`url(#${on ? 'wf-arrow-on' : 'wf-arrow-off'})`}
             />
           );
@@ -94,20 +94,26 @@ export function WorkflowGraph({
           const isCurrent = s.value === current;
           const isNext = nextSet.has(s.value);
           const done = curIdx >= 0 && i < curIdx;
-          const fill = isCurrent ? 'var(--color-accent)' : 'var(--color-surface)';
-          const stroke = isCurrent || isNext ? 'var(--color-accent)' : done ? 'var(--color-success)' : 'var(--color-border)';
-          const textColor = isCurrent
-            ? 'var(--color-on-accent)'
+          // 選べる（isNext）は既定は控えめ（accent 文字）で、hover で塗りに＝押せると分かる。アウトラインは細く。
+          const rectCls = isCurrent
+            ? 'fill-accent stroke-accent'
             : isNext
-              ? 'var(--color-accent)'
+              ? 'fill-surface stroke-border group-hover:fill-accent group-hover:stroke-accent'
               : done
-                ? 'var(--color-success)'
-                : 'var(--color-muted)';
+                ? 'fill-surface stroke-success'
+                : 'fill-surface stroke-border';
+          const textCls = isCurrent
+            ? 'fill-on-accent'
+            : isNext
+              ? 'fill-accent group-hover:fill-on-accent'
+              : done
+                ? 'fill-success'
+                : 'fill-muted';
           return (
             <g
               key={s.value}
               onClick={isNext && !busy ? () => advance(s.value) : undefined}
-              style={{ cursor: isNext ? 'pointer' : 'default' }}
+              className={`group ${isNext ? 'cursor-pointer' : ''}`}
             >
               <rect
                 x={cx(i) - HALF}
@@ -115,11 +121,16 @@ export function WorkflowGraph({
                 width={NODE_W}
                 height={NODE_H}
                 rx={6}
-                fill={fill}
-                stroke={stroke}
-                strokeWidth={isCurrent || isNext ? 2 : 1}
+                className={`stroke-1 transition-colors ${rectCls}`}
               />
-              <text x={cx(i)} y={MID} textAnchor="middle" dominantBaseline="central" fontSize="13" fill={textColor}>
+              <text
+                x={cx(i)}
+                y={MID}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="13"
+                className={`transition-colors ${textCls}`}
+              >
                 {s.label}
               </text>
             </g>
