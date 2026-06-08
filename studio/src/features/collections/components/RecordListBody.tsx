@@ -115,12 +115,13 @@ export function RecordListBody({
 
   function Row({ record, draft }: { record: Rec; draft?: boolean }) {
     const selected = record.id === selectedId;
+    const status = schema.statusField ? asString(record.fields[schema.statusField]) : '';
     return (
       <Link href={`/${collectionId}?sel=${record.id}`} scroll={false} className="block">
         <Card className={cn('p-4 transition-colors hover:border-accent', selected && 'border-accent bg-surface')}>
           <div className="flex items-center gap-2">
             <p className="font-medium truncate">{asString(record.fields[schema.titleField]) || t('untitled')}</p>
-            {schema.statusField && <StatusBadge status={asString(record.fields[schema.statusField])} />}
+            {status && <StatusBadge status={status} label={statusLabel(status)} />}
             {draft && <span className="chip inline-flex items-center px-2 py-0.5 text-accent border-accent">{t('draft')}</span>}
           </div>
           <div className="mt-2 text-xs text-muted">{t('updated')} {record.updatedAt}</div>

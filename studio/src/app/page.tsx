@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { NAV } from '@/composition/nav';
 import { APP_NAME } from '@/composition/instance';
+import { getCollection } from '@/composition/collections';
 import { Card, SectionLabel } from '@/shared/ui/primitives';
-import { t, type MessageKey } from '@/shared/i18n';
+import { t } from '@/shared/i18n';
 
 export default function DashboardPage() {
   return (
@@ -16,7 +17,7 @@ export default function DashboardPage() {
         {NAV.map((m) => (
           <Link key={m.id} href={m.href} className="group">
             <Card className="p-5 h-full hover:border-accent transition-colors">
-              <p className="font-medium">{t(`nav.${m.id}` as MessageKey)}</p>
+              <p className="font-medium">{getCollection(m.id)?.meta.label ?? m.id}</p>
             </Card>
           </Link>
         ))}

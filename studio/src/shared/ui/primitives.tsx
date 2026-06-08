@@ -86,19 +86,10 @@ export function BackLink({ href, children, className }: { href: string; children
   );
 }
 
-// 案件ステータスの表示色（ラベルの正本は core の project_statuses）。一覧バッジは同期描画なので色だけ持つ。
-const STATUS: Record<string, { label: string; className: string }> = {
-  consultation: { label: '無料相談', className: 'text-muted border-border' },
-  discovery: { label: '事前設計', className: 'text-accent border-accent' },
-  active: { label: '進行中', className: 'text-accent border-accent' },
-  delivered: { label: '納品済', className: 'text-accent border-accent' },
-  closed: { label: 'クローズ', className: 'text-muted border-border' },
-};
-
-// ステータスバッジ。色は STATUS（studio の presentation）、ラベルは overlay 由来を優先（label）。
+// ステータスバッジ（presentation のみ）。studio は status 値の意味を知らないため色は中立。
+// ラベルは overlay 由来を呼び出し側が渡す（label）。色分けが要るなら overlay に色を持たせて渡す方針。
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
   // 値が無ければ何も出さない（空の四角を描かない）。
   if (!status) return null;
-  const s = STATUS[status] ?? { label: status, className: 'text-muted border-border' };
-  return <span className={cn('chip inline-flex items-center px-2 py-0.5', s.className)}>{label ?? s.label}</span>;
+  return <span className="chip inline-flex items-center px-2 py-0.5 text-muted border-border">{label ?? status}</span>;
 }

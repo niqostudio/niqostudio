@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { NAV } from '@/composition/nav';
+import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
-import { t, type MessageKey } from '@/shared/i18n';
 import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
 import { SignOutButton } from './SignOutButton';
@@ -26,7 +26,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <nav className="p-3 flex md:flex-col gap-1 md:flex-1">
           {NAV.map((m) => (
             <Link key={m.id} href={m.href} className="rounded-sm px-3 py-2 text-sm hover:bg-bg transition-colors">
-              {t(`nav.${m.id}` as MessageKey)}
+              {getCollection(m.id)?.meta.label ?? m.id}
             </Link>
           ))}
         </nav>

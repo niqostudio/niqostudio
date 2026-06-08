@@ -54,10 +54,6 @@ const MESSAGES = {
   'origin.manual': '編集',
   'origin.derive': 'Git 取り込み',
   'origin.revert': '復元',
-  'nav.projects': '案件',
-  'nav.products': 'プロダクト',
-  'nav.clients': '顧客',
-  'nav.inquiries': '問い合わせ',
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
