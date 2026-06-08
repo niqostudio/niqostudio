@@ -87,7 +87,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         <section className="flex flex-col gap-3">
           <p className="section-label text-xs">{t('workflow')}</p>
           {statusOrder.length > 0 && <StatusStepper steps={statusOrder} current={status} />}
-          <WorkflowActions collectionId={collection} recordId={id} nextStates={nextLabeled} />
+          <WorkflowActions
+            collectionId={collection}
+            recordId={id}
+            current={{ value: status, label: statusLabel(status) }}
+            nextStates={nextLabeled}
+          />
         </section>
       )}
 

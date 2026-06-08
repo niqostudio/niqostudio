@@ -3,10 +3,14 @@ import type { TrendPoint, FunnelStep } from '@/features/dashboard/types';
 
 // ダッシュボードの構成（KPI / 配信ヘルス / パイプライン / 最近の活動）。どの値を「未対応/進行中/公開待ち」と
 // みなすか・stage の並び＝ドメイン判断なので composition が持つ。count 機構は adapter（CoreMetricsProvider）。
+export type KpiTone = 'warning' | 'error' | 'info';
+
 export interface Kpi {
   label: string;
   count: number;
   href: string;
+  // 0 超のとき数値を色づけする（要対応の温度感）。
+  tone?: KpiTone;
 }
 
 interface KpiDef {
@@ -14,6 +18,7 @@ interface KpiDef {
   table: string;
   filter?: { column: string; in: string[] };
   href: string;
+  tone?: KpiTone;
 }
 
 // 進行中（受注予測の対象）の案件 status。KPI と受注予測で共用する。
@@ -21,7 +26,7 @@ export const IN_PROGRESS_STATUSES = ['consultation', 'discovery', 'active'];
 
 // 業務 KPI はドメイン均等に1枚ずつ（問い合わせに寄せない）。
 const KPI_DEFS: KpiDef[] = [
-  { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new' },
+  { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new', tone: 'warning' },
   {
     label: '進行中の案件',
     table: 'projects',
@@ -34,7 +39,7 @@ const KPI_DEFS: KpiDef[] = [
 export async function loadKpis(): Promise<Kpi[]> {
   const metrics = new CoreMetricsProvider();
   return Promise.all(
-    KPI_DEFS.map(async (d) => ({ label: d.label, href: d.href, count: await metrics.count(d.table, d.filter) })),
+    KPI_DEFS.map(async (d) => ({ label: d.label, href: d.href, count: await metrics.count(d.table, d.filter), tone: d.tone })),
   );
 }
 

@@ -139,33 +139,33 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
   return <span className="chip inline-flex items-center px-2 py-0.5 text-muted border-border">{label ?? status}</span>;
 }
 
-// ステータスの流れ（順序つき）。現在を塗り、過去は通常、未来は淡く＝現在地が一目で分かる。
+// ステータス1つ分のチップ。tone で現在/完了/未来/通常を出し分け＝stepper・ワークフロー等で共用。
+export type StatusTone = 'plain' | 'current' | 'done' | 'upcoming';
+const STATUS_CHIP: Record<StatusTone, string> = {
+  plain: 'border-border text-fg',
+  current: 'border-accent bg-accent text-surface',
+  done: 'border-success text-success',
+  upcoming: 'border-border text-muted',
+};
+export function StatusChip({ children, tone = 'plain' }: { children: ReactNode; tone?: StatusTone }) {
+  return <span className={cn('chip inline-flex items-center px-2 py-0.5', STATUS_CHIP[tone])}>{children}</span>;
+}
+
+// ステータスの流れ（順序つき）。現在=塗り・完了=緑・未来=淡。矢印は状態の「間」に置く＝現在地が一目で分かる。
 export function StatusStepper({ steps, current }: { steps: { value: string; label: string }[]; current: string }) {
   const idx = steps.findIndex((s) => s.value === current);
   return (
     <div className="flex flex-wrap items-center gap-1">
       {steps.map((s, i) => {
-        const isCurrent = s.value === current;
-        const done = idx >= 0 && i < idx;
+        const tone: StatusTone = s.value === current ? 'current' : idx >= 0 && i < idx ? 'done' : 'upcoming';
         return (
           <span key={s.value} className="inline-flex items-center gap-1">
             {i > 0 && (
-              <span className="text-border" aria-hidden="true">
+              <span className="text-muted" aria-hidden="true">
                 →
               </span>
             )}
-            <span
-              className={cn(
-                'chip inline-flex items-center px-2 py-0.5',
-                isCurrent
-                  ? 'border-accent bg-accent text-surface'
-                  : done
-                    ? 'border-border text-fg'
-                    : 'border-border-subtle text-muted',
-              )}
-            >
-              {s.label}
-            </span>
+            <StatusChip tone={tone}>{s.label}</StatusChip>
           </span>
         );
       })}

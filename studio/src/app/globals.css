@@ -4,12 +4,12 @@
    色は機能（accent＝操作・status＝success/error/warning/info）に絞り、面は白/淡灰。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
-  --color-bg: #f6f7f9;
+  --color-bg: #f5f6f7;
   --color-surface: #ffffff;
-  --color-fg: #1c2024;
-  --color-muted: #6b7280;
-  --color-border: #e3e6ea;
-  --color-border-subtle: #eef0f3;
+  --color-fg: #18181b;
+  --color-muted: #4b5563;
+  --color-border: #d1d5db;
+  --color-border-subtle: #e5e7eb;
   --color-accent: #2563eb;
   --color-error: #dc2626;
   --color-success: #16a34a;

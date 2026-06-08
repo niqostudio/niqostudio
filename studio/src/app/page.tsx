@@ -19,6 +19,11 @@ import { t } from '@/shared/i18n';
 
 export const dynamic = 'force-dynamic';
 
+// 要対応カードの数値色（0 のときは無色＝騒がしくしない）。
+function toneClass(tone?: string): string {
+  return tone === 'error' ? 'text-error' : tone === 'warning' ? 'text-warning' : tone === 'info' ? 'text-info' : '';
+}
+
 export default async function DashboardPage() {
   const [kpis, delivery, pipeline, funnel, trend, health] = await Promise.all([
     loadKpis(),
@@ -34,9 +39,9 @@ export default async function DashboardPage() {
   // 要対応＝動くべき件数を1グリッドに集約（散らばった行をやめる）。
   const attention = [
     ...kpis,
-    { label: t('dueRisk'), count: health.dueSoon, href: health.href },
-    { label: t('stuck'), count: health.stuck, href: health.href },
-    { label: t('deliveryFailed'), count: delivery.failed, href: delivery.href },
+    { label: t('dueRisk'), count: health.dueSoon, href: health.href, tone: 'warning' as const },
+    { label: t('stuck'), count: health.stuck, href: health.href, tone: 'warning' as const },
+    { label: t('deliveryFailed'), count: delivery.failed, href: delivery.href, tone: 'error' as const },
   ];
 
   return (
@@ -55,7 +60,7 @@ export default async function DashboardPage() {
           {attention.map((k) => (
             <Link key={k.label} href={k.href} className="group">
               <Card className="h-full p-4 transition-colors hover:border-accent">
-                <p className="text-2xl font-semibold tabular-nums">{k.count}</p>
+                <p className={`text-2xl font-semibold tabular-nums ${k.count > 0 ? toneClass(k.tone) : ''}`}>{k.count}</p>
                 <p className="mt-1 text-sm text-muted">{k.label}</p>
               </Card>
             </Link>
