@@ -74,12 +74,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 印刷（PDF 保存）：高さ/overflow 制約を外し内容が切れないように。nav・terminal 等は print:hidden で隠す。 */
+/* 印刷（PDF 保存）：高さ/overflow 制約を外し内容が切れないように。背景は白。nav・terminal 等は print:hidden で隠す。 */
 @media print {
   html,
   body {
     height: auto;
     overflow: visible;
+    background: var(--color-surface);
   }
 }
 
