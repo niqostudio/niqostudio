@@ -53,6 +53,7 @@ const MESSAGES = {
   tagPlaceholder: '入力して Enter',
   comingSoon: '準備中',
   terminal: 'ターミナル',
+  terminalRuns: '実行',
   noRuns: '実行履歴はありません',
   meta: 'メタ',
   state: '状態',

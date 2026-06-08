@@ -1,8 +1,5 @@
 import { CoreMetricsProvider } from '@/adapters/domain-store/supabase/metrics';
-import { StudioActivityFeed } from '@/adapters/studio-store/supabase/activity-feed';
-import type { ActivityEntry } from '@/ports/studio-store';
 import type { TrendPoint, FunnelStep } from '@/features/dashboard/types';
-import { INSTANCE_ID } from './instance';
 
 // ダッシュボードの構成（KPI / 配信ヘルス / パイプライン / 最近の活動）。どの値を「未対応/進行中/公開待ち」と
 // みなすか・stage の並び＝ドメイン判断なので composition が持つ。count 機構は adapter（CoreMetricsProvider）。
@@ -72,11 +69,6 @@ export async function loadPipeline(): Promise<PipelineStage[]> {
       href: `/projects?status=${s.status}`,
     })),
   );
-}
-
-// 最近の活動（全 collection 横断＝record_versions）。1ドメインに寄らない横断フィード。
-export async function loadActivity(limit = 8): Promise<ActivityEntry[]> {
-  return new StudioActivityFeed(INSTANCE_ID).recent(limit);
 }
 
 // 受注ファネル：問い合わせ→顧客→案件（件数）。どこで落ちるかを可視化。
