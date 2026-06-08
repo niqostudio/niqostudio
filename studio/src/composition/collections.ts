@@ -106,7 +106,7 @@ const products: CollectionBinding<Fields> = {
 // ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。
 const ndas: CollectionBinding<Fields> = {
   ...coreCollection('ndas', 'NDA', ndasSemantics),
-  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }] },
+  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }], createHref: '/ndas/new' },
   detail: NdaDetail,
 };
 
