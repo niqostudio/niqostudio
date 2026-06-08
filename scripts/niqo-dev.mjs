@@ -3,6 +3,7 @@
 // pid/port を state に残し（niqo:down で停止）、出力はログファイルへ。
 import { spawn } from 'node:child_process';
 import { mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { platform } from 'node:os';
 import { STATE_DIR, open, writeState, stopDev } from './niqo-lib.mjs';
 
 // 既存 dev があれば止めてから（restart 相当）。
@@ -13,7 +14,13 @@ function start(name, cmd) {
   const log = `${STATE_DIR}/${name}.log`;
   writeFileSync(log, ''); // 旧ログをクリア
   const out = openSync(log, 'a');
-  const child = spawn(cmd, { detached: true, stdio: ['ignore', out, out], shell: true, windowsHide: true });
+  // Windows は detached だと（windowsHide でも）新しいコンソール窓が出るため付けない。
+  // windowsHide＋stdio→ログ＋unref で「窓無しのバックグラウンド」になり、ターミナルは解放される
+  // （その端末を閉じると dev も終わる／niqo:down では taskkill /T で確実に止める）。
+  // unix は detached でプロセスグループを分け、niqo:down の group kill を効かせる。
+  const opts = { stdio: ['ignore', out, out], shell: true, windowsHide: true };
+  if (platform() !== 'win32') opts.detached = true;
+  const child = spawn(cmd, opts);
   child.unref();
   return { name, pid: child.pid, log };
 }
