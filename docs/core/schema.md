@@ -108,6 +108,7 @@ erDiagram
 | `industry` | text NOT NULL | 業種 |
 | `size` / `description` / `logo_url` / `website_url` / `first_contact_date` | – | |
 | `address` | text | 所在地 / 請求先（法人取引の宛先） |
+| `external_id` | text | 外部システム（freee 等）の対応 id（非 null 一意） |
 | `internal_notes` | text | 内部専用 |
 
 ### projects（truth・案件＝engagement spine）
@@ -126,6 +127,7 @@ erDiagram
 | `started_on` / `ended_on` | date | 着手 / 実終了（CHECK: ended_on ≥ started_on） |
 | `due_on` | date | 計画上の終了（有期性の明示） |
 | `contract_value` | integer | 受注額（**税抜**・JPY・CHECK ≥ 0・null=未確定）。消費税は請求時に当時の税率で別計算する（→ 将来 invoices）。公開しない。 |
+| `external_id` | text | 外部システム（freee 等）の対応 id（非 null 一意） |
 | `internal_notes` | text | |
 
 ### products（truth・自社プロダクト＝継続実体）
@@ -433,6 +435,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 | `paid_amount` | numeric | 実入金額（CHECK >= 0・null=未入金。源泉・手数料で請求額と差が出るため別持ち） |
 | `pdf_url` | text | 請求書 PDF の URL |
 | `notes` | text | メモ |
+| `external_id` | text | 外部システム（freee 等）の対応 id（非 null 一意） |
 
 ## status の値
 

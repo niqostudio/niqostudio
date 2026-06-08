@@ -16,5 +16,6 @@ export const clientsSemantics: CollectionSemantics = {
     address: { label: '住所 / 請求先', kind: 'textarea' },
     first_contact_date: { label: '初回接触日', kind: 'date' },
     internal_notes: { label: '内部メモ', kind: 'textarea' },
+    external_id: { label: '連携 id（freee 等）' },
   },
 };

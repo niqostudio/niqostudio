@@ -26,5 +26,6 @@ export const invoicesSemantics: CollectionSemantics = {
     paid_amount: { label: '入金額（実入金）', order: 12 },
     pdf_url: { label: 'PDF（請求書の URL）', order: 13 },
     notes: { label: 'メモ', kind: 'textarea', order: 14 },
+    external_id: { label: '連携 id（freee 等）', order: 15 },
   },
 };

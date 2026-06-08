@@ -14,6 +14,7 @@ export type Database = {
           address: string | null
           created_at: string
           description: string | null
+          external_id: string | null
           first_contact_date: string | null
           id: string
           industry: string
@@ -31,6 +32,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           first_contact_date?: string | null
           id?: string
           industry: string
@@ -48,6 +50,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           description?: string | null
+          external_id?: string | null
           first_contact_date?: string | null
           id?: string
           industry?: string
@@ -258,6 +261,7 @@ export type Database = {
           client_id: string
           created_at: string
           due_on: string | null
+          external_id: string | null
           id: string
           invoice_no: string | null
           issued_on: string | null
@@ -277,6 +281,7 @@ export type Database = {
           client_id: string
           created_at?: string
           due_on?: string | null
+          external_id?: string | null
           id?: string
           invoice_no?: string | null
           issued_on?: string | null
@@ -296,6 +301,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           due_on?: string | null
+          external_id?: string | null
           id?: string
           invoice_no?: string | null
           issued_on?: string | null
@@ -1054,6 +1060,7 @@ export type Database = {
           created_at: string
           due_on: string | null
           ended_on: string | null
+          external_id: string | null
           id: string
           internal_notes: string | null
           product_id: string | null
@@ -1072,6 +1079,7 @@ export type Database = {
           created_at?: string
           due_on?: string | null
           ended_on?: string | null
+          external_id?: string | null
           id?: string
           internal_notes?: string | null
           product_id?: string | null
@@ -1090,6 +1098,7 @@ export type Database = {
           created_at?: string
           due_on?: string | null
           ended_on?: string | null
+          external_id?: string | null
           id?: string
           internal_notes?: string | null
           product_id?: string | null
