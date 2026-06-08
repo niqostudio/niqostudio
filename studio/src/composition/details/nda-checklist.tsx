@@ -62,6 +62,8 @@ export function NdaChecklist({
   }
 
   const status = asStr(work.status);
+  // 合意済は編集不可（読み合わせ・チェック・項目を読み取り専用に）。
+  const locked = status === 'agreed';
   const markAgreed = () => {
     const next = { ...work, status: 'agreed', agreed_on: new Date().toISOString().slice(0, 10) };
     setWork(next);
@@ -83,7 +85,7 @@ export function NdaChecklist({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 print:hidden">
-          {dirty && (
+          {!locked && dirty && (
             <Action variant="primary" onClick={() => persist(work)} disabled={busy}>
               {t('save')}
             </Action>
@@ -98,10 +100,12 @@ export function NdaChecklist({
           <Action variant="secondary" onClick={() => window.print()}>
             PDFに保存
           </Action>
-          <Action variant="secondary" href={editHref}>
-            <Pencil className="size-4" />
-            {t('edit')}
-          </Action>
+          {!locked && (
+            <Action variant="secondary" href={editHref}>
+              <Pencil className="size-4" />
+              {t('edit')}
+            </Action>
+          )}
           <Action variant="secondary" href={closeHref} title="閉じる">
             <X className="size-4" />
           </Action>
@@ -113,19 +117,28 @@ export function NdaChecklist({
         <div className="flex flex-col gap-1.5">
           {CATEGORIES.map((c) => {
             const on = work[c.key] === true;
-            return (
+            const inner = (
+              <>
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-sm border ${on ? 'border-accent text-accent' : 'border-border text-transparent'}`}
+                >
+                  ✓
+                </span>
+                <span className={`text-base ${on ? '' : 'text-muted'}`}>{c.label}</span>
+              </>
+            );
+            return locked ? (
+              <div key={c.key} className="flex items-center gap-3 rounded-sm border border-border-subtle px-4 py-3">
+                {inner}
+              </div>
+            ) : (
               <button
                 key={c.key}
                 type="button"
                 onClick={() => set(c.key, !on)}
                 className="flex items-center gap-3 rounded-sm border border-border-subtle px-4 py-3 text-left transition-colors hover:border-accent"
               >
-                <span
-                  className={`grid size-5 shrink-0 place-items-center rounded-sm border ${on ? 'border-accent text-accent' : 'border-border text-transparent'}`}
-                >
-                  ✓
-                </span>
-                <span className="text-base">{c.label}</span>
+                {inner}
               </button>
             );
           })}
@@ -135,20 +148,32 @@ export function NdaChecklist({
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">NDA 文書</span>
-          <Input value={asStr(work.reference)} className="w-full" onChange={(e) => set('reference', e.target.value || null)} />
+          {locked ? (
+            <p className="text-sm">{asStr(work.reference) || '—'}</p>
+          ) : (
+            <Input value={asStr(work.reference)} className="w-full" onChange={(e) => set('reference', e.target.value || null)} />
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">合意日</span>
-          <Input
-            type="date"
-            value={asStr(work.agreed_on)}
-            className="w-full"
-            onChange={(e) => set('agreed_on', e.target.value || null)}
-          />
+          {locked ? (
+            <p className="text-sm">{asStr(work.agreed_on) || '—'}</p>
+          ) : (
+            <Input
+              type="date"
+              value={asStr(work.agreed_on)}
+              className="w-full"
+              onChange={(e) => set('agreed_on', e.target.value || null)}
+            />
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">メモ</span>
-          <Textarea value={asStr(work.notes)} rows={2} className="w-full" onChange={(e) => set('notes', e.target.value || null)} />
+          {locked ? (
+            <p className="whitespace-pre-wrap text-sm">{asStr(work.notes) || '—'}</p>
+          ) : (
+            <Textarea value={asStr(work.notes)} rows={2} className="w-full" onChange={(e) => set('notes', e.target.value || null)} />
+          )}
         </div>
       </section>
 

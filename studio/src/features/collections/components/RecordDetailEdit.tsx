@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil } from 'lucide-react';
+import { Pencil, X } from 'lucide-react';
 import { Action } from '@/shared/ui/primitives';
 import { FieldControl, asText, type RefOption } from '@/shared/ui/fields';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
@@ -168,8 +168,19 @@ export function DetailFields({
                 <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
               </div>
             ) : editing === f.key ? (
-              <div className="mt-0.5 flex min-h-9 items-center">
+              <div className="mt-0.5 flex min-h-9 items-center gap-1">
                 <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
+                <button
+                  type="button"
+                  title={t('close')}
+                  onClick={() => {
+                    set(f.key, values[f.key]);
+                    setEditing(null);
+                  }}
+                  className="shrink-0 text-muted transition-colors hover:text-error"
+                >
+                  <X className="size-4" />
+                </button>
               </div>
             ) : (
               <button

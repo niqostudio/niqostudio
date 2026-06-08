@@ -113,7 +113,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         <section className="flex flex-wrap gap-2">
           {binding.recordActions.map((a) => (
             <form key={a.id} action={a.run.bind(null, id)}>
-              <button type="submit" className="btn btn-secondary">
+              <button type="submit" className="btn btn-primary">
                 {a.label}
               </button>
             </form>
