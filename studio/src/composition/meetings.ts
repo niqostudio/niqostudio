@@ -19,17 +19,8 @@ export async function loadMeetingsFor(
   column: 'client_id' | 'project_id' | 'inquiry_id',
   id: string,
 ): Promise<MeetingRow[]> {
-  const rows = await new CoreMetricsProvider().rows('meetings', [
-    'id',
-    'title',
-    'met_on',
-    'status',
-    'client_id',
-    'project_id',
-    'inquiry_id',
-  ]);
+  const rows = await new CoreMetricsProvider().rows('meetings', ['id', 'title', 'met_on', 'status'], { column, value: id });
   return rows
-    .filter((r) => String(r[column] ?? '') === id)
     .map((r) => ({
       id: String(r.id),
       title: typeof r.title === 'string' ? r.title : '',

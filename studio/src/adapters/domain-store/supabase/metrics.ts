@@ -22,8 +22,10 @@ export class CoreMetricsProvider implements MetricsProvider {
     return count ?? 0;
   }
 
-  async rows(table: string, columns: string[]): Promise<Record<string, unknown>[]> {
-    const { data, error } = await this.getClient().from(table).select(columns.join(','));
+  async rows(table: string, columns: string[], match?: { column: string; value: string }): Promise<Record<string, unknown>[]> {
+    let q = this.getClient().from(table).select(columns.join(','));
+    if (match) q = q.eq(match.column, match.value);
+    const { data, error } = await q;
     if (error) throw new Error(`${table} の取得に失敗: ${error.message}`);
     return (data ?? []) as unknown as Record<string, unknown>[];
   }

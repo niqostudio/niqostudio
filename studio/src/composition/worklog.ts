@@ -93,19 +93,17 @@ export async function loadWorklogSummary(): Promise<WorklogSummary> {
 // 1案件の総工数（案件詳細の集計表示用）。受注額があれば時給も返す。
 export async function loadProjectHours(projectId: string): Promise<{ hours: number; count: number; value: number | null; rate: number | null }> {
   const metrics = new CoreMetricsProvider();
-  const [entries, projects] = await Promise.all([
-    metrics.rows('work_logs', ['project_id', 'hours']),
-    metrics.rows('projects', ['id', 'contract_value']),
+  const [entries, projectRows] = await Promise.all([
+    metrics.rows('work_logs', ['hours'], { column: 'project_id', value: projectId }),
+    metrics.rows('projects', ['contract_value'], { column: 'id', value: projectId }),
   ]);
   let h = 0;
   let count = 0;
   for (const e of entries) {
-    if (String(e.project_id) === projectId) {
-      h += num(e.hours);
-      count++;
-    }
+    h += num(e.hours);
+    count++;
   }
-  const pv = projects.find((p) => String(p.id) === projectId)?.contract_value;
+  const pv = projectRows[0]?.contract_value;
   const value = typeof pv === 'number' ? pv : null;
   return { hours: round1(h), count, value, rate: value != null && h > 0 ? Math.round(value / h) : null };
 }

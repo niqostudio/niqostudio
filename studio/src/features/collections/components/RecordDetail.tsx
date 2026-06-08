@@ -22,26 +22,31 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   const title = asString(fields[schema.titleField]) || t('untitled');
   const status = schema.statusField ? asString(fields[schema.statusField]) : '';
 
-  const timeline = binding.history ? await binding.history.list(id).catch(() => []) : [];
-  const nextStates = binding.workflow ? await binding.workflow.nextStates(status || null).catch(() => []) : [];
-  const transitions = binding.workflow ? await binding.workflow.transitions().catch(() => []) : [];
-  const detailExtras = binding.detailExtras ?? [];
-
   // 読み取り表示するフィールド（status は workflow 側・hidden は overlay で除外済み）。
   const viewFields = schema.fields.filter((f) => f.key !== schema.statusField);
+  const refFields = viewFields.filter((f) => f.kind === 'reference' && f.refTable);
+  const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
+  const statusRef = statusDesc?.kind === 'reference' && statusDesc.refTable ? statusDesc : undefined;
 
-  // reference フィールドの選択肢（値＋表示ラベル＝overlay 優先）。表示・インライン編集の両方で使う。
-  const refOptions: Record<string, { value: string; label: string }[]> = {};
-  if (binding.references) {
-    await Promise.all(
-      viewFields
-        .filter((f) => f.kind === 'reference' && f.refTable)
-        .map(async (f) => {
-          const opts = await binding.references!.options(f.refTable!, f.refColumn ?? 'id').catch(() => []);
-          refOptions[f.key] = opts.map((o) => ({ value: o.value, label: f.optionLabels?.[o.value] ?? o.label }));
-        }),
-    );
-  }
+  // 互いに独立な取得は並列に（履歴 / 次状態 / 遷移 / 参照選択肢 / 状態マスタ）。
+  const [timeline, nextStates, transitions, refResolved, statusOpts] = await Promise.all([
+    binding.history ? binding.history.list(id).catch(() => []) : Promise.resolve([]),
+    binding.workflow ? binding.workflow.nextStates(status || null).catch(() => []) : Promise.resolve([]),
+    binding.workflow ? binding.workflow.transitions().catch(() => []) : Promise.resolve([]),
+    binding.references
+      ? Promise.all(
+          refFields.map(async (f) => {
+            const opts = await binding.references!.options(f.refTable!, f.refColumn ?? 'id').catch(() => []);
+            return [f.key, opts.map((o) => ({ value: o.value, label: f.optionLabels?.[o.value] ?? o.label }))] as const;
+          }),
+        )
+      : Promise.resolve([] as (readonly [string, { value: string; label: string }[]])[]),
+    statusRef && binding.references
+      ? binding.references.options(statusRef.refTable!, statusRef.refColumn ?? 'id').catch(() => [])
+      : Promise.resolve([] as { value: string; label: string }[]),
+  ]);
+  const detailExtras = binding.detailExtras ?? [];
+  const refOptions: Record<string, { value: string; label: string }[]> = Object.fromEntries(refResolved);
 
   // この record（例：顧客/案件/プロダクト）から作れる子 collection の作成導線（詳細ペインに置く）。
   const createRelated = listCollections().flatMap((b) =>
@@ -50,15 +55,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       .map((cv) => ({ targetCollection: b.meta.id, fk: cv.fk, parentId: id, label: `${b.meta.label}を作成` })),
   );
 
-  // status の値→ラベル（core 値集合 × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。
+  // status の値→ラベル＋順序（マスタ × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。
   const statusLabels = new Map<string, string>();
-  // ステッパー用の順序つき status（reference は sort_order 昇順で返る）。
   let statusOrder: { value: string; label: string }[] = [];
-  const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
-  if (statusDesc?.kind === 'reference' && statusDesc.refTable && binding.references) {
-    const opts = await binding.references.options(statusDesc.refTable, statusDesc.refColumn ?? 'id').catch(() => []);
-    for (const o of opts) statusLabels.set(o.value, o.label);
-    statusOrder = opts.map((o) => ({ value: o.value, label: o.label }));
+  if (statusRef) {
+    for (const o of statusOpts) statusLabels.set(o.value, o.label);
+    statusOrder = statusOpts.map((o) => ({ value: o.value, label: o.label }));
   }
   if (statusDesc?.optionLabels) for (const [v, l] of Object.entries(statusDesc.optionLabels)) statusLabels.set(v, l);
   const statusLabel = (code: string) => statusLabels.get(code) ?? code;

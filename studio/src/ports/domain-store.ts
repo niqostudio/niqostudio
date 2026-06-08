@@ -21,8 +21,8 @@ export interface MetricsProvider {
   timestamps(table: string, column?: string, since?: string): Promise<string[]>;
   // 数値列の合計（filter で絞る）。受注額パイプライン等の金額集計に使う。
   sum(table: string, column: string, filter?: CountFilter): Promise<number>;
-  // 指定列だけの行を取得（JS 側で集計する用途。滞留＝最新イベント判定など）。
-  rows(table: string, columns: string[]): Promise<Record<string, unknown>[]>;
+  // 指定列だけの行を取得（JS 側で集計する用途）。match 指定で column = value に絞る（index 利用）。
+  rows(table: string, columns: string[], match?: { column: string; value: string }): Promise<Record<string, unknown>[]>;
 }
 
 // reference（外向き FK）の選択肢解決。value＝参照キー、label＝表示用に選んだ列。

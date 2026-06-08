@@ -38,6 +38,8 @@ export interface CollectionMeta {
   // 指定があると一覧の新規ボタンは出さず、各親の詳細に作成ボタンを出す（fk に親 id を入れる）。
   // 配列＝複数の親を持てる（showcase は project_id xor product_id）。
   createVia?: { via: string; fk: string }[];
+  // 一覧の「新規」をこの URL への遷移にする（専用の作成 UI＝カスケード選択等。createVia と併用可）。
+  createHref?: string;
   // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
   singleton?: boolean;
 }
