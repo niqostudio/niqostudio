@@ -65,6 +65,15 @@ select:focus {
   border-color: var(--color-accent);
 }
 
+/* 日付入力：picker を light に統一し、カレンダーアイコンを控えめに（枠/余白は .field）。 */
+input[type="date"] {
+  color-scheme: light;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-fg);

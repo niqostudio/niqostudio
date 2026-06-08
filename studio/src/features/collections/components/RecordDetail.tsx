@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getCollection, listCollections } from '@/composition/collections';
-import { StatusBadge, StatusStepper } from '@/shared/ui/primitives';
+import { StatusBadge } from '@/shared/ui/primitives';
 import { asString, asChildren } from '../collection';
-import { WorkflowActions } from './WorkflowActions';
+import { WorkflowStepper } from './WorkflowStepper';
 import { CreateRelatedButton } from './CreateRelatedButton';
 import { RecordEditProvider, DetailActions, DetailFields } from './RecordDetailEdit';
 import { t } from '@/shared/i18n';
@@ -71,7 +71,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
             {schema.statusField && <StatusBadge status={status} label={status ? statusLabel(status) : undefined} />}
-            {draft && <span className="chip inline-flex items-center px-2 py-0.5 text-accent border-accent">{t('draft')}</span>}
+            {draft && (
+              <span className="inline-flex items-center gap-1 text-xs text-accent">
+                <span className="inline-block size-1.5 rounded-full bg-accent" />
+                {t('draft')}
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted">{t('updated')} {working.updatedAt}</p>
         </div>
@@ -83,15 +88,15 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         />
       </header>
 
-      {binding.workflow && (
-        <section className="flex flex-col gap-3">
+      {binding.workflow && statusOrder.length > 0 && (
+        <section className="flex flex-col gap-2">
           <p className="section-label text-xs">{t('workflow')}</p>
-          {statusOrder.length > 0 && <StatusStepper steps={statusOrder} current={status} />}
-          <WorkflowActions
+          <WorkflowStepper
             collectionId={collection}
             recordId={id}
-            current={{ value: status, label: statusLabel(status) }}
-            nextStates={nextLabeled}
+            steps={statusOrder}
+            current={status}
+            nextValues={nextLabeled.map((s) => s.value)}
           />
         </section>
       )}

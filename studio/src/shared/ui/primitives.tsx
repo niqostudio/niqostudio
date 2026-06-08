@@ -151,24 +151,3 @@ export function StatusChip({ children, tone = 'plain' }: { children: ReactNode; 
   return <span className={cn('chip inline-flex items-center px-2 py-0.5', STATUS_CHIP[tone])}>{children}</span>;
 }
 
-// ステータスの流れ（順序つき）。現在=塗り・完了=緑・未来=淡。矢印は状態の「間」に置く＝現在地が一目で分かる。
-export function StatusStepper({ steps, current }: { steps: { value: string; label: string }[]; current: string }) {
-  const idx = steps.findIndex((s) => s.value === current);
-  return (
-    <div className="flex flex-wrap items-center gap-1">
-      {steps.map((s, i) => {
-        const tone: StatusTone = s.value === current ? 'current' : idx >= 0 && i < idx ? 'done' : 'upcoming';
-        return (
-          <span key={s.value} className="inline-flex items-center gap-1">
-            {i > 0 && (
-              <span className="text-muted" aria-hidden="true">
-                →
-              </span>
-            )}
-            <StatusChip tone={tone}>{s.label}</StatusChip>
-          </span>
-        );
-      })}
-    </div>
-  );
-}

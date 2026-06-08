@@ -214,7 +214,8 @@ export function RecordListBody({
     return { label: t('updated'), value: record.updatedAt };
   };
 
-  function Row({ record, draft }: { record: Rec; draft?: boolean }) {
+  // 下書きかどうかは「新規下書き」セクション見出しで示す＝行に chip を出さない（status と同列に見せない）。
+  function Row({ record }: { record: Rec }) {
     const selected = record.id === selectedId;
     const status = schema.statusField ? asString(record.fields[schema.statusField]) : '';
     const sec = secondaryFor(record);
@@ -224,7 +225,6 @@ export function RecordListBody({
           <div className="flex items-center gap-2">
             <p className="font-medium truncate">{asString(record.fields[schema.titleField]) || t('untitled')}</p>
             {status && <StatusBadge status={status} label={statusLabel(status)} />}
-            {draft && <span className="chip inline-flex items-center px-2 py-0.5 text-accent border-accent">{t('draft')}</span>}
           </div>
           <div className="mt-2 text-xs text-muted">
             {sec.label} {sec.value}
@@ -315,7 +315,7 @@ export function RecordListBody({
         <section className="flex flex-col gap-3">
           <p className="section-label text-xs">{t('newDrafts')}</p>
           {draftRows.map((r) => (
-            <Row key={r.original.record.id} record={r.original.record} draft />
+            <Row key={r.original.record.id} record={r.original.record} />
           ))}
         </section>
       )}
