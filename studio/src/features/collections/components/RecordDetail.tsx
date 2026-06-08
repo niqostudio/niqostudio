@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
 import { asString, asChildren } from '../collection';
-import { WorkflowStepper } from './WorkflowStepper';
+import { WorkflowGraph } from './WorkflowGraph';
 import { CreateRelatedButton } from './CreateRelatedButton';
 import { RecordEditProvider, DetailActions, DetailFields } from './RecordDetailEdit';
 import { t } from '@/shared/i18n';
@@ -24,6 +24,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
 
   const timeline = binding.history ? await binding.history.list(id).catch(() => []) : [];
   const nextStates = binding.workflow ? await binding.workflow.nextStates(status || null).catch(() => []) : [];
+  const transitions = binding.workflow ? await binding.workflow.transitions().catch(() => []) : [];
 
   // 読み取り表示するフィールド（status は workflow 側・hidden は overlay で除外済み）。
   const viewFields = schema.fields.filter((f) => f.key !== schema.statusField);
@@ -91,12 +92,13 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       {binding.workflow && statusOrder.length > 0 && (
         <section className="flex flex-col gap-2">
           <p className="section-label text-xs">{t('workflow')}</p>
-          <WorkflowStepper
+          <WorkflowGraph
             collectionId={collection}
             recordId={id}
             steps={statusOrder}
             current={status}
             nextValues={nextLabeled.map((s) => s.value)}
+            edges={transitions}
           />
         </section>
       )}

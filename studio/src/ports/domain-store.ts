@@ -53,6 +53,8 @@ export interface WorkflowState {
 }
 export interface WorkflowProvider {
   nextStates(current: string | null): Promise<WorkflowState[]>;
+  // 状態機械の全遷移（エッジ）。グラフ表示で枝分かれを描くのに使う。
+  transitions(): Promise<{ from: string; to: string }[]>;
 }
 
 // record に紐づく取り込み源（source）。取得方法・射影は feature（git-import 等）が担う。

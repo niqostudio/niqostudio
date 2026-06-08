@@ -30,4 +30,10 @@ export class CoreProjectWorkflow implements WorkflowProvider {
     const allowed = new Set((trans.data ?? []).map((t) => (t as { to_status: string }).to_status));
     return rows.filter((s) => allowed.has(s.code)).map((s) => ({ value: s.code, label: s.label }));
   }
+
+  async transitions(): Promise<{ from: string; to: string }[]> {
+    const { data, error } = await this.getClient().from('project_status_transitions').select('from_status,to_status');
+    if (error) throw new Error(`遷移一覧の取得に失敗: ${error.message}`);
+    return ((data ?? []) as { from_status: string; to_status: string }[]).map((t) => ({ from: t.from_status, to: t.to_status }));
+  }
 }
