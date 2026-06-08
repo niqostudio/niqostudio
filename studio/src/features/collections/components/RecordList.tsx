@@ -35,6 +35,19 @@ export default async function RecordList({
   const publishedIds = new Set(published.map((r) => r.id));
   const newDrafts = drafts.filter((d) => !publishedIds.has(d.id));
 
+  // reference 列のフィルタ用に選択肢（値→ラベル）を解決（一覧の絞り込みで名前を出すため）。
+  const refOptions: Record<string, { value: string; label: string }[]> = {};
+  if (binding.references) {
+    await Promise.all(
+      schema.fields
+        .filter((f) => f.kind === 'reference' && f.refTable)
+        .map(async (f) => {
+          const opts = await binding.references!.options(f.refTable!, f.refColumn ?? 'id').catch(() => []);
+          refOptions[f.key] = opts.map((o) => ({ value: o.value, label: f.optionLabels?.[o.value] ?? o.label }));
+        }),
+    );
+  }
+
   return (
     <div className="flex h-full">
       <div className="flex w-full max-w-md shrink-0 flex-col gap-8 overflow-y-auto border-r border-border-subtle p-5 md:p-8">
@@ -62,6 +75,7 @@ export default async function RecordList({
           newDrafts={newDrafts}
           selectedId={selectedId}
           statusFilter={statusFilter}
+          refOptions={refOptions}
         />
       </div>
 

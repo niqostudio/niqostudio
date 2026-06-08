@@ -53,6 +53,7 @@ const MESSAGES = {
   add: '追加',
   none: '（なし）',
   yes: 'はい',
+  no: 'いいえ',
   tagPlaceholder: '入力して Enter',
   comingSoon: '準備中',
   terminal: 'ターミナル',

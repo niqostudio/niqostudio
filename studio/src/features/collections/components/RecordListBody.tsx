@@ -15,7 +15,7 @@ import {
 import { Card, StatusBadge, SearchField, Select } from '@/shared/ui/primitives';
 import { cn } from '@/shared/utils/cn';
 import type { CollectionRecord } from '@/shared/model/record';
-import type { CollectionSchema } from '@/features/domain-overlay/schema';
+import type { CollectionSchema, FieldDescriptor } from '@/features/domain-overlay/schema';
 import { asString, orderByList, type Fields } from '../collection';
 import { t } from '@/shared/i18n';
 
@@ -33,6 +33,7 @@ export function RecordListBody({
   newDrafts,
   selectedId,
   statusFilter,
+  refOptions,
 }: {
   collectionId: string;
   schema: CollectionSchema;
@@ -41,6 +42,8 @@ export function RecordListBody({
   selectedId?: string;
   // 初期 status 絞り込み（ダッシュボード KPI からの ?status= ドリルダウン）。
   statusFilter?: string;
+  // reference 列の値→ラベル（フィルタの表示用・server で解決して渡す）。
+  refOptions?: Record<string, { value: string; label: string }[]>;
 }) {
   const data = useMemo<ListRow[]>(
     () => [
@@ -55,15 +58,46 @@ export function RecordListBody({
     () =>
       schema.fields
         .filter((f) => f.key !== schema.titleField && f.key !== schema.statusField)
-        .map((f) => ({
-          field: f,
-          numeric: data.some((d) => typeof d.record.fields[f.key] === 'number'),
-        }))
-        .filter((x) => x.field.kind === 'date' || x.numeric),
+        .map((f) => ({ field: f, numeric: data.some((d) => typeof d.record.fields[f.key] === 'number') }))
+        .filter((x) => x.field.kind === 'date' || (x.field.kind === 'text' && x.numeric)),
     [schema, data],
   );
 
-  // 検索は title のみ。status はタブから厳密一致で絞る。ソート用に date/数値列を raw 値で足す（TanStack に型ソートさせる）。
+  // フィルタ可能な列＝categorical（reference / select / boolean）。status はタブで別管理。
+  const filterFields = useMemo(
+    () =>
+      schema.fields.filter(
+        (f) =>
+          f.key !== schema.statusField &&
+          (f.kind === 'reference' || f.kind === 'select' || f.kind === 'boolean'),
+      ),
+    [schema],
+  );
+
+  const labelFor = (f: FieldDescriptor, v: string): string => {
+    if (f.kind === 'reference') return refOptions?.[f.key]?.find((o) => o.value === v)?.label ?? v;
+    if (f.kind === 'boolean') return v === 'true' ? t('yes') : t('no');
+    return f.optionLabels?.[v] ?? v;
+  };
+
+  // 各フィルタ列の選択肢＝データに実在する値だけ（status タブと同じ思想・1値なら出さない）。
+  const filterOptions = useMemo(() => {
+    const m: Record<string, { value: string; label: string }[]> = {};
+    for (const f of filterFields) {
+      const present = new Set<string>();
+      for (const { record } of data) {
+        const raw = record.fields[f.key];
+        if (raw !== null && raw !== undefined && raw !== '') present.add(String(raw));
+      }
+      m[f.key] = [...present].sort().map((v) => ({ value: v, label: labelFor(f, v) }));
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterFields, data, refOptions]);
+
+  const visibleFilters = filterFields.filter((f) => (filterOptions[f.key]?.length ?? 0) >= 2);
+
+  // 検索は title のみ。ソート用に date/数値列、フィルタ用に categorical 列を足す（raw 値で TanStack に委譲）。
   const columns = useMemo<ColumnDef<ListRow, unknown>[]>(() => {
     const { titleField, statusField } = schema;
     const base: ColumnDef<ListRow, unknown>[] = [
@@ -88,8 +122,17 @@ export function RecordListBody({
         }) as ColumnDef<ListRow, unknown>,
       );
     }
+    for (const f of filterFields) {
+      base.push(
+        col.accessor((r) => asString(r.record.fields[f.key]), {
+          id: f.key,
+          filterFn: 'equalsString',
+          enableGlobalFilter: false,
+        }) as ColumnDef<ListRow, unknown>,
+      );
+    }
     return base;
-  }, [schema, sortFields]);
+  }, [schema, sortFields, filterFields]);
 
   const sortOptions = useMemo(() => {
     const opts = [
@@ -126,8 +169,7 @@ export function RecordListBody({
   const draftRows = rows.filter((r) => r.original.draft);
   const pubRows = rows.filter((r) => !r.original.draft);
 
-  // status タブ（自前スキン）。行の絞り込み自体は TanStack（columnFilters）が行い、
-  // ここは「どの status が在るか・各件数」の提示＝選択に依らず安定させるため data から出す。
+  // 値の出入りに依らず安定させるため、status タブの集計は data から出す（選択中フィルタを無視）。
   const statusField = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
   const statusCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -143,8 +185,15 @@ export function RecordListBody({
     [statusCounts, statusField],
   );
 
-  const activeStatus = (columnFilters.find((f) => f.id === 'status')?.value as string) ?? null;
-  const setStatus = (value: string | null) => setColumnFilters(value == null ? [] : [{ id: 'status', value }]);
+  // 列フィルタの汎用 set/get（status タブ・categorical フィルタ共用。他列の選択は保持）。
+  const filterValue = (id: string) => (columnFilters.find((f) => f.id === id)?.value as string) ?? null;
+  const setFilter = (id: string, value: string | null) =>
+    setColumnFilters((prev) => {
+      const rest = prev.filter((f) => f.id !== id);
+      return value == null ? rest : [...rest, { id, value }];
+    });
+
+  const activeStatus = filterValue('status');
   const statusLabel = (v: string) => statusField?.optionLabels?.[v] ?? v;
 
   const sortId = sorting[0]?.id ?? 'updatedAt';
@@ -189,15 +238,39 @@ export function RecordListBody({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} />
+
+        {visibleFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {visibleFilters.map((f) => (
+              <Select
+                key={f.key}
+                aria-label={f.label}
+                value={filterValue(f.key) ?? ''}
+                onChange={(e) => setFilter(f.key, e.target.value || null)}
+                className="w-auto"
+              >
+                <option value="">
+                  {f.label}：{t('all')}
+                </option>
+                {filterOptions[f.key].map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between gap-3">
           {statusTabs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              <StatusTab active={activeStatus == null} onClick={() => setStatus(null)} label={t('all')} count={data.length} />
+              <StatusTab active={activeStatus == null} onClick={() => setFilter('status', null)} label={t('all')} count={data.length} />
               {statusTabs.map((s) => (
                 <StatusTab
                   key={s}
                   active={activeStatus === s}
-                  onClick={() => setStatus(s)}
+                  onClick={() => setFilter('status', s)}
                   label={statusLabel(s)}
                   count={statusCounts.get(s) ?? 0}
                 />
@@ -221,7 +294,7 @@ export function RecordListBody({
         </div>
       </div>
 
-      {rows.length === 0 && (globalFilter || activeStatus) && <p className="text-sm text-muted">{t('noMatches')}</p>}
+      {rows.length === 0 && (globalFilter || columnFilters.length > 0) && <p className="text-sm text-muted">{t('noMatches')}</p>}
 
       {draftRows.length > 0 && (
         <section className="flex flex-col gap-3">
