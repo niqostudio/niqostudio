@@ -106,6 +106,7 @@ erDiagram
 | `testimonial` | jsonb | `{quote, role}`（公開は `ndas.publish_testimonial` で制御） |
 | `started_on` / `ended_on` | date | 着手 / 実終了（CHECK: ended_on ≥ started_on） |
 | `due_on` | date | 計画上の終了（有期性の明示） |
+| `contract_value` | integer | 受注額（**税抜**・JPY・CHECK ≥ 0・null=未確定）。消費税は請求時に当時の税率で別計算する（→ 将来 invoices）。公開しない。 |
 | `internal_notes` | text | |
 
 ### products（truth・自社プロダクト＝継続実体）
