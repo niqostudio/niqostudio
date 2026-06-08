@@ -1,6 +1,6 @@
 // niqo dev プロセスの共有ヘルパ。detached で起動した dev サーバの pid/port を state に残し、
 // niqo:down から横断停止できるようにする。state とログは .niqo/（gitignore）。
-import { execSync, execFile } from 'node:child_process';
+import { execSync, execFile, execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs';
 import { platform } from 'node:os';
 
@@ -46,11 +46,41 @@ export function clearState() {
   rmSync(STATE_FILE, { force: true });
 }
 
-// state にある dev を停止（best-effort）。停止したら true。
+// この repo の dev プロセス（next/astro/pnpm ラッパ・ビルドワーカ）を CommandLine で特定して停止。
+// state 追跡外のゾンビも掃除する（兄弟 repo＝sindo/preflight 等は CommandLine が一致しないので対象外）。
+export function killRepoDev() {
+  try {
+    if (platform() === 'win32') {
+      const likes = [
+        '*niqostudio\\niqostudio*',
+        '*@niqostudio/studio*',
+        '*@niqostudio/website*',
+        '*dev:studio*',
+        '*dev:website*',
+      ]
+        .map((p) => `$_.CommandLine -like '${p}'`)
+        .join(' -or ');
+      const ps = `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { ${likes} } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+      execFileSync('powershell', ['-NoProfile', '-Command', ps], { stdio: 'ignore' });
+    } else {
+      for (const p of ['niqostudio/niqostudio', '@niqostudio/studio', '@niqostudio/website', 'dev:studio', 'dev:website']) {
+        try {
+          execFileSync('pkill', ['-f', p], { stdio: 'ignore' });
+        } catch {
+          // pkill は該当 0 件で非 0 終了するため無視。
+        }
+      }
+    }
+  } catch {
+    // best-effort。
+  }
+}
+
+// dev を停止。state 追跡 pid＋CommandLine 一致の全プロセス（ゾンビ含む）を掃除する。
 export function stopDev() {
   const s = readState();
-  if (!s) return false;
-  for (const k of ['website', 'studio']) if (s[k]?.pid) killTree(s[k].pid);
+  if (s) for (const k of ['website', 'studio']) if (s[k]?.pid) killTree(s[k].pid);
+  killRepoDev();
   clearState();
-  return true;
+  return !!s;
 }
