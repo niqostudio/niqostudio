@@ -8,6 +8,7 @@ import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';
 import { InlineField } from './InlineField';
+import { publishAction } from '../actions';
 import { t } from '@/shared/i18n';
 
 // 一覧の右ペインに出す読み取り詳細＋ワークフロー操作（state machine の次状態へ進める）。
@@ -79,10 +80,19 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           </div>
           <p className="text-xs text-muted">{t('updated')} {working.updatedAt}</p>
         </div>
-        <Link href={`/${collection}/${id}/edit`} className="btn btn-primary inline-flex shrink-0 items-center gap-1.5">
-          <Pencil className="size-4" />
-          {t('edit')}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {draft && (
+            <form action={publishAction.bind(null, collection, id)}>
+              <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
+                {t('publish')}
+              </button>
+            </form>
+          )}
+          <Link href={`/${collection}/${id}/edit`} className="btn btn-secondary inline-flex items-center gap-1.5">
+            <Pencil className="size-4" />
+            {t('edit')}
+          </Link>
+        </div>
       </header>
 
       {binding.workflow && (

@@ -96,6 +96,18 @@ export async function discardDraftAction(collectionId: string, recordId: string)
   revalidatePath(path(collectionId, recordId));
 }
 
+// publish＝下書きを接続先（core）正本へ反映。版に origin=publish を残し、反映後は下書きを消す。
+export async function publishAction(collectionId: string, recordId: string): Promise<void> {
+  const binding = need(collectionId);
+  const draft = await binding.drafts.get(recordId).catch(() => null);
+  if (!draft) return;
+  await binding.store.upsert(draft);
+  await binding.versions?.append(recordId, draft.fields, 'publish');
+  await binding.drafts.remove(recordId);
+  revalidatePath(path(collectionId, recordId));
+  revalidatePath(path(collectionId));
+}
+
 // 取り込みを実行し、対応する command_runs の id を返す（トーストから terminal の行へ紐づける）。
 export async function deriveRecordAction(collectionId: string, recordId: string): Promise<string> {
   const runs = new StudioRunStore(INSTANCE_ID);

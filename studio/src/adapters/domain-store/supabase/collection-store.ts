@@ -68,8 +68,33 @@ export class CoreCollectionStore implements CollectionStore<Fields> {
     return data ? this.toRecord(data as unknown as Row, s, children) : null;
   }
 
-  async upsert(_record: CollectionRecord<Fields>): Promise<void> {
-    // publish（下書き→core 反映）は後段。
-    throw new Error('CoreCollectionStore.upsert は未実装（publish は後段）');
+  // publish＝下書き→core 正本へ反映。親は構造列だけ、採用子は draft 配列を upsert し、draft に無い既存は削除。
+  // 子行は studio 側で id 付き（uuid）＝id で keep/削除を判定できる。親 FK は子記述子から落ちているので付け直す。
+  async upsert(record: CollectionRecord<Fields>): Promise<void> {
+    const s = await coreStructure(this.table, this.config);
+    const names = await this.childrenOf();
+    const children = s.childTables.filter((c) => names.includes(c.table));
+    const client = this.getClient();
+
+    const parent: Record<string, unknown> = { id: record.id };
+    for (const f of s.fields) parent[f.name] = record.fields[f.name] ?? null;
+    const { error: pe } = await client.from(this.table).upsert(parent);
+    if (pe) throw new Error(`${this.table}.upsert(parent) 失敗: ${pe.message}`);
+
+    for (const c of children) {
+      const fk = c.fields.find((f) => f.refTable === this.table)?.name;
+      if (!fk) continue;
+      const rows = Array.isArray(record.fields[c.table]) ? (record.fields[c.table] as Record<string, unknown>[]) : [];
+      if (rows.length) {
+        const payload = rows.map((r) => ({ ...r, [fk]: record.id }));
+        const { error: ce } = await client.from(c.table).upsert(payload);
+        if (ce) throw new Error(`${c.table}.upsert(child) 失敗: ${ce.message}`);
+      }
+      const keep = rows.map((r) => r.id).filter((v): v is string => typeof v === 'string');
+      let del = client.from(c.table).delete().eq(fk, record.id);
+      if (keep.length) del = del.not('id', 'in', `(${keep.join(',')})`);
+      const { error: de } = await del;
+      if (de) throw new Error(`${c.table}.delete(child) 失敗: ${de.message}`);
+    }
   }
 }

@@ -24,6 +24,7 @@ const MESSAGES = {
   saved: '保存済み',
   unsaved: '未保存',
   draft: '下書き',
+  publish: '反映',
   publishedState: '公開中',
   repositories: 'リポジトリ',
   repoPlaceholder: 'URL / ローカルパス',
@@ -58,6 +59,7 @@ const MESSAGES = {
   'origin.manual': '編集',
   'origin.derive': 'Git 取り込み',
   'origin.revert': '復元',
+  'origin.publish': '反映',
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
