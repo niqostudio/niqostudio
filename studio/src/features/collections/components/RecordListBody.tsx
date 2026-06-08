@@ -237,10 +237,42 @@ export function RecordListBody({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
-        <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} />
+        <div className="flex items-center gap-2">
+          <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} className="flex-1" />
+          <Select
+            aria-label={t('sortBy')}
+            value={sortValue}
+            onChange={(e) => onSort(e.target.value)}
+            className="w-auto shrink-0"
+          >
+            {sortOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
 
-        {visibleFilters.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {(statusTabs.length > 0 || visibleFilters.length > 0) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {/* status は chip 全出しでなく件数つきプルダウン。 */}
+            {statusTabs.length > 0 && (
+              <Select
+                aria-label={statusField?.label ?? 'status'}
+                value={activeStatus ?? ''}
+                onChange={(e) => setFilter('status', e.target.value || null)}
+                className="w-auto"
+              >
+                <option value="">
+                  {statusField?.label ?? 'ステータス'}：{t('all')}（{data.length}）
+                </option>
+                {statusTabs.map((s) => (
+                  <option key={s} value={s}>
+                    {statusLabel(s)}（{statusCounts.get(s) ?? 0}）
+                  </option>
+                ))}
+              </Select>
+            )}
             {visibleFilters.map((f) =>
               f.kind === 'boolean' ? (
                 // 真偽はチェックボックス（ON＝true のみ表示）。
@@ -275,37 +307,6 @@ export function RecordListBody({
             )}
           </div>
         )}
-
-        <div className="flex items-center justify-between gap-3">
-          {statusTabs.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              <StatusTab active={activeStatus == null} onClick={() => setFilter('status', null)} label={t('all')} count={data.length} />
-              {statusTabs.map((s) => (
-                <StatusTab
-                  key={s}
-                  active={activeStatus === s}
-                  onClick={() => setFilter('status', s)}
-                  label={statusLabel(s)}
-                  count={statusCounts.get(s) ?? 0}
-                />
-              ))}
-            </div>
-          ) : (
-            <span />
-          )}
-          <Select
-            aria-label={t('sortBy')}
-            value={sortValue}
-            onChange={(e) => onSort(e.target.value)}
-            className="w-auto shrink-0"
-          >
-            {sortOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-        </div>
       </div>
 
       {rows.length === 0 && (globalFilter || columnFilters.length > 0) && <p className="text-sm text-muted">{t('noMatches')}</p>}
@@ -328,32 +329,5 @@ export function RecordListBody({
         </section>
       )}
     </div>
-  );
-}
-
-// status フィルタのタブ（自前スキン）。クリックで TanStack の columnFilters を切り替える。
-function StatusTab({
-  active,
-  onClick,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'chip inline-flex items-center gap-1.5 px-2.5 py-1 transition-colors',
-        active ? 'border-accent text-accent' : 'text-muted hover:text-fg',
-      )}
-    >
-      {label}
-      <span className="text-xs opacity-70">{count}</span>
-    </button>
   );
 }

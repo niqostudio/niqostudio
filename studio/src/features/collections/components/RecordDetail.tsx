@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getCollection, listCollections } from '@/composition/collections';
-import { StatusBadge } from '@/shared/ui/primitives';
+import { StatusBadge, StatusStepper } from '@/shared/ui/primitives';
 import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';
@@ -50,13 +50,17 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
 
   // status の値→ラベル（core 値集合 × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。
   const statusLabels = new Map<string, string>();
+  // ステッパー用の順序つき status（reference は sort_order 昇順で返る）。
+  let statusOrder: { value: string; label: string }[] = [];
   const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
   if (statusDesc?.kind === 'reference' && statusDesc.refTable && binding.references) {
     const opts = await binding.references.options(statusDesc.refTable, statusDesc.refColumn ?? 'id').catch(() => []);
     for (const o of opts) statusLabels.set(o.value, o.label);
+    statusOrder = opts.map((o) => ({ value: o.value, label: o.label }));
   }
   if (statusDesc?.optionLabels) for (const [v, l] of Object.entries(statusDesc.optionLabels)) statusLabels.set(v, l);
   const statusLabel = (code: string) => statusLabels.get(code) ?? code;
+  if (statusOrder.length === 0 && statusDesc?.options) statusOrder = statusDesc.options.map((v) => ({ value: v, label: statusLabel(v) }));
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
 
   return (
@@ -80,8 +84,9 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       </header>
 
       {binding.workflow && (
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3">
           <p className="section-label text-xs">{t('workflow')}</p>
+          {statusOrder.length > 0 && <StatusStepper steps={statusOrder} current={status} />}
           <WorkflowActions collectionId={collection} recordId={id} nextStates={nextLabeled} />
         </section>
       )}

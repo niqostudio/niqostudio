@@ -138,3 +138,37 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
   if (!status) return null;
   return <span className="chip inline-flex items-center px-2 py-0.5 text-muted border-border">{label ?? status}</span>;
 }
+
+// ステータスの流れ（順序つき）。現在を塗り、過去は通常、未来は淡く＝現在地が一目で分かる。
+export function StatusStepper({ steps, current }: { steps: { value: string; label: string }[]; current: string }) {
+  const idx = steps.findIndex((s) => s.value === current);
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {steps.map((s, i) => {
+        const isCurrent = s.value === current;
+        const done = idx >= 0 && i < idx;
+        return (
+          <span key={s.value} className="inline-flex items-center gap-1">
+            {i > 0 && (
+              <span className="text-border" aria-hidden="true">
+                →
+              </span>
+            )}
+            <span
+              className={cn(
+                'chip inline-flex items-center px-2 py-0.5',
+                isCurrent
+                  ? 'border-accent bg-accent text-surface'
+                  : done
+                    ? 'border-border text-fg'
+                    : 'border-border-subtle text-muted',
+              )}
+            >
+              {s.label}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
