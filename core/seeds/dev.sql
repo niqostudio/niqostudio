@@ -250,3 +250,15 @@ insert into core.invoices (id, client_id, project_id, invoice_no, title, subtota
 update core.invoices set withholding = 30630, paid_amount = 299370 where id = 'f3000000-0000-4000-8000-000000000001';
 -- 請求先住所の例。
 update core.clients set address = '東京都架空区ダミー 1-2-3 架空ビル' where id = '11111111-1111-4111-8111-111111111111';
+
+-- 追加プロジェクトの成果物（詳細ペインの成果物一覧・事例化の素材）。
+insert into core.deliverables (id, project_id, kind, name, description, url, image_urls) values
+  ('33333333-3333-4333-8333-333333334401', '22222222-2222-4222-8222-222222222301', 'business_system', '予約・問診統合システム', 'ダミー。予約と問診を1つに。', null, '{}'),
+  ('33333333-3333-4333-8333-333333334402', '22222222-2222-4222-8222-222222222301', 'public_web', '医院案内サイト', 'ダミーの公開サイト。', 'https://example.com/clinic', array['https://example.com/clinic-og.png']),
+  ('33333333-3333-4333-8333-333333334403', '22222222-2222-4222-8222-222222222302', 'public_web', 'EC サイト', 'ダミーの EC。', 'https://example.com/shop', array['https://example.com/shop-og.png']),
+  ('33333333-3333-4333-8333-333333334404', '22222222-2222-4222-8222-222222222303', 'business_system', '社内管理システム', 'ダミーの業務システム。', null, '{}');
+
+-- 成果物に紐づくメトリクス（before/after・goal は内部）。
+insert into core.metrics (id, project_id, deliverable_id, label, achieved, previous, goal, unit, kind) values
+  ('44444444-4444-4444-8444-444444444401', '22222222-2222-4222-8222-222222222301', '33333333-3333-4333-8333-333333334402', 'LCP', '1.4', '3.8', null, 's', 'technical'),
+  ('44444444-4444-4444-8444-444444444402', '22222222-2222-4222-8222-222222222302', '33333333-3333-4333-8333-333333334403', '転換率', '2.8', '1.1', '2.5', '%', 'business');
