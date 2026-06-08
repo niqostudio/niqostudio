@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { Action, StatusBadge, Input, Textarea } from '@/shared/ui/primitives';
 import { setFieldsAction, publishAction } from '@/features/collections/actions';
 import { toast } from '@/features/feedback/toast';
+import { useUnsavedGuard } from '@/shared/unsaved';
 import { t } from '@/shared/i18n';
 
 type Fields = Record<string, unknown>;
@@ -40,15 +41,7 @@ export function NdaChecklist({
   const [busy, setBusy] = useState(false);
 
   const dirty = j(work) !== j(fields);
-  useEffect(() => {
-    if (!dirty) return;
-    const h = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', h);
-    return () => window.removeEventListener('beforeunload', h);
-  }, [dirty]);
+  useUnsavedGuard(dirty);
 
   const set = (k: string, v: unknown) => setWork((w) => ({ ...w, [k]: v }));
 
@@ -74,7 +67,7 @@ export function NdaChecklist({
   };
 
   return (
-    <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
+    <div className="print-target flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -86,7 +79,7 @@ export function NdaChecklist({
             {t('updated')} {updatedAt}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 print:hidden">
           {dirty && (
             <Action variant="primary" onClick={() => persist(work)} disabled={busy}>
               {t('save')}
@@ -99,6 +92,9 @@ export function NdaChecklist({
               </Action>
             </form>
           )}
+          <Action variant="secondary" onClick={() => window.print()}>
+            PDFに保存
+          </Action>
           <Action variant="secondary" href={editHref}>
             <Pencil className="size-4" />
             {t('edit')}

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil } from 'lucide-react';
 import { Action } from '@/shared/ui/primitives';
@@ -8,6 +8,7 @@ import { FieldControl, asText, type RefOption } from '@/shared/ui/fields';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { setFieldsAction, publishAction } from '../actions';
 import { toast } from '@/features/feedback/toast';
+import { useUnsavedGuard } from '@/shared/unsaved';
 import { t } from '@/shared/i18n';
 
 type Fields = Record<string, unknown>;
@@ -53,16 +54,8 @@ export function RecordEditProvider({
   const dirtyKeys = fieldKeys.filter((k) => !eq(work[k], values[k]));
   const dirty = dirtyKeys.length > 0;
 
-  // 未保存のまま離脱（リロード/閉じる/外部遷移）したら確認。
-  useEffect(() => {
-    if (!dirty) return;
-    const h = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', h);
-    return () => window.removeEventListener('beforeunload', h);
-  }, [dirty]);
+  // 未保存ガード（横断）：アプリ内遷移・リロードを確認で止める。
+  useUnsavedGuard(dirty);
 
   const set = (key: string, v: unknown) => setWork((w) => ({ ...w, [key]: v }));
 
@@ -154,8 +147,8 @@ export function DetailFields({
               {f.label}
               {changed && <span className="inline-block size-1.5 rounded-full bg-accent" title={t('unsaved')} />}
             </span>
-            <div className="mt-0.5 flex min-h-9 items-center">
-              {f.kind === 'boolean' ? (
+            {f.kind === 'boolean' ? (
+              <div className="mt-0.5 flex min-h-9 items-center">
                 <button
                   type="button"
                   onClick={() => set(f.key, !(v === true))}
@@ -168,20 +161,25 @@ export function DetailFields({
                   </span>
                   <span>{v === true ? t('yes') : '—'}</span>
                 </button>
-              ) : editing === f.key ? (
-                <div className="w-full">
-                  <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditing(f.key)}
-                  className="w-full break-words text-left text-sm transition-colors hover:text-accent"
-                >
-                  {display(f, v)}
-                </button>
-              )}
-            </div>
+              </div>
+            ) : wide ? (
+              // 背の高い項目（list/textarea）は常に入力欄＝読↔編の切替が無く高さがずれない。
+              <div className="mt-0.5">
+                <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
+              </div>
+            ) : editing === f.key ? (
+              <div className="mt-0.5 flex min-h-9 items-center">
+                <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditing(f.key)}
+                className="mt-0.5 flex min-h-9 w-full items-center break-words text-left text-sm transition-colors hover:text-accent"
+              >
+                {display(f, v)}
+              </button>
+            )}
           </div>
         );
       })}

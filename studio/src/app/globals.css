@@ -73,3 +73,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* 印刷（PDF 保存）：.print-target だけを出す（nav・一覧・terminal 等を隠す）。
+   .print-target 内でも print:hidden（display:none）にした要素は出ない（操作ボタン等）。 */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-target,
+  .print-target * {
+    visibility: visible;
+  }
+  .print-target {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+}

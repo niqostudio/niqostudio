@@ -5,6 +5,7 @@ import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
 import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
+import { UnsavedProvider } from '@/shared/unsaved';
 import { SignOutButton } from './SignOutButton';
 
 // shell：左のグローバルサイドバー（nav）＋ メイン列（コンテンツ＋下から伸びる terminal パネル）。
@@ -15,7 +16,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
   if (!operator) return <>{children}</>;
 
   return (
-    <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden">
+    <UnsavedProvider>
+      <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden">
       <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
         <div className="px-5 py-4 border-b border-border-subtle">
           <Link href="/" className="font-semibold tracking-tight">
@@ -42,6 +44,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 md:min-h-0 md:overflow-auto">{children}</main>
         <TerminalPanel />
       </div>
-    </div>
+      </div>
+    </UnsavedProvider>
   );
 }

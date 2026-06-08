@@ -7,6 +7,7 @@ import { FieldInput, asText, defaultFor } from '@/shared/ui/fields';
 import type { CollectionSchema, FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t, type MessageKey } from '@/shared/i18n';
 import { toast } from '@/features/feedback/toast';
+import { useUnsavedGuard } from '@/shared/unsaved';
 import { openTerminal, openTerminalWithRun } from '@/features/terminal/panel';
 import {
   saveDraftJson,
@@ -47,6 +48,7 @@ export default function RecordPaneEditor(props: {
   const [src, setSrc] = useState({ ref: '', role: '', visibility: 'private' as 'private' | 'public' });
 
   const dirty = JSON.stringify(fields) !== JSON.stringify(props.initialFields);
+  useUnsavedGuard(dirty);
 
   async function run(fn: () => Promise<void>, msg?: { pending?: string; success?: string; onClick?: () => void }) {
     setBusy(true);
