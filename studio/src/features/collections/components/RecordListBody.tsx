@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   useReactTable,
@@ -234,8 +234,21 @@ export function RecordListBody({
     );
   }
 
+  // 詳細を開く（?sel 変更）で一覧ペインのスクロールが先頭へ戻るのを防ぐ（容器の scrollTop を保存/復元）。
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = rootRef.current?.parentElement;
+    if (!el) return;
+    const key = `reclist-scroll:${collectionId}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) el.scrollTop = Number(saved);
+    const onScroll = () => sessionStorage.setItem(key, String(el.scrollTop));
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [collectionId]);
+
   return (
-    <div className="flex flex-col gap-6">
+    <div ref={rootRef} className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} className="flex-1" />
