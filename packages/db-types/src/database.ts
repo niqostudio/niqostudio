@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          address: string | null
           created_at: string
           description: string | null
           first_contact_date: string | null
@@ -27,6 +28,7 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          address?: string | null
           created_at?: string
           description?: string | null
           first_contact_date?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          address?: string | null
           created_at?: string
           description?: string | null
           first_contact_date?: string | null
@@ -250,6 +253,88 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          client_id: string
+          created_at: string
+          due_on: string | null
+          id: string
+          invoice_no: string | null
+          issued_on: string | null
+          notes: string | null
+          paid_amount: number | null
+          paid_on: string | null
+          pdf_url: string | null
+          project_id: string | null
+          status: string
+          subtotal: number
+          tax: number
+          title: string | null
+          updated_at: string
+          withholding: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          invoice_no?: string | null
+          issued_on?: string | null
+          notes?: string | null
+          paid_amount?: number | null
+          paid_on?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          title?: string | null
+          updated_at?: string
+          withholding?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          invoice_no?: string | null
+          issued_on?: string | null
+          notes?: string | null
+          paid_amount?: number | null
+          paid_on?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          title?: string | null
+          updated_at?: string
+          withholding?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_outcomes"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           client_id: string | null
@@ -433,7 +518,7 @@ export type Database = {
       }
       metrics: {
         Row: {
-          achieved: string
+          achieved: string | null
           created_at: string
           deliverable_id: string | null
           goal: string | null
@@ -447,7 +532,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          achieved: string
+          achieved?: string | null
           created_at?: string
           deliverable_id?: string | null
           goal?: string | null
@@ -461,7 +546,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          achieved?: string
+          achieved?: string | null
           created_at?: string
           deliverable_id?: string | null
           goal?: string | null
@@ -505,12 +590,57 @@ export type Database = {
           },
         ]
       }
+      nda_events: {
+        Row: {
+          agreed_on: string | null
+          changed_at: string
+          id: string
+          nda_id: string
+          publish_deliverables: boolean
+          publish_metrics: boolean
+          publish_problems: boolean
+          publish_testimonial: boolean
+          status: string
+        }
+        Insert: {
+          agreed_on?: string | null
+          changed_at?: string
+          id?: string
+          nda_id: string
+          publish_deliverables: boolean
+          publish_metrics: boolean
+          publish_problems: boolean
+          publish_testimonial: boolean
+          status: string
+        }
+        Update: {
+          agreed_on?: string | null
+          changed_at?: string
+          id?: string
+          nda_id?: string
+          publish_deliverables?: boolean
+          publish_metrics?: boolean
+          publish_problems?: boolean
+          publish_testimonial?: boolean
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nda_events_nda_id_fkey"
+            columns: ["nda_id"]
+            isOneToOne: false
+            referencedRelation: "ndas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ndas: {
         Row: {
           agreed_on: string | null
           created_at: string
           id: string
           notes: string | null
+          pdf_url: string | null
           project_id: string
           publish_deliverables: boolean
           publish_metrics: boolean
@@ -525,6 +655,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          pdf_url?: string | null
           project_id: string
           publish_deliverables?: boolean
           publish_metrics?: boolean
@@ -539,6 +670,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          pdf_url?: string | null
           project_id?: string
           publish_deliverables?: boolean
           publish_metrics?: boolean

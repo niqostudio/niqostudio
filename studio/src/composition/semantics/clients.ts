@@ -13,6 +13,7 @@ export const clientsSemantics: CollectionSemantics = {
     description: { label: '説明', kind: 'textarea' },
     logo_url: { label: 'ロゴ URL' },
     website_url: { label: 'サイト URL' },
+    address: { label: '住所 / 請求先', kind: 'textarea' },
     first_contact_date: { label: '初回接触日', kind: 'date' },
     internal_notes: { label: '内部メモ', kind: 'textarea' },
   },
