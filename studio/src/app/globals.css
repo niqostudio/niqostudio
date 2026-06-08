@@ -25,8 +25,9 @@
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 }
 
-/* ダーク：同じ変数を上書き（on-accent＝白は両モード共通なので据え置き）。 */
-.dark {
+/* ダーク：同じ変数を上書き（on-accent＝白は両モード共通なので据え置き）。
+   :root.dark で特異度を @theme の :root より高くし、確実に上書きが効くようにする。 */
+:root.dark {
   --color-bg: #0f1216;
   --color-surface: #181c22;
   --color-fg: #e7e9ec;
