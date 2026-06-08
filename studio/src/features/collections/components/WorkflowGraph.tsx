@@ -25,6 +25,7 @@ export function WorkflowGraph({
   steps,
   current,
   nextValues,
+  visited,
   edges,
 }: {
   collectionId: string;
@@ -32,13 +33,15 @@ export function WorkflowGraph({
   steps: { value: string; label: string }[];
   current: string;
   nextValues: string[];
+  // 実際に通った状態（履歴）。done＝緑はこれで判定（飛ばした中間は緑にしない）。
+  visited: string[];
   edges: { from: string; to: string }[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const nextSet = new Set(nextValues);
   const idxOf = new Map(steps.map((s, i) => [s.value, i]));
-  const curIdx = idxOf.get(current) ?? -1;
+  const visitedSet = new Set(visited);
   const W = Math.max(steps.length, 1) * COL;
   const cx = (i: number) => i * COL + COL / 2;
 
@@ -93,7 +96,7 @@ export function WorkflowGraph({
         {steps.map((s, i) => {
           const isCurrent = s.value === current;
           const isNext = nextSet.has(s.value);
-          const done = curIdx >= 0 && i < curIdx;
+          const done = visitedSet.has(s.value);
           // 選べる（isNext）は既定は控えめ（accent 文字）で、hover で塗りに＝押せると分かる。アウトラインは細く。
           const rectCls = isCurrent
             ? 'fill-accent stroke-accent'

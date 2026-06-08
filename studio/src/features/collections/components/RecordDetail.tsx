@@ -98,6 +98,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
             steps={statusOrder}
             current={status}
             nextValues={nextLabeled.map((s) => s.value)}
+            visited={timeline.map((e) => e.to)}
             edges={transitions}
           />
         </section>
