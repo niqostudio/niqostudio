@@ -83,6 +83,18 @@ export async function setFieldAction(collectionId: string, recordId: string, key
   revalidatePath(path(collectionId, recordId));
 }
 
+// 詳細ペインの一括保存（変更した複数フィールドを patch として下書きにマージ）。
+export async function setFieldsAction(collectionId: string, recordId: string, patch: Fields): Promise<void> {
+  const binding = need(collectionId);
+  const draft = await binding.drafts.get(recordId).catch(() => null);
+  const working = draft ?? (await binding.store.get(recordId));
+  if (!working) return;
+  const fields = { ...(working.fields as Fields), ...patch };
+  await saveDraft(binding, recordId, fields, working.sourceId, 'manual');
+  revalidatePath(path(collectionId));
+  revalidatePath(path(collectionId, recordId));
+}
+
 // クライアント・エディタが作業コピー（fields 全体）を JSON で保存する。
 export async function saveDraftJson(collectionId: string, recordId: string, fieldsJson: string): Promise<void> {
   const binding = need(collectionId);

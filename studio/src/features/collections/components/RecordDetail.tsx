@@ -3,11 +3,10 @@ import { notFound } from 'next/navigation';
 import { Pencil } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
-import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';
-import { InlineField } from './InlineField';
+import { RecordDetailFields } from './RecordDetailFields';
 import { publishAction } from '../actions';
 import { t } from '@/shared/i18n';
 
@@ -60,14 +59,6 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   if (statusDesc?.optionLabels) for (const [v, l] of Object.entries(statusDesc.optionLabels)) statusLabels.set(v, l);
   const statusLabel = (code: string) => statusLabels.get(code) ?? code;
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
-
-  function display(value: unknown, f: FieldDescriptor): string {
-    if (value == null || value === '') return '—';
-    if (f.kind === 'list') return Array.isArray(value) ? (value as unknown[]).join('、') || '—' : '—';
-    if (f.kind === 'boolean') return value === true ? t('yes') : '—';
-    if (f.kind === 'reference') return refOptions[f.key]?.find((o) => o.value === asString(value))?.label ?? asString(value);
-    return asString(value);
-  }
 
   return (
     <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
@@ -123,19 +114,14 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       )}
 
       {viewFields.length > 0 && (
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {viewFields.map((f) => (
-            <InlineField
-              key={f.key}
-              collectionId={collection}
-              recordId={id}
-              d={f}
-              value={fields[f.key]}
-              display={display(fields[f.key], f)}
-              refOptions={refOptions[f.key]}
-            />
-          ))}
-        </section>
+        <RecordDetailFields
+          key={id}
+          collectionId={collection}
+          recordId={id}
+          fields={viewFields}
+          values={fields}
+          refOptions={refOptions}
+        />
       )}
 
       {schema.children.length > 0 && (
