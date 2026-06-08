@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, X } from 'lucide-react';
 import { Action, StatusBadge, Input, Textarea } from '@/shared/ui/primitives';
 import { setFieldsAction, publishAction } from '@/features/collections/actions';
 import { toast } from '@/features/feedback/toast';
@@ -28,6 +28,7 @@ export function NdaChecklist({
   projectLabel,
   hasDraft,
   editHref,
+  closeHref,
   updatedAt,
 }: {
   recordId: string;
@@ -35,6 +36,7 @@ export function NdaChecklist({
   projectLabel: string;
   hasDraft: boolean;
   editHref: string;
+  closeHref: string;
   updatedAt: string;
 }) {
   const [work, setWork] = useState<Fields>(fields);
@@ -67,8 +69,9 @@ export function NdaChecklist({
   };
 
   return (
-    <div className="print-target flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
-      <header className="flex items-start justify-between gap-3">
+    <div className="h-full overflow-y-auto p-5 md:p-8 print:h-auto print:overflow-visible">
+      <div className="mx-auto flex max-w-2xl flex-col gap-7">
+        <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold tracking-tight">NDA</h2>
@@ -98,6 +101,9 @@ export function NdaChecklist({
           <Action variant="secondary" href={editHref}>
             <Pencil className="size-4" />
             {t('edit')}
+          </Action>
+          <Action variant="secondary" href={closeHref} title="閉じる">
+            <X className="size-4" />
           </Action>
         </div>
       </header>
@@ -153,6 +159,7 @@ export function NdaChecklist({
           </Action>
         </div>
       )}
+      </div>
     </div>
   );
 }

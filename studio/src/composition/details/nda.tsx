@@ -28,6 +28,7 @@ export async function NdaDetail({ collection, id }: { collection: string; id: st
       projectLabel={projectLabel}
       hasDraft={!!draft}
       editHref={`/${collection}/${id}/edit`}
+      closeHref={`/${collection}`}
       updatedAt={working.updatedAt}
     />
   );

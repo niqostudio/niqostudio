@@ -17,8 +17,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <UnsavedProvider>
-      <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden">
-      <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
+      <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden print:block">
+      <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r print:hidden">
         <div className="px-5 py-4 border-b border-border-subtle">
           <Link href="/" className="font-semibold tracking-tight">
             {APP_NAME}
@@ -40,9 +40,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex flex-col md:h-dvh md:overflow-hidden">
-        <main className="flex-1 md:min-h-0 md:overflow-auto">{children}</main>
-        <TerminalPanel />
+      <div className="flex flex-col md:h-dvh md:overflow-hidden print:h-auto print:overflow-visible">
+        <main className="flex-1 md:min-h-0 md:overflow-auto print:overflow-visible">{children}</main>
+        <div className="print:hidden">
+          <TerminalPanel />
+        </div>
       </div>
       </div>
     </UnsavedProvider>
