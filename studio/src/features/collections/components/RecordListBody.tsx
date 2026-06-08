@@ -50,23 +50,58 @@ export function RecordListBody({
     [newDrafts, published],
   );
 
-  // 検索は title のみ（status/updatedAt は globalFilter 対象外）。status は厳密一致でタブから絞る。
-  const columns = useMemo<ColumnDef<ListRow, string>[]>(() => {
+  // ソート可能な schema 列＝date（近い順）と数値（多い順）。kind に number が無いので値の型で数値判定する。
+  const sortFields = useMemo(
+    () =>
+      schema.fields
+        .filter((f) => f.key !== schema.titleField && f.key !== schema.statusField)
+        .map((f) => ({
+          field: f,
+          numeric: data.some((d) => typeof d.record.fields[f.key] === 'number'),
+        }))
+        .filter((x) => x.field.kind === 'date' || x.numeric),
+    [schema, data],
+  );
+
+  // 検索は title のみ。status はタブから厳密一致で絞る。ソート用に date/数値列を raw 値で足す（TanStack に型ソートさせる）。
+  const columns = useMemo<ColumnDef<ListRow, unknown>[]>(() => {
     const { titleField, statusField } = schema;
-    return [
-      col.accessor((r) => asString(r.record.fields[titleField]), { id: 'title' }),
+    const base: ColumnDef<ListRow, unknown>[] = [
+      col.accessor((r) => asString(r.record.fields[titleField]), { id: 'title' }) as ColumnDef<ListRow, unknown>,
       ...(statusField
         ? [
             col.accessor((r) => asString(r.record.fields[statusField]), {
               id: 'status',
               filterFn: 'equalsString',
               enableGlobalFilter: false,
-            }),
+            }) as ColumnDef<ListRow, unknown>,
           ]
         : []),
-      col.accessor((r) => r.record.updatedAt, { id: 'updatedAt', enableGlobalFilter: false }),
+      col.accessor((r) => r.record.updatedAt, { id: 'updatedAt', enableGlobalFilter: false }) as ColumnDef<ListRow, unknown>,
     ];
-  }, [schema]);
+    for (const { field } of sortFields) {
+      base.push(
+        col.accessor((r) => r.record.fields[field.key] ?? undefined, {
+          id: field.key,
+          enableGlobalFilter: false,
+          sortUndefined: 'last',
+        }) as ColumnDef<ListRow, unknown>,
+      );
+    }
+    return base;
+  }, [schema, sortFields]);
+
+  const sortOptions = useMemo(() => {
+    const opts = [
+      { value: 'updatedAt:desc', label: t('sortUpdated') },
+      { value: 'title:asc', label: t('sortTitle') },
+    ];
+    for (const { field, numeric } of sortFields) {
+      if (numeric) opts.push({ value: `${field.key}:desc`, label: `${field.label}（多い順）` });
+      else opts.push({ value: `${field.key}:asc`, label: `${field.label}（近い順）` });
+    }
+    return opts;
+  }, [sortFields]);
 
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
@@ -112,15 +147,28 @@ export function RecordListBody({
   const setStatus = (value: string | null) => setColumnFilters(value == null ? [] : [{ id: 'status', value }]);
   const statusLabel = (v: string) => statusField?.optionLabels?.[v] ?? v;
 
-  const sortValue = `${sorting[0]?.id ?? 'updatedAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`;
+  const sortId = sorting[0]?.id ?? 'updatedAt';
+  const sortValue = `${sortId}:${sorting[0]?.desc ? 'desc' : 'asc'}`;
   const onSort = (v: string) => {
     const [id, dir] = v.split(':');
     setSorting([{ id, desc: dir === 'desc' }]);
   };
 
+  // 行の二次行：ソート中の列の値を見せる（納期順なら納期、受注額順なら金額）。既定は更新日時。
+  const sortedField = sortId !== 'updatedAt' && sortId !== 'title' ? schema.fields.find((f) => f.key === sortId) : undefined;
+  const secondaryFor = (record: Rec): { label: string; value: string } => {
+    if (sortedField) {
+      const raw = record.fields[sortedField.key];
+      const value = typeof raw === 'number' ? raw.toLocaleString() : asString(raw);
+      return { label: sortedField.label, value: value || '—' };
+    }
+    return { label: t('updated'), value: record.updatedAt };
+  };
+
   function Row({ record, draft }: { record: Rec; draft?: boolean }) {
     const selected = record.id === selectedId;
     const status = schema.statusField ? asString(record.fields[schema.statusField]) : '';
+    const sec = secondaryFor(record);
     return (
       <Link href={`/${collectionId}?sel=${record.id}`} scroll={false} className="block">
         <Card className={cn('p-4 transition-colors hover:border-accent', selected && 'border-accent bg-surface')}>
@@ -129,7 +177,9 @@ export function RecordListBody({
             {status && <StatusBadge status={status} label={statusLabel(status)} />}
             {draft && <span className="chip inline-flex items-center px-2 py-0.5 text-accent border-accent">{t('draft')}</span>}
           </div>
-          <div className="mt-2 text-xs text-muted">{t('updated')} {record.updatedAt}</div>
+          <div className="mt-2 text-xs text-muted">
+            {sec.label} {sec.value}
+          </div>
         </Card>
       </Link>
     );
@@ -162,8 +212,11 @@ export function RecordListBody({
             onChange={(e) => onSort(e.target.value)}
             className="w-auto shrink-0"
           >
-            <option value="updatedAt:desc">{t('sortUpdated')}</option>
-            <option value="title:asc">{t('sortTitle')}</option>
+            {sortOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </Select>
         </div>
       </div>
