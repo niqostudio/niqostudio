@@ -1,15 +1,17 @@
 import type { MessageKey } from '@/shared/i18n';
 import { CoreMetricsProvider } from '@/adapters/domain-store/supabase/metrics';
 
-// サイドバー nav。ドメイン別グループ（業務/公開）＋各 collection の件数。機能を足す＝該当グループに id を1つ。
+// サイドバー nav。ドメイン別グループ（営業/案件/公開/マスタ）＋各 collection の件数。機能を足す＝該当グループに id を1つ。
 export interface NavGroup {
   labelKey: MessageKey;
   ids: string[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
-  { labelKey: 'business', ids: ['inquiries', 'contacts', 'clients', 'projects', 'meetings', 'work_logs'] },
-  { labelKey: 'publishing', ids: ['showcase_entries', 'ndas', 'services', 'products', 'profile', 'metric_definitions'] },
+  { labelKey: 'crm', ids: ['inquiries', 'contacts', 'clients'] },
+  { labelKey: 'delivery', ids: ['projects', 'meetings', 'work_logs', 'invoices'] },
+  { labelKey: 'publishing', ids: ['showcase_entries', 'ndas', 'services', 'products', 'profile'] },
+  { labelKey: 'masters', ids: ['metric_definitions'] },
 ];
 
 const NAV_IDS = NAV_GROUPS.flatMap((g) => g.ids);
