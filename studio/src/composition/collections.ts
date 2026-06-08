@@ -43,7 +43,7 @@ function coreCollection(id: string, label: string, seed?: CollectionSemantics): 
 // 作成は顧客（clients）詳細から（client_id を文脈設定）＝一覧に新規ボタンは出さない。
 const projects: CollectionBinding<Fields> = {
   ...coreCollection('projects', '案件'),
-  meta: { id: 'projects', label: '案件', createVia: { via: 'clients', fk: 'client_id' } },
+  meta: { id: 'projects', label: '案件', createVia: [{ via: 'clients', fk: 'client_id' }] },
   history: new CoreProjectStatusHistory(),
   workflow: new CoreProjectWorkflow(),
   sources: new CoreProjectSourceRegistry(),
@@ -66,10 +66,24 @@ const inquiries: CollectionBinding<Fields> = {
   recordActions: [{ id: 'convert', label: '顧客に転換', run: convertInquiryToClient }],
 };
 
-// ndas は NDA 専用の読み合わせ詳細を持つ（汎用 RecordDetail を上書き）。
+// ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。
 const ndas: CollectionBinding<Fields> = {
   ...coreCollection('ndas', 'NDA', ndasSemantics),
+  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }] },
   detail: NdaDetail,
+};
+
+// 事例は被写体（案件 or プロダクト）から作る（showcase_entries は project_id xor product_id）。
+const showcaseEntries: CollectionBinding<Fields> = {
+  ...coreCollection('showcase_entries', '事例', showcaseEntriesSemantics),
+  meta: {
+    id: 'showcase_entries',
+    label: '事例',
+    createVia: [
+      { via: 'projects', fk: 'project_id' },
+      { via: 'products', fk: 'product_id' },
+    ],
+  },
 };
 
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
@@ -78,7 +92,7 @@ const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
   inquiries: inquiries as CollectionBinding<unknown>,
   services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
-  showcase_entries: coreCollection('showcase_entries', '事例', showcaseEntriesSemantics) as CollectionBinding<unknown>,
+  showcase_entries: showcaseEntries as CollectionBinding<unknown>,
   ndas: ndas as CollectionBinding<unknown>,
   profile: profile as CollectionBinding<unknown>,
 };

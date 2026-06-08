@@ -44,7 +44,7 @@ export default async function RecordList({
             <Link href={`/schema/${collectionId}`} title="スキーマ設定" className="text-muted transition-colors hover:text-accent">
               <Settings className="size-5" />
             </Link>
-            {!binding.meta.createVia && !binding.meta.singleton && (
+            {!binding.meta.createVia?.length && !binding.meta.singleton && (
               <form action={createRecordAction.bind(null, collectionId, undefined)}>
                 <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
                   <Plus className="size-4" />

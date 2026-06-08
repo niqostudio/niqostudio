@@ -34,9 +34,10 @@ export function orderByList<T>(values: T[], order: T[]): T[] {
 export interface CollectionMeta {
   id: string;
   label: string;
-  // この collection を親 collection の画面から作る導線（案件←顧客 等）。
-  // 指定があると一覧の新規ボタンは出さず、親の詳細に作成ボタンを出す（fk に親 id を入れる）。
-  createVia?: { via: string; fk: string };
+  // この collection を親 collection の画面から作る導線（案件←顧客、事例←案件/プロダクト 等）。
+  // 指定があると一覧の新規ボタンは出さず、各親の詳細に作成ボタンを出す（fk に親 id を入れる）。
+  // 配列＝複数の親を持てる（showcase は project_id xor product_id）。
+  createVia?: { via: string; fk: string }[];
   // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
   singleton?: boolean;
 }

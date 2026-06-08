@@ -41,10 +41,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
     );
   }
 
-  // この record（例：顧客）から作れる子 collection（例：案件）の作成導線（詳細ペインに置く）。
-  const createRelated = listCollections()
-    .filter((b) => b.meta.createVia?.via === collection)
-    .map((b) => ({ targetCollection: b.meta.id, fk: b.meta.createVia!.fk, parentId: id, label: `${b.meta.label}を作成` }));
+  // この record（例：顧客/案件/プロダクト）から作れる子 collection の作成導線（詳細ペインに置く）。
+  const createRelated = listCollections().flatMap((b) =>
+    (b.meta.createVia ?? [])
+      .filter((cv) => cv.via === collection)
+      .map((cv) => ({ targetCollection: b.meta.id, fk: cv.fk, parentId: id, label: `${b.meta.label}を作成` })),
+  );
 
   // status の値→ラベル（core 値集合 × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。
   const statusLabels = new Map<string, string>();
@@ -87,7 +89,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       {createRelated.length > 0 && (
         <section className="flex flex-wrap gap-2">
           {createRelated.map((r) => (
-            <CreateRelatedButton key={r.targetCollection} {...r} />
+            <CreateRelatedButton key={`${r.targetCollection}-${r.fk}`} {...r} />
           ))}
         </section>
       )}
