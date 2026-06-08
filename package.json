@@ -11,6 +11,7 @@
     "db:types": "pnpm --filter @niqostudio/infra run types",
     "niqo:up": "node scripts/niqo-up.mjs",
     "niqo:dev": "node scripts/niqo-dev.mjs",
+    "niqo:dev:down": "node scripts/niqo-dev-down.mjs",
     "niqo:down": "node scripts/niqo-down.mjs",
     "dev:website": "pnpm --filter @niqostudio/website run dev",
     "dev:studio": "pnpm --filter @niqostudio/studio run dev",
