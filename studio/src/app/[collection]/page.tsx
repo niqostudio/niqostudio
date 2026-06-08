@@ -8,9 +8,9 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ collection: string }>;
-  searchParams: Promise<{ sel?: string }>;
+  searchParams: Promise<{ sel?: string; status?: string }>;
 }) {
   const { collection } = await params;
-  const { sel } = await searchParams;
-  return <RecordList collectionId={collection} selectedId={sel} />;
+  const { sel, status } = await searchParams;
+  return <RecordList collectionId={collection} selectedId={sel} statusFilter={status} />;
 }

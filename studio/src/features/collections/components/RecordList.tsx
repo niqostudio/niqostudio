@@ -11,7 +11,15 @@ import { Settings, Plus } from 'lucide-react';
 
 // 一覧（master）＋右ペイン詳細（detail）。行クリックで ?sel=<id> を選び、右に読み取り詳細＋ワークフロー。
 // CRUD 編集は詳細の「編集」から /<col>/<id>/edit へ分離。
-export default async function RecordList({ collectionId, selectedId }: { collectionId: string; selectedId?: string }) {
+export default async function RecordList({
+  collectionId,
+  selectedId,
+  statusFilter,
+}: {
+  collectionId: string;
+  selectedId?: string;
+  statusFilter?: string;
+}) {
   const binding = getCollection(collectionId);
   if (!binding) notFound();
 
@@ -47,6 +55,7 @@ export default async function RecordList({ collectionId, selectedId }: { collect
           published={published}
           newDrafts={newDrafts}
           selectedId={selectedId}
+          statusFilter={statusFilter}
         />
       </div>
 

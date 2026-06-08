@@ -32,12 +32,15 @@ export function RecordListBody({
   published,
   newDrafts,
   selectedId,
+  statusFilter,
 }: {
   collectionId: string;
   schema: CollectionSchema;
   published: Rec[];
   newDrafts: Rec[];
   selectedId?: string;
+  // 初期 status 絞り込み（ダッシュボード KPI からの ?status= ドリルダウン）。
+  statusFilter?: string;
 }) {
   const data = useMemo<ListRow[]>(
     () => [
@@ -66,7 +69,9 @@ export function RecordListBody({
   }, [schema]);
 
   const [globalFilter, setGlobalFilter] = useState('');
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    statusFilter && schema.statusField ? [{ id: 'status', value: statusFilter }] : [],
+  );
   const [sorting, setSorting] = useState<SortingState>([{ id: 'updatedAt', desc: true }]);
 
   const table = useReactTable({
