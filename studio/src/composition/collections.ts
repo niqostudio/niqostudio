@@ -17,6 +17,7 @@ import { servicesSemantics } from '@/composition/semantics/services';
 import { showcaseEntriesSemantics } from '@/composition/semantics/showcase-entries';
 import { ndasSemantics } from '@/composition/semantics/ndas';
 import { profileSemantics } from '@/composition/semantics/profile';
+import { convertInquiryToClient } from './conversions';
 import { INSTANCE_ID } from './instance';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
@@ -58,11 +59,17 @@ const profile: CollectionBinding<Fields> = {
   meta: { id: 'profile', label: 'プロフィール', singleton: true },
 };
 
+// inquiries は顧客への転換アクションを持つ（接続先固有のワークフロー＝composition が差す）。
+const inquiries: CollectionBinding<Fields> = {
+  ...coreCollection('inquiries', '問い合わせ', inquiriesSemantics),
+  recordActions: [{ id: 'convert', label: '顧客に転換', run: convertInquiryToClient }],
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
   products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
   clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
-  inquiries: coreCollection('inquiries', '問い合わせ', inquiriesSemantics) as CollectionBinding<unknown>,
+  inquiries: inquiries as CollectionBinding<unknown>,
   services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
   showcase_entries: coreCollection('showcase_entries', '事例', showcaseEntriesSemantics) as CollectionBinding<unknown>,
   ndas: coreCollection('ndas', 'NDA', ndasSemantics) as CollectionBinding<unknown>,

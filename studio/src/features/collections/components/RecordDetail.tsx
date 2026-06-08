@@ -110,6 +110,18 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         </section>
       )}
 
+      {binding.recordActions && binding.recordActions.length > 0 && (
+        <section className="flex flex-wrap gap-2">
+          {binding.recordActions.map((a) => (
+            <form key={a.id} action={a.run.bind(null, id)}>
+              <button type="submit" className="btn btn-secondary">
+                {a.label}
+              </button>
+            </form>
+          ))}
+        </section>
+      )}
+
       {viewFields.length > 0 && (
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {viewFields.map((f) => (

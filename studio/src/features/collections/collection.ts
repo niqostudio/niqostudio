@@ -60,4 +60,13 @@ export interface CollectionBinding<F> {
   workflow?: WorkflowProvider;
   // 源を射影して下書きへ反映する。反映できたら true。
   derive?: (recordId: string) => Promise<boolean>;
+  // record 単位のカスタム操作（詳細ペインのボタン）。接続先固有のワークフローを composition が差す。
+  recordActions?: RecordAction[];
+}
+
+// 詳細ペインの record 単位アクション（例：問い合わせ→顧客 転換）。run は server action。
+export interface RecordAction {
+  id: string;
+  label: string;
+  run: (recordId: string, formData?: FormData) => Promise<void>;
 }
