@@ -3,11 +3,10 @@ import Link from 'next/link';
 import { NAV_GROUPS, loadNavCounts } from '@/composition/nav';
 import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
-import { SectionLabel } from '@/shared/ui/primitives';
-import { t } from '@/shared/i18n';
 import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
 import { UnsavedProvider } from '@/shared/unsaved';
+import { NavLinks } from './NavLinks';
 import { SignOutButton } from './SignOutButton';
 
 // shell：左のグローバルサイドバー（nav）＋ メイン列（コンテンツ＋下から伸びる terminal パネル）。
@@ -17,6 +16,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const operator = await getOperator();
   if (!operator) return <>{children}</>;
   const counts = await loadNavCounts();
+  // ラベル/件数は server で解決して client の NavLinks へ渡す（active 判定だけ client）。
+  const navGroups = NAV_GROUPS.map((g) => ({
+    labelKey: g.labelKey,
+    items: g.ids.map((id) => ({ id, label: getCollection(id)?.meta.label ?? id, count: counts[id] })),
+  }));
 
   return (
     <UnsavedProvider>
@@ -28,25 +32,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-0.5">studio</p>
         </div>
-        <nav className="flex flex-col gap-4 p-3 md:flex-1">
-          {NAV_GROUPS.map((g) => (
-            <div key={g.labelKey} className="flex flex-col gap-0.5">
-              <SectionLabel className="px-3 pb-1">{t(g.labelKey)}</SectionLabel>
-              {g.ids.map((id) => (
-                <Link
-                  key={id}
-                  href={`/${id}`}
-                  className="flex items-center justify-between rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-bg"
-                >
-                  <span>{getCollection(id)?.meta.label ?? id}</span>
-                  {counts[id] !== undefined && (
-                    <span className="text-xs tabular-nums text-muted">{counts[id]}</span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </nav>
+        <NavLinks groups={navGroups} />
         <div className="px-3 py-3 border-t border-border-subtle">
           <p className="text-xs text-muted truncate" title={operator.email ?? ''}>
             {operator.email}

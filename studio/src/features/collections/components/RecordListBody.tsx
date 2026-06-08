@@ -240,25 +240,39 @@ export function RecordListBody({
         <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} />
 
         {visibleFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {visibleFilters.map((f) => (
-              <Select
-                key={f.key}
-                aria-label={f.label}
-                value={filterValue(f.key) ?? ''}
-                onChange={(e) => setFilter(f.key, e.target.value || null)}
-                className="w-auto"
-              >
-                <option value="">
-                  {f.label}：{t('all')}
-                </option>
-                {filterOptions[f.key].map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {visibleFilters.map((f) =>
+              f.kind === 'boolean' ? (
+                // 真偽はチェックボックス（ON＝true のみ表示）。
+                <label key={f.key} className="inline-flex items-center gap-1.5 text-sm text-muted">
+                  <input
+                    type="checkbox"
+                    className="accent-accent"
+                    checked={filterValue(f.key) === 'true'}
+                    onChange={(e) => setFilter(f.key, e.target.checked ? 'true' : null)}
+                  />
+                  {f.label}
+                </label>
+              ) : (
+                // カテゴリ（参照/選択）はプルダウン（単一選択）。
+                <Select
+                  key={f.key}
+                  aria-label={f.label}
+                  value={filterValue(f.key) ?? ''}
+                  onChange={(e) => setFilter(f.key, e.target.value || null)}
+                  className="w-auto"
+                >
+                  <option value="">
+                    {f.label}：{t('all')}
                   </option>
-                ))}
-              </Select>
-            ))}
+                  {filterOptions[f.key].map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </Select>
+              ),
+            )}
           </div>
         )}
 
