@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type {
   CollectionStore,
   SourceRegistry,
@@ -76,5 +76,7 @@ export interface CollectionBinding<F> {
 export interface RecordAction {
   id: string;
   label: string;
+  // ボタンのアイコン（意味で統一＝作成は Plus・変換は UserPlus/FolderPlus・計測は Activity）。createVia の作成ボタンと揃える。
+  icon?: ComponentType<{ className?: string }>;
   run: (recordId: string, formData?: FormData) => Promise<void>;
 }

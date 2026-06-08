@@ -24,7 +24,7 @@ import { metricDefinitionsSemantics } from '@/composition/semantics/metric-defin
 import { invoicesSemantics } from '@/composition/semantics/invoices';
 import { convertInquiryToContact } from './conversions';
 import { createProjectFromContact } from './contact-actions';
-import { openMetricsForProject, openMetricsForProduct } from './metrics-actions';
+import { openMetricsForProject } from './metrics-actions';
 import { createInvoiceFromProject } from './invoice-actions';
 import { NdaDetail } from './details/nda';
 import { InquiryReply } from './details/InquiryReply';
@@ -37,6 +37,7 @@ import { ProjectInvoices } from '@/features/invoices/ProjectInvoices';
 import { ClientInvoices } from '@/features/invoices/ClientInvoices';
 import { createMeetingFromProject } from './meetings-actions';
 import { INSTANCE_ID } from './instance';
+import { Plus, Activity, FolderPlus, UserPlus } from 'lucide-react';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
 // 確定は store の overlay）。store は core 列を動的に読む generic＝テーブルごとの手書き写像なし。
@@ -66,9 +67,9 @@ const projects: CollectionBinding<Fields> = {
   sources: new CoreProjectSourceRegistry(),
   detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices],
   recordActions: [
-    { id: 'meeting', label: '打ち合わせを作成', run: createMeetingFromProject },
-    { id: 'invoice', label: '請求を作成', run: createInvoiceFromProject },
-    { id: 'metrics', label: 'メトリクスを計測', run: openMetricsForProject },
+    { id: 'meeting', label: '打ち合わせを作成', icon: Plus, run: createMeetingFromProject },
+    { id: 'invoice', label: '請求を作成', icon: Plus, run: createInvoiceFromProject },
+    { id: 'metrics', label: 'メトリクスを計測', icon: Activity, run: openMetricsForProject },
   ],
   derive: async (recordId) => {
     const [{ deriveProjectDrafts }, { GitRepositoryProjectionEngine, GitCliSourceAccess }] =
@@ -86,7 +87,7 @@ const profile: CollectionBinding<Fields> = {
 // inquiries は顧客への転換アクションを持つ（接続先固有のワークフロー＝composition が差す）。
 const inquiries: CollectionBinding<Fields> = {
   ...coreCollection('inquiries', '問い合わせ', inquiriesSemantics),
-  recordActions: [{ id: 'convert', label: '顧客担当者に変換', run: convertInquiryToContact }],
+  recordActions: [{ id: 'convert', label: '顧客担当者に変換', icon: UserPlus, run: convertInquiryToContact }],
   detailExtras: [InquiryReply, InquiryMeetings],
 };
 
@@ -99,13 +100,12 @@ const clients: CollectionBinding<Fields> = {
 // 顧客担当者（人）。問い合わせから変換で作られ、案件化で会社（client）に紐付く。一覧から手動追加も可。
 const contacts: CollectionBinding<Fields> = {
   ...coreCollection('contacts', '顧客担当者', contactsSemantics),
-  recordActions: [{ id: 'projectize', label: '案件化', run: createProjectFromContact }],
+  recordActions: [{ id: 'projectize', label: '案件化', icon: FolderPlus, run: createProjectFromContact }],
 };
 
-// プロダクトもメトリクス計測の起点を持つ。
+// プロダクトは web アプリ中心で metrics 入力導線は出さない（core の polymorphic な metrics 対応は温存）。
 const products: CollectionBinding<Fields> = {
   ...coreCollection('products', 'プロダクト'),
-  recordActions: [{ id: 'metrics', label: 'メトリクスを計測', run: openMetricsForProduct }],
 };
 
 // ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。
