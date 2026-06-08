@@ -58,7 +58,7 @@ export function WorkflowStepper({
                 disabled={busy}
                 onClick={() => advance(s.value)}
                 title={`${s.label} に進める`}
-                className="chip inline-flex items-center px-2 py-0.5 border-accent text-accent transition-colors hover:bg-accent hover:text-surface disabled:opacity-50"
+                className="chip inline-flex items-center px-2 py-0.5 border-accent text-accent transition-colors hover:bg-accent hover:text-on-accent disabled:opacity-50"
               >
                 {s.label}
               </button>

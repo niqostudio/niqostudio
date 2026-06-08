@@ -1,27 +1,44 @@
 @import "tailwindcss";
 
-/* studio は業務システム＝白ベースの中立トークン（website のブランド warm とは分離）。
-   色は機能（accent＝操作・status＝success/error/warning/info）に絞り、面は白/淡灰。
+/* studio は業務システムの中立トークン。色は機能（accent＝操作・status＝success/error/warning/info）に絞る。
+   面・文字・枠は CSS 変数で持ち、.dark で同じ変数を上書き＝全 UU がそのままライト/ダークに追従する。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
-  --color-bg: #f5f6f7;
+  --color-bg: #f6f7f9;
   --color-surface: #ffffff;
   --color-fg: #18181b;
   --color-muted: #4b5563;
-  --color-border: #d1d5db;
-  --color-border-subtle: #e5e7eb;
+  --color-border: #d3d7dd;
+  --color-border-subtle: #e7e9ee;
   --color-accent: #2563eb;
+  --color-on-accent: #ffffff;
   --color-error: #dc2626;
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-info: #2563eb;
 
-  --radius-sm: 0;
+  --radius-sm: 0.375rem;
   --container-readable: 48rem;
   --breakpoint-sm: 768px;
 
   --font-sans: var(--font-inter), var(--font-noto-jp), system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+}
+
+/* ダーク：同じ変数を上書き（on-accent＝白は両モード共通なので据え置き）。 */
+.dark {
+  --color-bg: #0f1216;
+  --color-surface: #181c22;
+  --color-fg: #e7e9ec;
+  --color-muted: #98a2b3;
+  --color-border: #2b313b;
+  --color-border-subtle: #232830;
+  --color-accent: #3b82f6;
+  --color-error: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
+  color-scheme: dark;
 }
 
 /* UI パーツのスキン（色・枠・角丸・形のみ）。中立トークンで描く。 */
@@ -30,16 +47,16 @@
     @apply inline-block rounded-sm border px-4 py-2 text-sm;
   }
   .btn-primary {
-    @apply border-transparent bg-accent text-surface transition-opacity hover:opacity-90;
+    @apply border-transparent bg-accent text-on-accent transition-opacity hover:opacity-90;
   }
   .btn-secondary {
     @apply border-border bg-surface transition-colors hover:border-muted;
   }
   .card {
-    @apply border border-border bg-surface;
+    @apply rounded-sm border border-border bg-surface;
   }
   .chip {
-    @apply border text-xs text-muted;
+    @apply rounded-sm border text-xs text-muted;
   }
   /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus 枠色は下のグローバル規則。 */
   .field {
@@ -55,6 +72,7 @@
 
 html {
   scrollbar-gutter: stable;
+  color-scheme: light;
 }
 
 /* フォーカスは枠線の色だけ変える（太い既定アウトラインは出さない）。 */
@@ -65,10 +83,7 @@ select:focus {
   border-color: var(--color-accent);
 }
 
-/* 日付入力：picker を light に統一し、カレンダーアイコンを控えめに（枠/余白は .field）。 */
-input[type="date"] {
-  color-scheme: light;
-}
+/* 日付入力：picker は html の color-scheme（テーマ追従）に従う。アイコンを控えめに。 */
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.55;
@@ -92,4 +107,3 @@ body {
     background: var(--color-surface);
   }
 }
-

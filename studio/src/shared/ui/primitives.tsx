@@ -143,7 +143,7 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
 export type StatusTone = 'plain' | 'current' | 'done' | 'upcoming';
 const STATUS_CHIP: Record<StatusTone, string> = {
   plain: 'border-border text-fg',
-  current: 'border-accent bg-accent text-surface',
+  current: 'border-accent bg-accent text-on-accent',
   done: 'border-success text-success',
   upcoming: 'border-border text-muted',
 };
