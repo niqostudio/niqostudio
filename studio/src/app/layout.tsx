@@ -19,14 +19,10 @@ export const metadata: Metadata = {
   description: 'NIQO STUDIO の業務システム',
 };
 
-// 描画前にテーマを適用して FOUC を防ぐ（保存値→無ければ OS 設定）。
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" data-theme="neutral" className={`${inter.variable} ${notoSansJp.variable}`}>
+    <html lang="ja" className={`${inter.variable} ${notoSansJp.variable}`}>
       <body>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <AppShell>{children}</AppShell>
         <Toaster />
       </body>

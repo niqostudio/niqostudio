@@ -97,21 +97,21 @@ export function WorkflowGraph({
           const isCurrent = s.value === current;
           const isNext = nextSet.has(s.value);
           const done = visitedSet.has(s.value);
-          // 選べる（isNext）は既定は控えめ（accent 文字）で、hover で塗りに＝押せると分かる。アウトラインは細く。
+          // current＝accent 塗り / 選べる（isNext）＝ghost＋hover で塗り / done＝通った＝soft 緑 / upcoming＝控えめ。
           const rectCls = isCurrent
             ? 'fill-accent stroke-accent'
             : isNext
               ? 'fill-surface stroke-border group-hover:fill-accent group-hover:stroke-accent'
               : done
-                ? 'fill-surface stroke-success'
-                : 'fill-surface stroke-border';
+                ? 'fill-success-soft stroke-success'
+                : 'fill-surface-2 stroke-border-subtle';
           const textCls = isCurrent
             ? 'fill-on-accent'
             : isNext
               ? 'fill-accent group-hover:fill-on-accent'
               : done
                 ? 'fill-success'
-                : 'fill-muted';
+                : 'fill-faint';
           return (
             <g
               key={s.value}

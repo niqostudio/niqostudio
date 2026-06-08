@@ -131,23 +131,28 @@ export function BackLink({ href, children, className }: { href: string; children
   );
 }
 
-// ステータスバッジ（presentation のみ）。studio は status 値の意味を知らないため色は中立。
+// ステータスバッジ（presentation のみ）。studio は status 値の意味を知らないため中立の soft 面で出す。
 // ラベルは overlay 由来を呼び出し側が渡す（label）。色分けが要るなら overlay に色を持たせて渡す方針。
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
   // 値が無ければ何も出さない（空の四角を描かない）。
   if (!status) return null;
-  return <span className="chip inline-flex items-center px-2 py-0.5 text-muted border-border">{label ?? status}</span>;
+  return (
+    <span className="inline-flex items-center rounded-sm bg-surface-2 px-2 py-0.5 text-xs text-muted">{label ?? status}</span>
+  );
 }
 
 // ステータス1つ分のチップ。tone で現在/完了/未来/通常を出し分け＝stepper・ワークフロー等で共用。
+// soft 面＋solid 文字（current だけ accent 塗り）＝セマンティックに統一。
 export type StatusTone = 'plain' | 'current' | 'done' | 'upcoming';
 const STATUS_CHIP: Record<StatusTone, string> = {
-  plain: 'border-border text-fg',
-  current: 'border-accent bg-accent text-on-accent',
-  done: 'border-success text-success',
-  upcoming: 'border-border text-muted',
+  plain: 'bg-surface-2 text-fg',
+  current: 'bg-accent text-on-accent',
+  done: 'bg-success-soft text-success',
+  upcoming: 'bg-surface-2 text-faint',
 };
 export function StatusChip({ children, tone = 'plain' }: { children: ReactNode; tone?: StatusTone }) {
-  return <span className={cn('chip inline-flex items-center px-2 py-0.5', STATUS_CHIP[tone])}>{children}</span>;
+  return (
+    <span className={cn('inline-flex items-center rounded-sm px-2 py-0.5 text-xs', STATUS_CHIP[tone])}>{children}</span>
+  );
 }
 

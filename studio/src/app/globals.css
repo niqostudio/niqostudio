@@ -1,45 +1,46 @@
 @import "tailwindcss";
 
-/* studio は業務システムの中立トークン。色は機能（accent＝操作・status＝success/error/warning/info）に絞る。
-   面・文字・枠は CSS 変数で持ち、.dark で同じ変数を上書き＝全 UU がそのままライト/ダークに追従する。
+/* studio の配色＝セマンティック・トークン（light 単一）。役割で色を決め、面・文字・枠・状態を分けて持つ。
+   ・neutral（面/文字/枠）が地。色は意味のあるときだけ＝accent（操作）と status（success/warning/error/info）。
+   ・各 status は solid（文字・罫・図形）と soft（淡い背景）の対で持ち、チップ等は soft 面＋solid 文字で出す。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
-  --color-bg: #f5f5f5;
+  /* 面（奥→手前）と subtle な塗り（ヘッダ・hover・inset） */
+  --color-bg: #f4f4f4;
   --color-surface: #ffffff;
+  --color-surface-2: #efefef;
+
+  /* 文字（主→副→三次） */
   --color-fg: #171717;
   --color-muted: #525252;
-  --color-border: #d4d4d4;
-  --color-border-subtle: #e5e5e5;
-  --color-accent: #4f46e5;
-  --color-on-accent: #ffffff;
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-info: #2563eb;
+  --color-faint: #8e8e8e;
 
-  --radius-sm: 0.375rem;
+  /* 罫 */
+  --color-border: #d6d6d6;
+  --color-border-subtle: #e6e6e6;
+
+  /* ブランド＝操作・選択・現在・focus（indigo） */
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef2ff;
+  --color-on-accent: #ffffff;
+
+  /* status（solid＝文字/罫/図形、soft＝淡い背景） */
+  --color-success: #16a34a;
+  --color-success-soft: #e7f7ec;
+  --color-warning: #d97706;
+  --color-warning-soft: #fbeecf;
+  --color-error: #dc2626;
+  --color-error-soft: #fbe5e5;
+  --color-info: #0284c7;
+  --color-info-soft: #e2f1fb;
+
+  --radius-sm: 0.25rem;
   --container-readable: 48rem;
   --breakpoint-sm: 768px;
 
   --font-sans: var(--font-inter), var(--font-noto-jp), system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
-}
-
-/* ダーク：同じ変数を上書き（on-accent＝白は両モード共通なので据え置き）。
-   :root.dark で特異度を @theme の :root より高くし、確実に上書きが効くようにする。 */
-:root.dark {
-  --color-bg: #0f0f10;
-  --color-surface: #1a1a1b;
-  --color-fg: #ededee;
-  --color-muted: #a3a3a3;
-  --color-border: #343436;
-  --color-border-subtle: #242425;
-  --color-accent: #6366f1;
-  --color-error: #f87171;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-info: #60a5fa;
-  color-scheme: dark;
 }
 
 /* UI パーツのスキン（色・枠・角丸・形のみ）。中立トークンで描く。 */
@@ -48,10 +49,10 @@
     @apply inline-block rounded-sm border px-4 py-2 text-sm;
   }
   .btn-primary {
-    @apply border-transparent bg-accent text-on-accent transition-opacity hover:opacity-90;
+    @apply border-transparent bg-accent text-on-accent transition-colors hover:bg-accent-hover;
   }
   .btn-secondary {
-    @apply border-border bg-surface transition-colors hover:border-muted;
+    @apply border-border bg-surface transition-colors hover:border-muted hover:bg-surface-2;
   }
   .card {
     @apply rounded-sm border border-border bg-surface;
@@ -59,9 +60,9 @@
   .chip {
     @apply rounded-sm border text-xs text-muted;
   }
-  /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus 枠色は下のグローバル規則。 */
+  /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus は下のグローバル規則。 */
   .field {
-    @apply rounded-sm border border-border bg-surface px-2 py-1.5 text-sm;
+    @apply rounded-sm border border-border bg-surface px-2 py-2 text-sm;
   }
   .chip-mono {
     @apply border-border px-2 py-0.5 font-mono;
@@ -76,18 +77,26 @@ html {
   color-scheme: light;
 }
 
-/* フォーカスは枠線の色だけ変える（太い既定アウトラインは出さない）。 */
+/* フォーカス：枠を accent にし、淡い soft リングを薄く添える（太い既定アウトラインは出さない）。 */
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
-/* 日付入力：picker は html の color-scheme（テーマ追従）に従う。アイコンを控えめに。 */
+/* 日付入力：アイコンを控えめに。 */
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.55;
+}
+
+/* グラフ（recharts）はクリックでフォーカス枠を出さない（棒/セクタ/SVG）。 */
+.recharts-wrapper:focus,
+.recharts-wrapper :focus,
+.recharts-surface:focus {
+  outline: none;
 }
 
 body {

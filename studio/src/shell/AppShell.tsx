@@ -7,7 +7,6 @@ import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
 import { UnsavedProvider } from '@/shared/unsaved';
 import { NavLinks } from './NavLinks';
-import { ThemeToggle } from './ThemeToggle';
 import { SignOutButton } from './SignOutButton';
 
 // shell：左のグローバルサイドバー（nav）＋ メイン列（コンテンツ＋下から伸びる terminal パネル）。
@@ -34,13 +33,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-0.5">studio</p>
         </div>
         <NavLinks groups={navGroups} />
-        <div className="px-3 py-3 border-t border-border-subtle">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-muted truncate" title={operator.email ?? ''}>
-              {operator.email}
-            </p>
-            <ThemeToggle />
-          </div>
+        <div className="flex flex-col gap-2 px-3 py-3 border-t border-border-subtle">
+          <p className="text-xs text-muted truncate" title={operator.email ?? ''}>
+            {operator.email}
+          </p>
           <SignOutButton />
         </div>
       </aside>
