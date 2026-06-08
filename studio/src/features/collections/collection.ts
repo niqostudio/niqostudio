@@ -34,6 +34,8 @@ export function orderByList<T>(values: T[], order: T[]): T[] {
 export interface CollectionMeta {
   id: string;
   label: string;
+  // nav・作成ボタンで使うアイコン（その collection が表す実体＝請求=円 / NDA=文書 等）。
+  icon?: ComponentType<{ className?: string }>;
   // この collection を親 collection の画面から作る導線（案件←顧客、事例←案件/プロダクト 等）。
   // 指定があると一覧の新規ボタンは出さず、各親の詳細に作成ボタンを出す（fk に親 id を入れる）。
   // 配列＝複数の親を持てる（showcase は project_id xor product_id）。

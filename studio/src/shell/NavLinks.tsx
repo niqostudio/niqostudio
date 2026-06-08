@@ -1,14 +1,15 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SectionLabel } from '@/shared/ui/primitives';
 import { t, type MessageKey } from '@/shared/i18n';
 
-// nav の表示データ（ラベル・件数は server で解決して渡す）。active 判定だけ client（pathname）。
+// nav の表示データ（ラベル・件数・アイコンは server で解決して渡す）。active 判定だけ client（pathname）。
 export interface NavGroupView {
   labelKey: MessageKey;
-  items: { id: string; label: string; count?: number }[];
+  items: { id: string; label: string; count?: number; icon?: ReactNode }[];
 }
 
 export function NavLinks({ groups }: { groups: NavGroupView[] }) {
@@ -25,9 +26,10 @@ export function NavLinks({ groups }: { groups: NavGroupView[] }) {
               <Link
                 key={it.id}
                 href={base}
-                className={`flex items-center justify-between rounded-sm px-3 py-1.5 text-sm transition-colors ${active ? 'bg-bg' : 'hover:bg-bg'}`}
+                className={`flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors ${active ? 'bg-bg' : 'hover:bg-bg'}`}
               >
-                <span>{it.label}</span>
+                {it.icon && <span className={active ? 'text-accent' : 'text-muted'}>{it.icon}</span>}
+                <span className="flex-1 truncate">{it.label}</span>
                 {it.count !== undefined && <span className="text-xs tabular-nums text-muted">{it.count}</span>}
               </Link>
             );

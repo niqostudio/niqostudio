@@ -19,7 +19,15 @@ export async function AppShell({ children }: { children: ReactNode }) {
   // ラベル/件数は server で解決して client の NavLinks へ渡す（active 判定だけ client）。
   const navGroups = NAV_GROUPS.map((g) => ({
     labelKey: g.labelKey,
-    items: g.ids.map((id) => ({ id, label: getCollection(id)?.meta.label ?? id, count: counts[id] })),
+    items: g.ids.map((id) => {
+      const Icon = getCollection(id)?.meta.icon;
+      return {
+        id,
+        label: getCollection(id)?.meta.label ?? id,
+        count: counts[id],
+        icon: Icon ? <Icon className="size-4 shrink-0" /> : null,
+      };
+    }),
   }));
 
   return (

@@ -52,7 +52,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   const createRelated = listCollections().flatMap((b) =>
     (b.meta.createVia ?? [])
       .filter((cv) => cv.via === collection)
-      .map((cv) => ({ targetCollection: b.meta.id, fk: cv.fk, parentId: id, label: `${b.meta.label}を作成` })),
+      .map((cv) => ({ targetCollection: b.meta.id, fk: cv.fk, parentId: id, label: `${b.meta.label}を作成`, icon: b.meta.icon })),
   );
 
   // status の値→ラベル＋順序（マスタ × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。

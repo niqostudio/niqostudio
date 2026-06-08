@@ -37,7 +37,25 @@ import { ProjectInvoices } from '@/features/invoices/ProjectInvoices';
 import { ClientInvoices } from '@/features/invoices/ClientInvoices';
 import { createMeetingFromProject } from './meetings-actions';
 import { INSTANCE_ID } from './instance';
-import { Plus, Activity, FolderPlus, UserPlus } from 'lucide-react';
+import type { ComponentType } from 'react';
+import {
+  Activity,
+  FolderPlus,
+  UserPlus,
+  Briefcase,
+  Package,
+  Building2,
+  Contact,
+  Inbox,
+  Layers,
+  Sparkles,
+  FileText,
+  CircleUser,
+  Gauge,
+  Users,
+  JapaneseYen,
+  Clock,
+} from 'lucide-react';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
 // 確定は store の overlay）。store は core 列を動的に読む generic＝テーブルごとの手書き写像なし。
@@ -67,8 +85,8 @@ const projects: CollectionBinding<Fields> = {
   sources: new CoreProjectSourceRegistry(),
   detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices],
   recordActions: [
-    { id: 'meeting', label: '打ち合わせを作成', icon: Plus, run: createMeetingFromProject },
-    { id: 'invoice', label: '請求を作成', icon: Plus, run: createInvoiceFromProject },
+    { id: 'meeting', label: '打ち合わせを作成', icon: Users, run: createMeetingFromProject },
+    { id: 'invoice', label: '請求を作成', icon: JapaneseYen, run: createInvoiceFromProject },
     { id: 'metrics', label: 'メトリクスを計測', icon: Activity, run: openMetricsForProject },
   ],
   derive: async (recordId) => {
@@ -167,6 +185,24 @@ const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   // 工数は一覧から新規作成し、対象の案件はフォームで選ぶ（案件詳細からは作らない）。
   work_logs: coreCollection('work_logs', '工数', workLogsSemantics) as CollectionBinding<unknown>,
 };
+
+// 各 collection のアイコン（その実体を表す）。nav・作成ボタンで共通に使う。
+const ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  projects: Briefcase,
+  products: Package,
+  clients: Building2,
+  contacts: Contact,
+  inquiries: Inbox,
+  services: Layers,
+  showcase_entries: Sparkles,
+  ndas: FileText,
+  profile: CircleUser,
+  metric_definitions: Gauge,
+  meetings: Users,
+  invoices: JapaneseYen,
+  work_logs: Clock,
+};
+for (const [id, b] of Object.entries(COLLECTIONS)) b.meta.icon = ICONS[id];
 
 // collection id → 汎用 binding。各 collection の F は UI では Fields として扱う。
 export function getCollection(id: string): CollectionBinding<Fields> | undefined {
