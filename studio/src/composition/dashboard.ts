@@ -1,7 +1,10 @@
 import { CoreMetricsProvider } from '@/adapters/domain-store/supabase/metrics';
+import { StudioActivityFeed } from '@/adapters/studio-store/supabase/activity-feed';
+import type { ActivityEntry } from '@/ports/studio-store';
+import { INSTANCE_ID } from './instance';
 
-// ダッシュボードの KPI / パイプライン。どの値を「未対応/進行中/公開待ち」とみなすか・stage の並び＝
-// ドメイン判断なので composition が持つ。href は対応する一覧へ（?status= で絞り込み済みに着地）。
+// ダッシュボードの構成（KPI / 配信ヘルス / パイプライン / 最近の活動）。どの値を「未対応/進行中/公開待ち」と
+// みなすか・stage の並び＝ドメイン判断なので composition が持つ。count 機構は adapter（CoreMetricsProvider）。
 export interface Kpi {
   label: string;
   count: number;
@@ -15,9 +18,9 @@ interface KpiDef {
   href: string;
 }
 
+// 業務 KPI はドメイン均等に1枚ずつ（問い合わせに寄せない）。
 const KPI_DEFS: KpiDef[] = [
   { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new' },
-  { label: 'メール送達失敗', table: 'inquiries', filter: { column: 'delivery_status', in: ['bounced'] }, href: '/inquiries' },
   {
     label: '進行中の案件',
     table: 'projects',
@@ -34,7 +37,14 @@ export async function loadKpis(): Promise<Kpi[]> {
   );
 }
 
-// 案件パイプライン（status 別の件数）。各 stage は絞り込み済み一覧へドリルダウン。
+// 配信ヘルス（業務 KPI とは別枠）。メール送達失敗の件数。
+export async function loadDeliveryHealth(): Promise<{ failed: number; href: string }> {
+  const metrics = new CoreMetricsProvider();
+  const failed = await metrics.count('inquiries', { column: 'delivery_status', in: ['bounced'] });
+  return { failed, href: '/inquiries' };
+}
+
+// 案件パイプライン（status 別件数）。各 stage は絞り込み済み一覧へドリルダウン。
 export const PIPELINE_TITLE = '案件パイプライン';
 
 export interface PipelineStage {
@@ -61,4 +71,9 @@ export async function loadPipeline(): Promise<PipelineStage[]> {
       href: `/projects?status=${s.status}`,
     })),
   );
+}
+
+// 最近の活動（全 collection 横断＝record_versions）。1ドメインに寄らない横断フィード。
+export async function loadActivity(limit = 8): Promise<ActivityEntry[]> {
+  return new StudioActivityFeed(INSTANCE_ID).recent(limit);
 }
