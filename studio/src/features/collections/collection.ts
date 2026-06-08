@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type {
   CollectionStore,
   SourceRegistry,
@@ -62,6 +63,8 @@ export interface CollectionBinding<F> {
   derive?: (recordId: string) => Promise<boolean>;
   // record 単位のカスタム操作（詳細ペインのボタン）。接続先固有のワークフローを composition が差す。
   recordActions?: RecordAction[];
+  // この collection 専用の詳細ビュー（汎用 RecordDetail を上書き）。composition が差す（例：NDA 読み合わせ）。
+  detail?: (props: { collection: string; id: string }) => ReactNode | Promise<ReactNode>;
 }
 
 // 詳細ペインの record 単位アクション（例：問い合わせ→顧客 転換）。run は server action。

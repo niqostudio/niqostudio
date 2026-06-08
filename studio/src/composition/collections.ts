@@ -18,6 +18,7 @@ import { showcaseEntriesSemantics } from '@/composition/semantics/showcase-entri
 import { ndasSemantics } from '@/composition/semantics/ndas';
 import { profileSemantics } from '@/composition/semantics/profile';
 import { convertInquiryToClient } from './conversions';
+import { NdaDetail } from './details/nda';
 import { INSTANCE_ID } from './instance';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
@@ -65,6 +66,12 @@ const inquiries: CollectionBinding<Fields> = {
   recordActions: [{ id: 'convert', label: '顧客に転換', run: convertInquiryToClient }],
 };
 
+// ndas は NDA 専用の読み合わせ詳細を持つ（汎用 RecordDetail を上書き）。
+const ndas: CollectionBinding<Fields> = {
+  ...coreCollection('ndas', 'NDA', ndasSemantics),
+  detail: NdaDetail,
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
   products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
@@ -72,7 +79,7 @@ const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   inquiries: inquiries as CollectionBinding<unknown>,
   services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
   showcase_entries: coreCollection('showcase_entries', '事例', showcaseEntriesSemantics) as CollectionBinding<unknown>,
-  ndas: coreCollection('ndas', 'NDA', ndasSemantics) as CollectionBinding<unknown>,
+  ndas: ndas as CollectionBinding<unknown>,
   profile: profile as CollectionBinding<unknown>,
 };
 

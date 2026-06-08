@@ -22,6 +22,7 @@ export default async function RecordList({
 }) {
   const binding = getCollection(collectionId);
   if (!binding) notFound();
+  const Detail = binding.detail;
 
   const schema = await binding.resolveSchema();
   const published = await binding.store.list();
@@ -61,7 +62,11 @@ export default async function RecordList({
 
       <div className="hidden flex-1 overflow-hidden md:block">
         {selectedId ? (
-          <RecordDetail collection={collectionId} id={selectedId} />
+          Detail ? (
+            <Detail key={selectedId} collection={collectionId} id={selectedId} />
+          ) : (
+            <RecordDetail key={selectedId} collection={collectionId} id={selectedId} />
+          )
         ) : (
           <div className="flex h-full items-center justify-center p-8 text-sm text-muted">{t('selectHint')}</div>
         )}
