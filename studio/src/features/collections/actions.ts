@@ -51,6 +51,18 @@ export async function createRecordAction(collectionId: string, preset?: Fields, 
   const fields: Fields = {};
   for (const d of schema.fields) fields[d.key] = d.key === schema.titleField ? '無題' : null;
   for (const c of schema.children) fields[c.key] = [];
+  // status は NOT NULL の初期状態（最初の状態＝is_initial・例：無料相談）を入れる（null のまま作らない）。
+  const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
+  if (statusDesc) {
+    let initial: string | undefined;
+    if (statusDesc.kind === 'reference' && statusDesc.refTable && binding.references) {
+      const opts = await binding.references.options(statusDesc.refTable, statusDesc.refColumn ?? 'id').catch(() => []);
+      initial = opts[0]?.value;
+    } else if (statusDesc.options?.length) {
+      initial = statusDesc.options[0];
+    }
+    if (initial) fields[statusDesc.key] = initial;
+  }
   if (preset) Object.assign(fields, preset);
   await saveDraft(binding, id, fields, null, 'create');
   redirect(path(collectionId, id));
