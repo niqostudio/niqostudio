@@ -4,6 +4,8 @@ import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
 import { loadKpis, loadDeliveryHealth, loadPipeline, loadActivity, PIPELINE_TITLE } from '@/composition/dashboard';
 import { QUICK_LINKS } from '@/composition/links';
+import { DEPLOY_TARGETS, getDeploy } from '@/composition/deploy';
+import { DeployButton } from '@/features/deploy/DeployButton';
 import { Card, SectionLabel } from '@/shared/ui/primitives';
 import { t, type MessageKey } from '@/shared/i18n';
 
@@ -16,6 +18,7 @@ export default async function DashboardPage() {
     loadPipeline(),
     loadActivity(),
   ]);
+  const deployAvailable = getDeploy().available();
   return (
     <div className="flex flex-col gap-8 p-5 md:p-10">
       <header>
@@ -42,6 +45,21 @@ export default async function DashboardPage() {
         >
           {t('deliveryFailed')}：{delivery.failed}
         </Link>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <SectionLabel>{t('deploy')}</SectionLabel>
+        {deployAvailable ? (
+          <div className="flex flex-wrap gap-2">
+            {DEPLOY_TARGETS.map((d) => (
+              <DeployButton key={d.id} id={d.id} label={d.label} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">
+            GitHub 連携が未設定（GITHUB_TOKEN か GitHub App）。設定すると公開サイトのデプロイをここから要求できます。
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">

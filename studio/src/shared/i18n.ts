@@ -7,6 +7,7 @@ const MESSAGES = {
   consoles: '外部コンソール',
   noActivity: '活動はまだありません',
   deliveryFailed: 'メール送達失敗',
+  deploy: '公開操作',
   open: '開く',
   new: '新規作成',
   search: '検索',
