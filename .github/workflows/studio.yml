@@ -1,0 +1,33 @@
+name: "studio: typecheck & test"
+
+# studio の純検証（型＋テスト）。db-types の生成型は committed・テストは純ロジックで DB/secret 不要。
+# paths でモジュール別に出し分け（website/core/infra/docs と統一）。studio は deploy 対象外＝検証のみ。
+on:
+  push:
+    branches: [main]
+    paths: ["studio/**", "packages/**", ".github/workflows/studio.yml"]
+  pull_request:
+    paths: ["studio/**", "packages/**", ".github/workflows/studio.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # studio とその workspace 依存（db-types / ui）のみ入れる。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/studio...
+      - run: pnpm typecheck
+      - run: pnpm test
