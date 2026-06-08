@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { NAV } from '@/composition/nav';
+import { NAV_GROUPS, loadNavCounts } from '@/composition/nav';
+import { getCollection } from '@/composition/collections';
 import { APP_NAME } from '@/composition/instance';
-import { t, type MessageKey } from '@/shared/i18n';
+import { SectionLabel } from '@/shared/ui/primitives';
+import { t } from '@/shared/i18n';
 import { TerminalPanel } from '@/features/terminal';
 import { getOperator } from '@/adapters/session/supabase/session';
+import { UnsavedProvider } from '@/shared/unsaved';
 import { SignOutButton } from './SignOutButton';
 
 // shell：左のグローバルサイドバー（nav）＋ メイン列（コンテンツ＋下から伸びる terminal パネル）。
@@ -13,21 +16,35 @@ import { SignOutButton } from './SignOutButton';
 export async function AppShell({ children }: { children: ReactNode }) {
   const operator = await getOperator();
   if (!operator) return <>{children}</>;
+  const counts = await loadNavCounts();
 
   return (
-    <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden">
-      <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r">
+    <UnsavedProvider>
+      <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden print:block">
+      <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r print:hidden">
         <div className="px-5 py-4 border-b border-border-subtle">
           <Link href="/" className="font-semibold tracking-tight">
             {APP_NAME}
           </Link>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-0.5">studio</p>
         </div>
-        <nav className="p-3 flex md:flex-col gap-1 md:flex-1">
-          {NAV.map((m) => (
-            <Link key={m.id} href={m.href} className="rounded-sm px-3 py-2 text-sm hover:bg-bg transition-colors">
-              {t(`nav.${m.id}` as MessageKey)}
-            </Link>
+        <nav className="flex flex-col gap-4 p-3 md:flex-1">
+          {NAV_GROUPS.map((g) => (
+            <div key={g.labelKey} className="flex flex-col gap-0.5">
+              <SectionLabel className="px-3 pb-1">{t(g.labelKey)}</SectionLabel>
+              {g.ids.map((id) => (
+                <Link
+                  key={id}
+                  href={`/${id}`}
+                  className="flex items-center justify-between rounded-sm px-3 py-1.5 text-sm transition-colors hover:bg-bg"
+                >
+                  <span>{getCollection(id)?.meta.label ?? id}</span>
+                  {counts[id] !== undefined && (
+                    <span className="text-xs tabular-nums text-muted">{counts[id]}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="px-3 py-3 border-t border-border-subtle">
@@ -38,10 +55,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex flex-col md:h-dvh md:overflow-hidden">
-        <main className="flex-1 md:min-h-0 md:overflow-auto">{children}</main>
-        <TerminalPanel />
+      <div className="flex flex-col md:h-dvh md:overflow-hidden print:h-auto print:overflow-visible">
+        <main className="flex-1 md:min-h-0 md:overflow-auto print:overflow-visible">{children}</main>
+        <div className="print:hidden">
+          <TerminalPanel />
+        </div>
       </div>
-    </div>
+      </div>
+    </UnsavedProvider>
   );
 }

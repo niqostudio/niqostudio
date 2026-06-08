@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Search } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
+import { t } from '@/shared/i18n';
 
 // studio 自前スキン（globals.css の .btn/.card/.chip 等）を着せる薄いラッパー。
 // 形・色は共有クラスが持ち、中身と中身ごとのレイアウトは呼び出し側が持つ。
@@ -16,6 +17,40 @@ export function Button({
   className?: string;
 }) {
   return <button className={cn('btn', `btn-${variant}`, className)}>{children}</button>;
+}
+
+// アクションボタン（button/link 兼用）。色は variant の props で変える＝保存/反映/編集で共通化。
+export function Action({
+  children,
+  variant = 'secondary',
+  href,
+  onClick,
+  type = 'button',
+  disabled,
+  title,
+  className,
+}: {
+  children: ReactNode;
+  variant?: 'primary' | 'secondary';
+  href?: string;
+  onClick?: () => void;
+  type?: 'button' | 'submit';
+  disabled?: boolean;
+  title?: string;
+  className?: string;
+}) {
+  const cls = cn('btn', `btn-${variant}`, 'inline-flex items-center gap-1.5', className);
+  if (href)
+    return (
+      <Link href={href} title={title} className={cls}>
+        {children}
+      </Link>
+    );
+  return (
+    <button type={type} onClick={onClick} disabled={disabled} title={title} className={cls}>
+      {children}
+    </button>
+  );
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
@@ -73,6 +108,16 @@ export function SectionLabel({ children, className }: { children: ReactNode; cla
   return <p className={cn('section-label text-xs', className)}>{children}</p>;
 }
 
+// 未実装ドメインの「あるべき場所」を示す枠。準備中バッジ＋何が入るかの一文。core を変えず UI 骨格を見せる。
+export function Placeholder({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 rounded-sm border border-dashed border-border p-4 text-sm text-muted">
+      <span className="chip chip-mono px-1.5 py-0.5">{t('comingSoon')}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
 // 戻りリンク。矢印は SVG＋inline-flex items-center で文字メトリクスに依らず中央揃え（← 文字のズレ回避）。
 export function BackLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
   return (
@@ -86,19 +131,10 @@ export function BackLink({ href, children, className }: { href: string; children
   );
 }
 
-// 案件ステータスの表示色（ラベルの正本は core の project_statuses）。一覧バッジは同期描画なので色だけ持つ。
-const STATUS: Record<string, { label: string; className: string }> = {
-  consultation: { label: '無料相談', className: 'text-muted border-border' },
-  discovery: { label: '事前設計', className: 'text-accent border-accent' },
-  active: { label: '進行中', className: 'text-accent border-accent' },
-  delivered: { label: '納品済', className: 'text-accent border-accent' },
-  closed: { label: 'クローズ', className: 'text-muted border-border' },
-};
-
-// ステータスバッジ。色は STATUS（studio の presentation）、ラベルは overlay 由来を優先（label）。
+// ステータスバッジ（presentation のみ）。studio は status 値の意味を知らないため色は中立。
+// ラベルは overlay 由来を呼び出し側が渡す（label）。色分けが要るなら overlay に色を持たせて渡す方針。
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
   // 値が無ければ何も出さない（空の四角を描かない）。
   if (!status) return null;
-  const s = STATUS[status] ?? { label: status, className: 'text-muted border-border' };
-  return <span className={cn('chip inline-flex items-center px-2 py-0.5', s.className)}>{label ?? s.label}</span>;
+  return <span className="chip inline-flex items-center px-2 py-0.5 text-muted border-border">{label ?? status}</span>;
 }

@@ -83,6 +83,18 @@ export async function setFieldAction(collectionId: string, recordId: string, key
   revalidatePath(path(collectionId, recordId));
 }
 
+// 詳細ペインの一括保存（変更した複数フィールドを patch として下書きにマージ）。
+export async function setFieldsAction(collectionId: string, recordId: string, patch: Fields): Promise<void> {
+  const binding = need(collectionId);
+  const draft = await binding.drafts.get(recordId).catch(() => null);
+  const working = draft ?? (await binding.store.get(recordId));
+  if (!working) return;
+  const fields = { ...(working.fields as Fields), ...patch };
+  await saveDraft(binding, recordId, fields, working.sourceId, 'manual');
+  revalidatePath(path(collectionId));
+  revalidatePath(path(collectionId, recordId));
+}
+
 // クライアント・エディタが作業コピー（fields 全体）を JSON で保存する。
 export async function saveDraftJson(collectionId: string, recordId: string, fieldsJson: string): Promise<void> {
   const binding = need(collectionId);
@@ -94,6 +106,18 @@ export async function saveDraftJson(collectionId: string, recordId: string, fiel
 export async function discardDraftAction(collectionId: string, recordId: string): Promise<void> {
   await need(collectionId).drafts.remove(recordId);
   revalidatePath(path(collectionId, recordId));
+}
+
+// publish＝下書きを接続先（core）正本へ反映。版に origin=publish を残し、反映後は下書きを消す。
+export async function publishAction(collectionId: string, recordId: string): Promise<void> {
+  const binding = need(collectionId);
+  const draft = await binding.drafts.get(recordId).catch(() => null);
+  if (!draft) return;
+  await binding.store.upsert(draft);
+  await binding.versions?.append(recordId, draft.fields, 'publish');
+  await binding.drafts.remove(recordId);
+  revalidatePath(path(collectionId, recordId));
+  revalidatePath(path(collectionId));
 }
 
 // 取り込みを実行し、対応する command_runs の id を返す（トーストから terminal の行へ紐づける）。

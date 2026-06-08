@@ -22,3 +22,14 @@ export interface VersionStore<F> {
   listForRecord(recordId: string): Promise<RecordVersion<F>[]>;
   get(versionId: string): Promise<RecordVersion<F> | null>;
 }
+
+// 最近の活動（collection 横断）。studio が記録した版イベント（作成/編集/derive/publish 等）の時系列。
+export interface ActivityEntry {
+  collection: string;
+  recordId: string;
+  origin: string;
+  at: string;
+}
+export interface ActivityFeed {
+  recent(limit: number): Promise<ActivityEntry[]>;
+}

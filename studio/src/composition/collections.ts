@@ -13,6 +13,12 @@ import { StudioOverlayStore } from '@/adapters/studio-store/supabase/overlay-sto
 import { CoreProjectSourceRegistry } from '@/adapters/domain-store/supabase/source-registry';
 import { clientsSemantics } from '@/composition/semantics/clients';
 import { inquiriesSemantics } from '@/composition/semantics/inquiries';
+import { servicesSemantics } from '@/composition/semantics/services';
+import { showcaseEntriesSemantics } from '@/composition/semantics/showcase-entries';
+import { ndasSemantics } from '@/composition/semantics/ndas';
+import { profileSemantics } from '@/composition/semantics/profile';
+import { convertInquiryToClient } from './conversions';
+import { NdaDetail } from './details/nda';
 import { INSTANCE_ID } from './instance';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
@@ -37,7 +43,7 @@ function coreCollection(id: string, label: string, seed?: CollectionSemantics): 
 // 作成は顧客（clients）詳細から（client_id を文脈設定）＝一覧に新規ボタンは出さない。
 const projects: CollectionBinding<Fields> = {
   ...coreCollection('projects', '案件'),
-  meta: { id: 'projects', label: '案件', createVia: { via: 'clients', fk: 'client_id' } },
+  meta: { id: 'projects', label: '案件', createVia: [{ via: 'clients', fk: 'client_id' }] },
   history: new CoreProjectStatusHistory(),
   workflow: new CoreProjectWorkflow(),
   sources: new CoreProjectSourceRegistry(),
@@ -48,11 +54,47 @@ const projects: CollectionBinding<Fields> = {
   },
 };
 
+// profile は singleton（id='singleton' 固定で1行）。一覧に「新規」を出さない。
+const profile: CollectionBinding<Fields> = {
+  ...coreCollection('profile', 'プロフィール', profileSemantics),
+  meta: { id: 'profile', label: 'プロフィール', singleton: true },
+};
+
+// inquiries は顧客への転換アクションを持つ（接続先固有のワークフロー＝composition が差す）。
+const inquiries: CollectionBinding<Fields> = {
+  ...coreCollection('inquiries', '問い合わせ', inquiriesSemantics),
+  recordActions: [{ id: 'convert', label: '顧客に転換', run: convertInquiryToClient }],
+};
+
+// ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。
+const ndas: CollectionBinding<Fields> = {
+  ...coreCollection('ndas', 'NDA', ndasSemantics),
+  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }] },
+  detail: NdaDetail,
+};
+
+// 事例は被写体（案件 or プロダクト）から作る（showcase_entries は project_id xor product_id）。
+const showcaseEntries: CollectionBinding<Fields> = {
+  ...coreCollection('showcase_entries', '事例', showcaseEntriesSemantics),
+  meta: {
+    id: 'showcase_entries',
+    label: '事例',
+    createVia: [
+      { via: 'projects', fk: 'project_id' },
+      { via: 'products', fk: 'product_id' },
+    ],
+  },
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
   products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
   clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
-  inquiries: coreCollection('inquiries', '問い合わせ', inquiriesSemantics) as CollectionBinding<unknown>,
+  inquiries: inquiries as CollectionBinding<unknown>,
+  services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
+  showcase_entries: showcaseEntries as CollectionBinding<unknown>,
+  ndas: ndas as CollectionBinding<unknown>,
+  profile: profile as CollectionBinding<unknown>,
 };
 
 // collection id → 汎用 binding。各 collection の F は UI では Fields として扱う。

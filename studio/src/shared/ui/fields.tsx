@@ -52,8 +52,65 @@ function TagInput({ value, onChange }: { value: string[]; onChange: (v: string[]
   );
 }
 
+// 入力欄本体（ラベル無し）。詳細ペインのインライン編集は自前ラベルと併用するため分離。
+export function FieldControl({
+  d,
+  value,
+  onChange,
+  refOptions,
+}: {
+  d: FieldDescriptor;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  refOptions?: RefOption[];
+}) {
+  if (d.kind === 'textarea')
+    return <Textarea value={asText(value)} rows={2} className="w-full" onChange={(e) => onChange(e.target.value || null)} />;
+  if (d.kind === 'select')
+    return (
+      <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
+        {!d.required && <option value="">{t('none')}</option>}
+        {(d.options ?? []).map((o) => (
+          <option key={o} value={o}>
+            {d.optionLabels?.[o] ?? o}
+          </option>
+        ))}
+      </Select>
+    );
+  if (d.kind === 'reference')
+    return (
+      <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
+        {!d.required && <option value="">{t('none')}</option>}
+        {(refOptions ?? []).map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label || t('untitled')}
+          </option>
+        ))}
+      </Select>
+    );
+  if (d.kind === 'boolean')
+    return (
+      <span className="flex items-center gap-2">
+        <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
+        <span className="text-sm">{t('yes')}</span>
+      </span>
+    );
+  if (d.kind === 'list') return <TagInput value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} />;
+  return (
+    <Input
+      type={d.kind === 'date' ? 'date' : 'text'}
+      value={asText(value)}
+      className="w-full"
+      onChange={(e) => onChange(e.target.value || null)}
+    />
+  );
+}
+
 export function FieldInput({
-  d, value, onChange, refOptions,
+  d,
+  value,
+  onChange,
+  refOptions,
 }: {
   d: FieldDescriptor;
   value: unknown;
@@ -63,32 +120,7 @@ export function FieldInput({
   return (
     <label className="flex flex-col gap-1">
       <span className="text-sm text-muted">{d.label}</span>
-      {d.kind === 'textarea' ? (
-        <Textarea value={asText(value)} rows={2} className="w-full" onChange={(e) => onChange(e.target.value || null)} />
-      ) : d.kind === 'select' ? (
-        <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
-          {(d.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
-        </Select>
-      ) : d.kind === 'reference' ? (
-        <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
-          {!d.required && <option value="">{t('none')}</option>}
-          {(refOptions ?? []).map((o) => <option key={o.value} value={o.value}>{o.label || t('untitled')}</option>)}
-        </Select>
-      ) : d.kind === 'boolean' ? (
-        <span className="flex items-center gap-2">
-          <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
-          <span className="text-sm">{t('yes')}</span>
-        </span>
-      ) : d.kind === 'list' ? (
-        <TagInput value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} />
-      ) : (
-        <Input
-          type={d.kind === 'date' ? 'date' : 'text'}
-          value={asText(value)}
-          className="w-full"
-          onChange={(e) => onChange(e.target.value || null)}
-        />
-      )}
+      <FieldControl d={d} value={value} onChange={onChange} refOptions={refOptions} />
     </label>
   );
 }

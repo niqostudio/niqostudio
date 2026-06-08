@@ -28,3 +28,6 @@ org-icon.png
 # ローカルツール（Atlas バイナリ）・一時検証物（追跡しない）
 .bin/
 .tmp-baseline/
+
+# niqo dev（detached プロセスの state / ログ）
+.niqo/

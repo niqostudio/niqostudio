@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type {
   CollectionStore,
   SourceRegistry,
@@ -20,13 +21,25 @@ export function asChildren(value: unknown): Fields[] {
   return Array.isArray(value) ? (value as Fields[]) : [];
 }
 
+// 値を canonical 順（order）で並べ、order 外は末尾に入力順のまま残す（安定ソート）。status タブの表示順などに使う。
+export function orderByList<T>(values: T[], order: T[]): T[] {
+  const rank = (v: T) => {
+    const i = order.indexOf(v);
+    return i < 0 ? order.length : i;
+  };
+  return [...values].sort((a, b) => rank(a) - rank(b));
+}
+
 // collection のメタ（nav / 見出し）。
 export interface CollectionMeta {
   id: string;
   label: string;
-  // この collection を親 collection の画面から作る導線（案件←顧客 等）。
-  // 指定があると一覧の新規ボタンは出さず、親の詳細に作成ボタンを出す（fk に親 id を入れる）。
-  createVia?: { via: string; fk: string };
+  // この collection を親 collection の画面から作る導線（案件←顧客、事例←案件/プロダクト 等）。
+  // 指定があると一覧の新規ボタンは出さず、各親の詳細に作成ボタンを出す（fk に親 id を入れる）。
+  // 配列＝複数の親を持てる（showcase は project_id xor product_id）。
+  createVia?: { via: string; fk: string }[];
+  // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
+  singleton?: boolean;
 }
 
 // collection の配線。SoR store（確定の正本）と staging store（下書き）を別 seam で持つ。
@@ -49,4 +62,15 @@ export interface CollectionBinding<F> {
   workflow?: WorkflowProvider;
   // 源を射影して下書きへ反映する。反映できたら true。
   derive?: (recordId: string) => Promise<boolean>;
+  // record 単位のカスタム操作（詳細ペインのボタン）。接続先固有のワークフローを composition が差す。
+  recordActions?: RecordAction[];
+  // この collection 専用の詳細ビュー（汎用 RecordDetail を上書き）。composition が差す（例：NDA 読み合わせ）。
+  detail?: (props: { collection: string; id: string }) => ReactNode | Promise<ReactNode>;
+}
+
+// 詳細ペインの record 単位アクション（例：問い合わせ→顧客 転換）。run は server action。
+export interface RecordAction {
+  id: string;
+  label: string;
+  run: (recordId: string, formData?: FormData) => Promise<void>;
 }

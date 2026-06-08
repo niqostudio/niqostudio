@@ -2,45 +2,131 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Card, StatusBadge, SearchField } from '@/shared/ui/primitives';
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+} from '@tanstack/react-table';
+import { Card, StatusBadge, SearchField, Select } from '@/shared/ui/primitives';
+import { cn } from '@/shared/utils/cn';
 import type { CollectionRecord } from '@/shared/model/record';
 import type { CollectionSchema } from '@/features/domain-overlay/schema';
-import { asString, type Fields } from '../collection';
+import { asString, orderByList, type Fields } from '../collection';
 import { t } from '@/shared/i18n';
 
-type Record = CollectionRecord<Fields>;
+type Rec = CollectionRecord<Fields>;
+// published と下書きを 1 モデルに束ね draft で区別する。検索/フィルタ/ソートは TanStack が持ち、
+// 描画（カード・ドラフト/正本の分割）とスキンは自前で持つ＝headless 委譲。
+type ListRow = { record: Rec; draft: boolean };
 
-// 一覧の本体（検索つき）。schema の titleField でカードを描き、絞り込みはクライアントで即時に効かせる。
+const col = createColumnHelper<ListRow>();
+
 export function RecordListBody({
   collectionId,
   schema,
   published,
   newDrafts,
   selectedId,
+  statusFilter,
 }: {
   collectionId: string;
   schema: CollectionSchema;
-  published: Record[];
-  newDrafts: Record[];
+  published: Rec[];
+  newDrafts: Rec[];
   selectedId?: string;
+  // 初期 status 絞り込み（ダッシュボード KPI からの ?status= ドリルダウン）。
+  statusFilter?: string;
 }) {
-  const [query, setQuery] = useState('');
-  const q = query.trim().toLowerCase();
+  const data = useMemo<ListRow[]>(
+    () => [
+      ...newDrafts.map((record) => ({ record, draft: true })),
+      ...published.map((record) => ({ record, draft: false })),
+    ],
+    [newDrafts, published],
+  );
 
-  const [drafts, pub] = useMemo(() => {
-    if (!q) return [newDrafts, published];
-    const match = (r: Record) => asString(r.fields[schema.titleField]).toLowerCase().includes(q);
-    return [newDrafts.filter(match), published.filter(match)];
-  }, [q, newDrafts, published, schema.titleField]);
+  // 検索は title のみ（status/updatedAt は globalFilter 対象外）。status は厳密一致でタブから絞る。
+  const columns = useMemo<ColumnDef<ListRow, string>[]>(() => {
+    const { titleField, statusField } = schema;
+    return [
+      col.accessor((r) => asString(r.record.fields[titleField]), { id: 'title' }),
+      ...(statusField
+        ? [
+            col.accessor((r) => asString(r.record.fields[statusField]), {
+              id: 'status',
+              filterFn: 'equalsString',
+              enableGlobalFilter: false,
+            }),
+          ]
+        : []),
+      col.accessor((r) => r.record.updatedAt, { id: 'updatedAt', enableGlobalFilter: false }),
+    ];
+  }, [schema]);
 
-  function Row({ record, draft }: { record: Record; draft?: boolean }) {
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    statusFilter && schema.statusField ? [{ id: 'status', value: statusFilter }] : [],
+  );
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'updatedAt', desc: true }]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { globalFilter, columnFilters, sorting },
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
+    globalFilterFn: 'includesString',
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const rows = table.getRowModel().rows;
+  const draftRows = rows.filter((r) => r.original.draft);
+  const pubRows = rows.filter((r) => !r.original.draft);
+
+  // status タブ（自前スキン）。行の絞り込み自体は TanStack（columnFilters）が行い、
+  // ここは「どの status が在るか・各件数」の提示＝選択に依らず安定させるため data から出す。
+  const statusField = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
+  const statusCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!schema.statusField) return m;
+    for (const { record } of data) {
+      const s = asString(record.fields[schema.statusField]);
+      if (s) m.set(s, (m.get(s) ?? 0) + 1);
+    }
+    return m;
+  }, [data, schema.statusField]);
+  const statusTabs = useMemo(
+    () => orderByList([...statusCounts.keys()], statusField?.options ?? []),
+    [statusCounts, statusField],
+  );
+
+  const activeStatus = (columnFilters.find((f) => f.id === 'status')?.value as string) ?? null;
+  const setStatus = (value: string | null) => setColumnFilters(value == null ? [] : [{ id: 'status', value }]);
+  const statusLabel = (v: string) => statusField?.optionLabels?.[v] ?? v;
+
+  const sortValue = `${sorting[0]?.id ?? 'updatedAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`;
+  const onSort = (v: string) => {
+    const [id, dir] = v.split(':');
+    setSorting([{ id, desc: dir === 'desc' }]);
+  };
+
+  function Row({ record, draft }: { record: Rec; draft?: boolean }) {
     const selected = record.id === selectedId;
+    const status = schema.statusField ? asString(record.fields[schema.statusField]) : '';
     return (
       <Link href={`/${collectionId}?sel=${record.id}`} scroll={false} className="block">
-        <Card className={`p-4 transition-colors hover:border-accent ${selected ? 'border-accent bg-surface' : ''}`}>
+        <Card className={cn('p-4 transition-colors hover:border-accent', selected && 'border-accent bg-surface')}>
           <div className="flex items-center gap-2">
             <p className="font-medium truncate">{asString(record.fields[schema.titleField]) || t('untitled')}</p>
-            {schema.statusField && <StatusBadge status={asString(record.fields[schema.statusField])} />}
+            {status && <StatusBadge status={status} label={statusLabel(status)} />}
             {draft && <span className="chip inline-flex items-center px-2 py-0.5 text-accent border-accent">{t('draft')}</span>}
           </div>
           <div className="mt-2 text-xs text-muted">{t('updated')} {record.updatedAt}</div>
@@ -50,26 +136,84 @@ export function RecordListBody({
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <SearchField value={query} onChange={setQuery} placeholder={t('search')} />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <SearchField value={globalFilter} onChange={setGlobalFilter} placeholder={t('search')} />
+        <div className="flex items-center justify-between gap-3">
+          {statusTabs.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              <StatusTab active={activeStatus == null} onClick={() => setStatus(null)} label={t('all')} count={data.length} />
+              {statusTabs.map((s) => (
+                <StatusTab
+                  key={s}
+                  active={activeStatus === s}
+                  onClick={() => setStatus(s)}
+                  label={statusLabel(s)}
+                  count={statusCounts.get(s) ?? 0}
+                />
+              ))}
+            </div>
+          ) : (
+            <span />
+          )}
+          <Select
+            aria-label={t('sortBy')}
+            value={sortValue}
+            onChange={(e) => onSort(e.target.value)}
+            className="w-auto shrink-0"
+          >
+            <option value="updatedAt:desc">{t('sortUpdated')}</option>
+            <option value="title:asc">{t('sortTitle')}</option>
+          </Select>
+        </div>
+      </div>
 
-      {q && drafts.length === 0 && pub.length === 0 && (
-        <p className="text-sm text-muted">{t('noMatches')}</p>
-      )}
+      {rows.length === 0 && (globalFilter || activeStatus) && <p className="text-sm text-muted">{t('noMatches')}</p>}
 
-      {drafts.length > 0 && (
+      {draftRows.length > 0 && (
         <section className="flex flex-col gap-3">
           <p className="section-label text-xs">{t('newDrafts')}</p>
-          {drafts.map((r) => <Row key={r.id} record={r} draft />)}
+          {draftRows.map((r) => (
+            <Row key={r.original.record.id} record={r.original.record} draft />
+          ))}
         </section>
       )}
 
-      {pub.length > 0 && (
+      {pubRows.length > 0 && (
         <section className="flex flex-col gap-3">
-          {drafts.length > 0 && <p className="section-label text-xs">{t('publishedSection')}</p>}
-          {pub.map((r) => <Row key={r.id} record={r} />)}
+          {draftRows.length > 0 && <p className="section-label text-xs">{t('publishedSection')}</p>}
+          {pubRows.map((r) => (
+            <Row key={r.original.record.id} record={r.original.record} />
+          ))}
         </section>
       )}
     </div>
+  );
+}
+
+// status フィルタのタブ（自前スキン）。クリックで TanStack の columnFilters を切り替える。
+function StatusTab({
+  active,
+  onClick,
+  label,
+  count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'chip inline-flex items-center gap-1.5 px-2.5 py-1 transition-colors',
+        active ? 'border-accent text-accent' : 'text-muted hover:text-fg',
+      )}
+    >
+      {label}
+      <span className="text-xs opacity-70">{count}</span>
+    </button>
   );
 }

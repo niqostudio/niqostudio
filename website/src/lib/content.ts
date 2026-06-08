@@ -2,26 +2,34 @@ import * as core from './core';
 import { toCaseView, toServiceView, toProfileView } from './projection';
 import type { CaseView, ServiceView, ProfileView, ContentLink } from '../types/views';
 
-// 一覧・profile はページ/コンポーネント横断で何度も呼ばれるため、ビルド内で Promise をメモ化する。
+// 一覧・profile はビルド中にページ/コンポーネント横断で何度も呼ばれるため Promise をメモ化する。
+// ただし dev は長命プロセスでメモが残り、接続先（core）の変更がリロードで反映されない。
+// そこで本番ビルド時のみメモ化し、dev は毎回取得する（studio→website の反映がすぐ見えるように）。
+const memo = import.meta.env.PROD;
+
 let casesP: Promise<CaseView[]> | undefined;
 export function getCases(): Promise<CaseView[]> {
-  return (casesP ??= core.fetchCases().then((rows) => rows.map((row) => toCaseView(row))));
+  const load = () => core.fetchCases().then((rows) => rows.map((row) => toCaseView(row)));
+  return memo ? (casesP ??= load()) : load();
 }
 
 let servicesP: Promise<ServiceView[]> | undefined;
 export function getServices(): Promise<ServiceView[]> {
-  return (servicesP ??= core.fetchServices().then((rows) => {
-    const services = rows.map(toServiceView);
-    return [
-      ...services.filter((s) => s.slug === 'discovery'),
-      ...services.filter((s) => s.slug !== 'discovery'),
-    ];
-  }));
+  const load = () =>
+    core.fetchServices().then((rows) => {
+      const services = rows.map(toServiceView);
+      return [
+        ...services.filter((s) => s.slug === 'discovery'),
+        ...services.filter((s) => s.slug !== 'discovery'),
+      ];
+    });
+  return memo ? (servicesP ??= load()) : load();
 }
 
 let profileP: Promise<ProfileView> | undefined;
 export function getProfile(): Promise<ProfileView> {
-  return (profileP ??= core.fetchProfile().then(toProfileView));
+  const load = () => core.fetchProfile().then(toProfileView);
+  return memo ? (profileP ??= load()) : load();
 }
 
 export async function getCase(slug: string): Promise<CaseView | null> {

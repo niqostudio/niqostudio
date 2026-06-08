@@ -11,9 +11,23 @@ import { Settings, Plus } from 'lucide-react';
 
 // 一覧（master）＋右ペイン詳細（detail）。行クリックで ?sel=<id> を選び、右に読み取り詳細＋ワークフロー。
 // CRUD 編集は詳細の「編集」から /<col>/<id>/edit へ分離。
-export default async function RecordList({ collectionId, selectedId }: { collectionId: string; selectedId?: string }) {
+export default async function RecordList({
+  collectionId,
+  selectedId,
+  statusFilter,
+}: {
+  collectionId: string;
+  selectedId?: string;
+  statusFilter?: string;
+}) {
   const binding = getCollection(collectionId);
   if (!binding) notFound();
+
+  // 専用詳細を持つ collection は、選択時は一覧を隠してフル表示（左の nav ＋ 詳細のみ）。
+  if (binding.detail && selectedId) {
+    const Detail = binding.detail;
+    return <Detail key={selectedId} collection={collectionId} id={selectedId} />;
+  }
 
   const schema = await binding.resolveSchema();
   const published = await binding.store.list();
@@ -30,7 +44,7 @@ export default async function RecordList({ collectionId, selectedId }: { collect
             <Link href={`/schema/${collectionId}`} title="スキーマ設定" className="text-muted transition-colors hover:text-accent">
               <Settings className="size-5" />
             </Link>
-            {!binding.meta.createVia && (
+            {!binding.meta.createVia?.length && !binding.meta.singleton && (
               <form action={createRecordAction.bind(null, collectionId, undefined)}>
                 <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
                   <Plus className="size-4" />
@@ -47,12 +61,13 @@ export default async function RecordList({ collectionId, selectedId }: { collect
           published={published}
           newDrafts={newDrafts}
           selectedId={selectedId}
+          statusFilter={statusFilter}
         />
       </div>
 
       <div className="hidden flex-1 overflow-hidden md:block">
         {selectedId ? (
-          <RecordDetail collection={collectionId} id={selectedId} />
+          <RecordDetail key={selectedId} collection={collectionId} id={selectedId} />
         ) : (
           <div className="flex h-full items-center justify-center p-8 text-sm text-muted">{t('selectHint')}</div>
         )}

@@ -1,13 +1,10 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Pencil } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
-import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';
-import { InlineField } from './InlineField';
+import { RecordEditProvider, DetailActions, DetailFields } from './RecordDetailEdit';
 import { t } from '@/shared/i18n';
 
 // 一覧の右ペインに出す読み取り詳細＋ワークフロー操作（state machine の次状態へ進める）。
@@ -44,10 +41,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
     );
   }
 
-  // この record（例：顧客）から作れる子 collection（例：案件）の作成導線（詳細ペインに置く）。
-  const createRelated = listCollections()
-    .filter((b) => b.meta.createVia?.via === collection)
-    .map((b) => ({ targetCollection: b.meta.id, fk: b.meta.createVia!.fk, parentId: id, label: `${b.meta.label}を作成` }));
+  // この record（例：顧客/案件/プロダクト）から作れる子 collection の作成導線（詳細ペインに置く）。
+  const createRelated = listCollections().flatMap((b) =>
+    (b.meta.createVia ?? [])
+      .filter((cv) => cv.via === collection)
+      .map((cv) => ({ targetCollection: b.meta.id, fk: cv.fk, parentId: id, label: `${b.meta.label}を作成` })),
+  );
 
   // status の値→ラベル（core 値集合 × overlay ラベル）。バッジ・ワークフロー・履歴で共通に使う。
   const statusLabels = new Map<string, string>();
@@ -60,16 +59,9 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   const statusLabel = (code: string) => statusLabels.get(code) ?? code;
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
 
-  function display(value: unknown, f: FieldDescriptor): string {
-    if (value == null || value === '') return '—';
-    if (f.kind === 'list') return Array.isArray(value) ? (value as unknown[]).join('、') || '—' : '—';
-    if (f.kind === 'boolean') return value === true ? t('yes') : '—';
-    if (f.kind === 'reference') return refOptions[f.key]?.find((o) => o.value === asString(value))?.label ?? asString(value);
-    return asString(value);
-  }
-
   return (
-    <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
+    <RecordEditProvider collectionId={collection} recordId={id} fieldKeys={viewFields.map((f) => f.key)} values={fields}>
+      <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -79,10 +71,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           </div>
           <p className="text-xs text-muted">{t('updated')} {working.updatedAt}</p>
         </div>
-        <Link href={`/${collection}/${id}/edit`} className="btn btn-primary inline-flex shrink-0 items-center gap-1.5">
-          <Pencil className="size-4" />
-          {t('edit')}
-        </Link>
+        <DetailActions
+          collectionId={collection}
+          recordId={id}
+          hasDraft={!!draft}
+          editHref={`/${collection}/${id}/edit`}
+        />
       </header>
 
       {binding.workflow && (
@@ -95,26 +89,24 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
       {createRelated.length > 0 && (
         <section className="flex flex-wrap gap-2">
           {createRelated.map((r) => (
-            <CreateRelatedButton key={r.targetCollection} {...r} />
+            <CreateRelatedButton key={`${r.targetCollection}-${r.fk}`} {...r} />
           ))}
         </section>
       )}
 
-      {viewFields.length > 0 && (
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {viewFields.map((f) => (
-            <InlineField
-              key={f.key}
-              collectionId={collection}
-              recordId={id}
-              d={f}
-              value={fields[f.key]}
-              display={display(fields[f.key], f)}
-              refOptions={refOptions[f.key]}
-            />
+      {binding.recordActions && binding.recordActions.length > 0 && (
+        <section className="flex flex-wrap gap-2">
+          {binding.recordActions.map((a) => (
+            <form key={a.id} action={a.run.bind(null, id)}>
+              <button type="submit" className="btn btn-secondary">
+                {a.label}
+              </button>
+            </form>
           ))}
         </section>
       )}
+
+      {viewFields.length > 0 && <DetailFields fields={viewFields} refOptions={refOptions} />}
 
       {schema.children.length > 0 && (
         <section className="flex flex-col gap-1">
@@ -145,6 +137,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           </ol>
         </section>
       )}
-    </div>
+      </div>
+    </RecordEditProvider>
   );
 }

@@ -10,7 +10,9 @@
     "db:reset": "node scripts/db-reset.mjs",
     "db:types": "pnpm --filter @niqostudio/infra run types",
     "niqo:up": "node scripts/niqo-up.mjs",
-    "niqo:down": "pnpm db:stop",
+    "niqo:dev": "node scripts/niqo-dev.mjs",
+    "niqo:dev:down": "node scripts/niqo-dev-down.mjs",
+    "niqo:down": "node scripts/niqo-down.mjs",
     "dev:website": "pnpm --filter @niqostudio/website run dev",
     "dev:studio": "pnpm --filter @niqostudio/studio run dev",
     "test": "pnpm -r --if-present run test"
@@ -19,7 +21,6 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0",
     "dbmate": "2.33.0",
     "pg": "^8.21.0"
   }
