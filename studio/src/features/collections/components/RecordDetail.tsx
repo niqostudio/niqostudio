@@ -68,10 +68,22 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   if (statusOrder.length === 0 && statusDesc?.options) statusOrder = statusDesc.options.map((v) => ({ value: v, label: statusLabel(v) }));
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
 
-  // 親（createVia の親 FK）を解決してヘッダのパンくずに出す（projects→顧客 / invoices→顧客 等・汎用）。
-  const parentCrumb = (binding.meta.createVia ?? [])
-    .map((cv) => refOptions[cv.fk]?.find((o) => o.value === asString(fields[cv.fk]))?.label)
-    .find((label): label is string => !!label);
+  // 親（createVia の親 FK）を解決してヘッダのパンくずに出す（projects→顧客 等・汎用）。
+  // fk が overlay で hidden だと refOptions に乗らないため、無ければ親テーブルを直接解決する。
+  let parentCrumb: string | undefined;
+  for (const cv of binding.meta.createVia ?? []) {
+    const val = asString(fields[cv.fk]);
+    if (!val) continue;
+    let label = refOptions[cv.fk]?.find((o) => o.value === val)?.label;
+    if (!label && binding.references) {
+      const opts = await binding.references.options(cv.via, 'id').catch(() => []);
+      label = opts.find((o) => o.value === val)?.label;
+    }
+    if (label) {
+      parentCrumb = label;
+      break;
+    }
+  }
 
   // 作成系アクション（createVia ＋ recordActions）。workflow があれば右に縦積み、無ければ単独で横並び。
   const actionButtons =
