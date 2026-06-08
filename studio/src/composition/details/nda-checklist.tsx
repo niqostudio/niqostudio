@@ -30,6 +30,7 @@ export function NdaChecklist({
   editHref,
   closeHref,
   updatedAt,
+  events = [],
 }: {
   recordId: string;
   fields: Fields;
@@ -38,6 +39,7 @@ export function NdaChecklist({
   editHref: string;
   closeHref: string;
   updatedAt: string;
+  events?: { status: string; enabled: string[]; changedAt: string }[];
 }) {
   const [work, setWork] = useState<Fields>(fields);
   const [busy, setBusy] = useState(false);
@@ -209,6 +211,25 @@ export function NdaChecklist({
             合意済にする
           </Action>
         </div>
+      )}
+
+      {events.length > 0 && (
+        <section className="flex flex-col gap-2 print:hidden">
+          <p className="section-label text-xs">変更履歴</p>
+          <ol className="flex flex-col gap-2">
+            {events.map((e, i) => (
+              <li key={i} className="flex items-baseline gap-3 text-sm">
+                <span className="shrink-0 text-xs text-muted tabular-nums">{e.changedAt.slice(0, 10)}</span>
+                <StatusBadge
+                  status={e.status}
+                  label={STATUS_LABEL[e.status] ?? e.status}
+                  tone={e.status === 'agreed' ? 'success' : 'neutral'}
+                />
+                <span className="text-muted">{e.enabled.length ? e.enabled.join('・') : '公開なし'}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
       </div>
     </div>

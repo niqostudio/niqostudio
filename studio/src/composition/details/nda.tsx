@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { asString } from '@/features/collections/collection';
 import { NdaChecklist } from './nda-checklist';
+import { loadNdaEvents } from '@/composition/ndas';
 
 // NDA 専用詳細（server）。案件名を解決して読み合わせチェックリストへ渡す。
 // collections への静的依存（循環）を避けるため getCollection は dynamic import。
@@ -21,6 +22,8 @@ export async function NdaDetail({ collection, id }: { collection: string; id: st
     projectLabel = opts.find((o) => o.value === asString(fields.project_id))?.label ?? projectLabel;
   }
 
+  const events = await loadNdaEvents(id);
+
   return (
     <NdaChecklist
       recordId={id}
@@ -30,6 +33,7 @@ export async function NdaDetail({ collection, id }: { collection: string; id: st
       editHref={`/${collection}/${id}/edit`}
       closeHref={`/${collection}`}
       updatedAt={working.updatedAt}
+      events={events}
     />
   );
 }
