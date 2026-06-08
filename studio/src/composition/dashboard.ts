@@ -1,6 +1,7 @@
 import { CoreMetricsProvider } from '@/adapters/domain-store/supabase/metrics';
 import { StudioActivityFeed } from '@/adapters/studio-store/supabase/activity-feed';
 import type { ActivityEntry } from '@/ports/studio-store';
+import type { TrendPoint, FunnelStep } from '@/features/dashboard/types';
 import { INSTANCE_ID } from './instance';
 
 // ダッシュボードの構成（KPI / 配信ヘルス / パイプライン / 最近の活動）。どの値を「未対応/進行中/公開待ち」と
@@ -76,4 +77,48 @@ export async function loadPipeline(): Promise<PipelineStage[]> {
 // 最近の活動（全 collection 横断＝record_versions）。1ドメインに寄らない横断フィード。
 export async function loadActivity(limit = 8): Promise<ActivityEntry[]> {
   return new StudioActivityFeed(INSTANCE_ID).recent(limit);
+}
+
+// 受注ファネル：問い合わせ→顧客→案件（件数）。どこで落ちるかを可視化。
+export async function loadFunnel(): Promise<FunnelStep[]> {
+  const metrics = new CoreMetricsProvider();
+  const [inquiries, clients, projects] = await Promise.all([
+    metrics.count('inquiries'),
+    metrics.count('clients'),
+    metrics.count('projects'),
+  ]);
+  return [
+    { label: '問い合わせ', count: inquiries },
+    { label: '顧客', count: clients },
+    { label: '案件', count: projects },
+  ];
+}
+
+// 月次推移：問い合わせ・案件の作成件数（直近 months ヶ月）。created_at を月で集計。
+export async function loadTrend(months = 6): Promise<TrendPoint[]> {
+  const metrics = new CoreMetricsProvider();
+  const now = new Date();
+  const since = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1).toISOString();
+  const [inq, prj] = await Promise.all([
+    metrics.timestamps('inquiries', 'created_at', since),
+    metrics.timestamps('projects', 'created_at', since),
+  ]);
+  const points: TrendPoint[] = [];
+  const byKey = new Map<string, TrendPoint>();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const point: TrendPoint = { month: key, inquiries: 0, projects: 0 };
+    points.push(point);
+    byKey.set(key, point);
+  }
+  for (const ts of inq) {
+    const p = byKey.get(ts.slice(0, 7));
+    if (p) p.inquiries++;
+  }
+  for (const ts of prj) {
+    const p = byKey.get(ts.slice(0, 7));
+    if (p) p.projects++;
+  }
+  return points;
 }
