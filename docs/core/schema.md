@@ -34,6 +34,11 @@ studio は service_role で core を読み書きし、website は anon で `publ
 | 🔒 NDA | `ndas` | 不可（公開可否の正本・projects 専用） |
 | 🔒 curation | `showcase_entries` / `showcase_problems` / `showcase_deliverables` / `showcase_metrics` | 不可 |
 | 📥 リード | `inquiries` | 不可（INSERT は最小権限ロール `inquiry_writer`・anon は不可） |
+| 📋 業務記録 | `meetings` / `work_logs` | 不可（内部運用・service_role 専用） |
+| 👤 担当者 | `contacts` | 不可（顧客担当者＝人・内部運用・service_role 専用） |
+| ✉ 返信ログ | `inquiry_replies` | 不可（送信した返信の append-only ログ・内部） |
+| ⚙ マスタ | `metric_definitions` | 不可（指標カタログ・内部・studio で編集） |
+| 📈 計測ログ | `metric_measurements` | 不可（指標の時系列・推移の正本・内部・append-only） |
 | 🌐 公開 view | `public_showcases` | SELECT 可（project は `published` × 選択 × カテゴリ許可、product は `published` × 選択・owner 投影） |
 | 🌐 公開 view | `public_services` | SELECT 可（`is_active = true` の投影） |
 | 🌐 公開 view | `public_profile` | SELECT 可（singleton の投影） |
@@ -51,6 +56,12 @@ erDiagram
     project_statuses ||--o{ project_status_transitions : "from/to_status"
     projects     ||--o{ project_status_events : "project_id"
     clients      ||--o{ inquiries         : "converted_client_id"
+    clients      ||--o{ contacts          : "client_id (任意)"
+    clients      ||--o{ meetings          : "client_id (任意)"
+    projects     ||--o{ meetings          : "project_id (任意)"
+    inquiries    ||--o{ meetings          : "inquiry_id (任意)"
+    inquiries    ||--o{ inquiry_replies   : "inquiry_id"
+    projects     ||--o{ work_logs         : "project_id"
     projects     ||--|| ndas              : "project_id (1:1)"
     projects     ||--o{ requirements      : "project_id"
     projects     ||--o{ scope_items       : "project_id"
@@ -63,6 +74,7 @@ erDiagram
     projects     ||--o{ metrics           : "project_id (xor product_id)"
     products     ||--o{ metrics           : "product_id (xor project_id)"
     deliverables ||--o{ metrics           : "deliverable_id (任意)"
+    deliverables ||--o{ metric_measurements : "deliverable_id (任意)"
     projects     ||--o{ showcase_entries  : "project_id (xor product_id)"
     products     ||--o{ showcase_entries  : "product_id (xor project_id)"
     showcase_entries ||--o{ showcase_problems     : "showcase_id"
@@ -311,6 +323,79 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 | `converted_client_id` | uuid FK→clients | 内部運用 |
 | `internal_notes` | text | 内部運用 |
 
+### meetings（業務記録・打ち合わせ）
+顧客・案件・問い合わせ（無料相談）のいずれにも紐付けられる打ち合わせ記録。内部のみ。status は予定/実施済/中止の区分で、案件のような状態機械は持たない。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `client_id` | uuid FK→clients | 任意・ON DELETE CASCADE（顧客の打ち合わせ） |
+| `project_id` | uuid FK→projects | 任意・ON DELETE SET NULL（案件文脈） |
+| `inquiry_id` | uuid FK→inquiries | 任意・ON DELETE SET NULL（無料相談＝問い合わせ由来。顧客化せず紐付け） |
+| `title` | text NOT NULL | 議題 |
+| `met_on` | date NOT NULL | 打ち合わせ日（既定 current_date） |
+| `duration_min` | integer | 所要時間（分・CHECK > 0） |
+| `status` | text NOT NULL | scheduled / done / canceled（既定 scheduled） |
+| `location` | text | 場所 / オンライン URL |
+| `notes` | text | 議事録 |
+
+### work_logs（業務記録・工数）
+案件に対する作業時間の記録（project 1:N）。内部のみ。集計で案件別の総工数・粗利（`contract_value` ÷ 工数）に使う。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `project_id` | uuid FK→projects | NOT NULL・CASCADE |
+| `worked_on` | date NOT NULL | 作業日（既定 current_date） |
+| `hours` | numeric(5,2) NOT NULL | 工数（時間・CHECK > 0） |
+| `task` | text NOT NULL | 作業内容 |
+| `note` | text | メモ |
+
+### contacts（CRM・顧客担当者）
+会社（clients）に紐づく担当者（人）。1会社:N。問い合わせから変換で作られ、案件化で会社に割り当てる。内部のみ。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `client_id` | uuid FK→clients | 任意・ON DELETE SET NULL（会社未割当でも持てる） |
+| `name` | text NOT NULL | 氏名 |
+| `email` / `phone` / `role` | text | 連絡先・役職 |
+| `notes` | text | メモ |
+
+### inquiry_replies（業務記録・問い合わせ返信ログ）
+問い合わせへ studio から送った返信の append-only ログ（スレッド表示の正本）。受信は取り込まないため送信のみ。内部のみ。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `inquiry_id` | uuid FK→inquiries | NOT NULL・CASCADE |
+| `body` | text NOT NULL | 返信本文 |
+
+※ `created_at` のみ（更新しない append-only）。
+
+### metric_definitions（マスタ・指標カタログ）
+メトリクスのカタログ。機械的（technical・スクリプト測定可）/ ビジネス（business・手動＋測り方）を区別。studio で編集。metrics（値）は参照せず、反映時に label/unit/kind をコピーする。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `key` | text UNIQUE NOT NULL | スクリプト測定の対応キー |
+| `label` | text NOT NULL | 指標名 |
+| `unit` | text | 単位 |
+| `kind` | text NOT NULL | technical / business（既定 business） |
+| `auto` | boolean NOT NULL | スクリプト測定可（既定 false） |
+| `howto` | text | 手動の測り方（business 等） |
+| `sort_order` / `is_active` | integer / boolean | 並び順・有効 |
+
+### metric_measurements（計測ログ・推移）
+指標の計測を時系列で残す append-only ログ（推移グラフの正本）。被写体（案件 xor プロダクト）＋成果物（任意）＋指標 key。旧サイトは公開前に1回、納品物は期間中に何度も測れる＝after が推移する。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `project_id` / `product_id` | uuid FK | **どちらか一方**（CHECK num_nonnulls=1）・CASCADE |
+| `deliverable_id` | uuid FK→deliverables | 任意・ON DELETE SET NULL |
+| `metric_key` | text NOT NULL | 指標のキー（metric_definitions.key） |
+| `phase` | text NOT NULL | before / after |
+| `value` | text NOT NULL | 計測値 |
+| `url` | text | 測定 URL（自動測定時） |
+
+※ `measured_at` のみ（append-only）。
+
 ## status の値
 
 | テーブル | カラム | 値 |
@@ -325,6 +410,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 | `metrics` | `kind` | technical / business |
 | `inquiries` | `status` | new / responded / converted / archived |
 | `inquiries` | `delivery_status` | pending / delivered / bounced |
+| `meetings` | `status` | scheduled / done / canceled |
 | `services` | `is_active` | boolean |
 
 ## jsonb 構造

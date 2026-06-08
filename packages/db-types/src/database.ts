@@ -60,6 +60,50 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliverables: {
         Row: {
           created_at: string
@@ -173,6 +217,216 @@ export type Database = {
             columns: ["converted_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_replies: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          inquiry_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          inquiry_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          inquiry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_replies_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          duration_min: number | null
+          id: string
+          inquiry_id: string | null
+          location: string | null
+          met_on: string
+          notes: string | null
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          duration_min?: number | null
+          id?: string
+          inquiry_id?: string | null
+          location?: string | null
+          met_on?: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          duration_min?: number | null
+          id?: string
+          inquiry_id?: string | null
+          location?: string | null
+          met_on?: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_outcomes"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_definitions: {
+        Row: {
+          auto: boolean
+          created_at: string
+          howto: string | null
+          id: string
+          is_active: boolean
+          key: string
+          kind: string
+          label: string
+          sort_order: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto?: boolean
+          created_at?: string
+          howto?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          kind?: string
+          label: string
+          sort_order?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto?: boolean
+          created_at?: string
+          howto?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          kind?: string
+          label?: string
+          sort_order?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      metric_measurements: {
+        Row: {
+          deliverable_id: string | null
+          id: string
+          measured_at: string
+          metric_key: string
+          phase: string
+          product_id: string | null
+          project_id: string | null
+          url: string | null
+          value: string
+        }
+        Insert: {
+          deliverable_id?: string | null
+          id?: string
+          measured_at?: string
+          metric_key: string
+          phase: string
+          product_id?: string | null
+          project_id?: string | null
+          url?: string | null
+          value: string
+        }
+        Update: {
+          deliverable_id?: string | null
+          id?: string
+          measured_at?: string
+          metric_key?: string
+          phase?: string
+          product_id?: string | null
+          project_id?: string | null
+          url?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_measurements_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_measurements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_measurements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_outcomes"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "metric_measurements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1073,6 +1327,54 @@ export type Database = {
             columns: ["showcase_id"]
             isOneToOne: false
             referencedRelation: "showcase_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_logs: {
+        Row: {
+          created_at: string
+          hours: number
+          id: string
+          note: string | null
+          project_id: string
+          task: string
+          updated_at: string
+          worked_on: string
+        }
+        Insert: {
+          created_at?: string
+          hours: number
+          id?: string
+          note?: string | null
+          project_id: string
+          task: string
+          updated_at?: string
+          worked_on?: string
+        }
+        Update: {
+          created_at?: string
+          hours?: number
+          id?: string
+          note?: string | null
+          project_id?: string
+          task?: string
+          updated_at?: string
+          worked_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_outcomes"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "work_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
