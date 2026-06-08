@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Pencil, X } from 'lucide-react';
 import { Action, StatusBadge, Input, Textarea } from '@/shared/ui/primitives';
+import { DatePicker } from '@/shared/ui/DatePicker';
 import { setFieldsAction, publishAction } from '@/features/collections/actions';
 import { toast } from '@/features/feedback/toast';
 import { useUnsavedGuard } from '@/shared/unsaved';
@@ -161,12 +162,7 @@ export function NdaChecklist({
           {locked ? (
             <p className="text-sm">{asStr(work.agreed_on) || '—'}</p>
           ) : (
-            <Input
-              type="date"
-              value={asStr(work.agreed_on)}
-              className="w-full"
-              onChange={(e) => set('agreed_on', e.target.value || null)}
-            />
+            <DatePicker value={asStr(work.agreed_on)} className="w-full" onChange={(v) => set('agreed_on', v || null)} />
           )}
         </div>
         <div className="flex flex-col gap-0.5">

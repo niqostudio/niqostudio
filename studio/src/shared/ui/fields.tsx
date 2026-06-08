@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Input, Select, Textarea } from './primitives';
+import { DatePicker } from './DatePicker';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t } from '@/shared/i18n';
 
@@ -117,14 +118,9 @@ export function FieldControl({
       </span>
     );
   if (d.kind === 'list') return <TagInput value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} />;
-  return (
-    <Input
-      type={d.kind === 'date' ? 'date' : 'text'}
-      value={asText(value)}
-      className="w-full"
-      onChange={(e) => onChange(e.target.value || null)}
-    />
-  );
+  if (d.kind === 'date')
+    return <DatePicker value={asText(value)} className="w-full" onChange={(v) => onChange(v || null)} />;
+  return <Input type="text" value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)} />;
 }
 
 export function FieldInput({

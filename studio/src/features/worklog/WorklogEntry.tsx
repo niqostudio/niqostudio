@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { logWorkAction } from './actions';
 import { toast } from '@/features/feedback/toast';
 import { t } from '@/shared/i18n';
+import { DatePicker } from '@/shared/ui/DatePicker';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -51,7 +52,7 @@ export function WorklogEntry({ projects }: { projects: { value: string; label: s
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs text-muted">作業日</span>
-          <input type="date" className="field" value={workedOn} onChange={(e) => setWorkedOn(e.target.value)} />
+          <DatePicker value={workedOn} onChange={setWorkedOn} />
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs text-muted">工数（時間）</span>
