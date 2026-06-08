@@ -9,12 +9,12 @@ import { t } from '@/shared/i18n';
 // 状態機械のグラフ。ノード＝状態（sort_order で横並び）、エッジ＝遷移。
 // 隣接は直線・スキップは上弧・戻りは下弧で枝分かれを描く。現在から出る遷移は強調し、
 // 行ける状態（ノード）はクリックで遷移できる。色はトークン＝ライト/ダーク追従。
-const COL = 132;
+const COL = 128;
 const NODE_W = 104;
-const NODE_H = 34;
-const MID = 70;
-const H = 140;
-const ARC = 44;
+const NODE_H = 32;
+const MID = 56;
+const H = 112;
+const ARC = 26;
 const HALF = NODE_W / 2;
 const TOP = MID - NODE_H / 2;
 const BOTTOM = MID + NODE_H / 2;
@@ -81,12 +81,13 @@ export function WorkflowGraph({
           const b = idxOf.get(e.to);
           if (a == null || b == null) return null;
           const on = e.from === current; // 現在から出る＝今選べる遷移
+          const adjacent = b === a + 1; // 背骨（隣接）＝主たる流れ。スキップ/戻りの弧は薄くして退かせる。
           return (
             <path
               key={`${e.from}-${e.to}-${i}`}
               d={edgePath(a, b)}
               fill="none"
-              stroke={on ? 'var(--color-accent)' : 'var(--color-border)'}
+              stroke={on ? 'var(--color-accent)' : adjacent ? 'var(--color-border)' : 'var(--color-border-subtle)'}
               strokeWidth={on ? 1.5 : 1}
               markerEnd={`url(#${on ? 'wf-arrow-on' : 'wf-arrow-off'})`}
             />
@@ -123,7 +124,7 @@ export function WorkflowGraph({
                 y={TOP}
                 width={NODE_W}
                 height={NODE_H}
-                rx={6}
+                rx={2}
                 className={`stroke-1 transition-colors ${rectCls}`}
               />
               <text
