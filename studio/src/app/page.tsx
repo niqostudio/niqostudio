@@ -19,20 +19,23 @@ export default async function DashboardPage() {
     loadActivity(),
   ]);
   const deployAvailable = getDeploy().available();
+
   return (
-    <div className="flex flex-col gap-8 p-5 md:p-10">
+    <div className="flex flex-col gap-10 p-5 md:p-10">
       <header>
         <SectionLabel>{t('dashboard')}</SectionLabel>
-        <h1 className="text-2xl font-semibold tracking-tight mt-1">
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           {APP_NAME} {t('opsSystem')}
         </h1>
       </header>
 
-      <div className="flex flex-col gap-2">
+      {/* 要対応：今あなたが動くべきもの */}
+      <section className="flex flex-col gap-3">
+        <SectionLabel>{t('attention')}</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-3">
           {kpis.map((k) => (
             <Link key={k.label} href={k.href} className="group">
-              <Card className="p-5 h-full hover:border-accent transition-colors">
+              <Card className="h-full p-5 transition-colors hover:border-accent">
                 <p className="text-3xl font-semibold tabular-nums">{k.count}</p>
                 <p className="mt-1 text-sm text-muted">{k.label}</p>
               </Card>
@@ -45,87 +48,95 @@ export default async function DashboardPage() {
         >
           {t('deliveryFailed')}：{delivery.failed}
         </Link>
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-3">
-        <SectionLabel>{t('deploy')}</SectionLabel>
-        {deployAvailable ? (
-          <div className="flex flex-wrap gap-2">
-            {DEPLOY_TARGETS.map((d) => (
-              <DeployButton key={d.id} id={d.id} label={d.label} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">
-            GitHub 連携が未設定（GITHUB_TOKEN か GitHub App）。設定すると公開サイトのデプロイをここから要求できます。
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
+      {/* 案件パイプライン */}
+      <section className="flex flex-col gap-3">
         <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {pipeline.map((s) => (
             <Link key={s.status} href={s.href} className="group">
-              <Card className="px-4 py-3 hover:border-accent transition-colors">
+              <Card className="px-4 py-3 transition-colors hover:border-accent">
                 <span className="text-xs text-muted">{s.label}</span>
                 <span className="ml-2 text-lg font-semibold tabular-nums">{s.count}</span>
               </Card>
             </Link>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-3">
-        <SectionLabel>{t('recentActivity')}</SectionLabel>
-        {activity.length > 0 ? (
-          <div className="flex flex-col">
-            {activity.map((a, i) => (
-              <Link
-                key={`${a.recordId}-${a.at}-${i}`}
-                href={`/${a.collection}?sel=${a.recordId}`}
-                className="flex items-center justify-between rounded-sm px-3 py-2 text-sm hover:bg-bg transition-colors"
-              >
-                <span>
-                  {getCollection(a.collection)?.meta.label ?? a.collection} を {t(`origin.${a.origin}` as MessageKey)}
-                </span>
-                <span className="text-xs text-muted tabular-nums">{a.at.slice(0, 10)}</span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">{t('noActivity')}</p>
-        )}
-      </div>
+      {/* 業務（左・広い）＋ 操作/導線（右・サイド） */}
+      <div className="grid gap-10 lg:grid-cols-3">
+        <section className="flex flex-col gap-3 lg:col-span-2">
+          <SectionLabel>{t('recentActivity')}</SectionLabel>
+          {activity.length > 0 ? (
+            <div className="flex flex-col">
+              {activity.map((a, i) => (
+                <Link
+                  key={`${a.recordId}-${a.at}-${i}`}
+                  href={`/${a.collection}?sel=${a.recordId}`}
+                  className="flex items-center justify-between rounded-sm px-3 py-2 text-sm transition-colors hover:bg-bg"
+                >
+                  <span>
+                    {getCollection(a.collection)?.meta.label ?? a.collection} を {t(`origin.${a.origin}` as MessageKey)}
+                  </span>
+                  <span className="text-xs tabular-nums text-muted">{a.at.slice(0, 10)}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">{t('noActivity')}</p>
+          )}
+        </section>
 
-      <div className="flex flex-col gap-3">
-        <SectionLabel>{t('collections')}</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {NAV.map((m) => (
-            <Link key={m.id} href={m.href} className="group">
-              <Card className="p-5 h-full hover:border-accent transition-colors">
-                <p className="font-medium">{getCollection(m.id)?.meta.label ?? m.id}</p>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
+        <aside className="flex flex-col gap-8">
+          <section className="flex flex-col gap-3">
+            <SectionLabel>{t('deploy')}</SectionLabel>
+            {deployAvailable ? (
+              <div className="flex flex-wrap gap-2">
+                {DEPLOY_TARGETS.map((d) => (
+                  <DeployButton key={d.id} id={d.id} label={d.label} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">
+                GitHub 連携が未設定。設定すると公開サイトのデプロイをここから要求できます。
+              </p>
+            )}
+          </section>
 
-      <div className="flex flex-col gap-3">
-        <SectionLabel>{t('consoles')}</SectionLabel>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_LINKS.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              target="_blank"
-              rel="noreferrer"
-              className="chip chip-mono inline-flex items-center px-3 py-1.5 text-muted transition-colors hover:border-accent hover:text-accent"
-            >
-              {l.label}
-            </a>
-          ))}
-        </div>
+          <section className="flex flex-col gap-2">
+            <SectionLabel>{t('collections')}</SectionLabel>
+            <div className="flex flex-col">
+              {NAV.map((m) => (
+                <Link
+                  key={m.id}
+                  href={m.href}
+                  className="rounded-sm px-3 py-2 text-sm transition-colors hover:bg-bg"
+                >
+                  {getCollection(m.id)?.meta.label ?? m.id}
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <SectionLabel>{t('consoles')}</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_LINKS.map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="chip chip-mono inline-flex items-center px-3 py-1.5 text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
   );

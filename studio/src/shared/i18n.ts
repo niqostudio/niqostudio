@@ -3,6 +3,7 @@ const MESSAGES = {
   collections: 'コレクション',
   dashboard: 'ダッシュボード',
   opsSystem: '業務システム',
+  attention: '要対応',
   recentActivity: '最近の活動',
   consoles: '外部コンソール',
   noActivity: '活動はまだありません',
