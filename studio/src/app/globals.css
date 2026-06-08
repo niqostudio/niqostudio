@@ -4,12 +4,12 @@
    面・文字・枠は CSS 変数で持ち、.dark で同じ変数を上書き＝全 UU がそのままライト/ダークに追従する。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
-  --color-bg: #f6f7f9;
+  --color-bg: #f1f5f9;
   --color-surface: #ffffff;
-  --color-fg: #18181b;
-  --color-muted: #4b5563;
-  --color-border: #d3d7dd;
-  --color-border-subtle: #e7e9ee;
+  --color-fg: #0f172a;
+  --color-muted: #475569;
+  --color-border: #cbd5e1;
+  --color-border-subtle: #e2e8f0;
   --color-accent: #2563eb;
   --color-on-accent: #ffffff;
   --color-error: #dc2626;
@@ -28,12 +28,12 @@
 /* ダーク：同じ変数を上書き（on-accent＝白は両モード共通なので据え置き）。
    :root.dark で特異度を @theme の :root より高くし、確実に上書きが効くようにする。 */
 :root.dark {
-  --color-bg: #0f1216;
-  --color-surface: #181c22;
-  --color-fg: #e7e9ec;
-  --color-muted: #98a2b3;
-  --color-border: #2b313b;
-  --color-border-subtle: #232830;
+  --color-bg: #0b1220;
+  --color-surface: #161e2e;
+  --color-fg: #e8edf4;
+  --color-muted: #94a3b8;
+  --color-border: #2e3a4f;
+  --color-border-subtle: #222c3d;
   --color-accent: #3b82f6;
   --color-error: #f87171;
   --color-success: #4ade80;
