@@ -21,9 +21,11 @@ import { meetingsSemantics } from '@/composition/semantics/meetings';
 import { workLogsSemantics } from '@/composition/semantics/work-logs';
 import { contactsSemantics } from '@/composition/semantics/contacts';
 import { metricDefinitionsSemantics } from '@/composition/semantics/metric-definitions';
+import { invoicesSemantics } from '@/composition/semantics/invoices';
 import { convertInquiryToContact } from './conversions';
 import { createProjectFromContact } from './contact-actions';
 import { openMetricsForProject, openMetricsForProduct } from './metrics-actions';
+import { createInvoiceFromProject } from './invoice-actions';
 import { NdaDetail } from './details/nda';
 import { InquiryReply } from './details/InquiryReply';
 import { ProjectWorklogSummary } from '@/features/worklog/ProjectWorklogSummary';
@@ -31,6 +33,8 @@ import { ProjectMeetings } from '@/features/meetings/ProjectMeetings';
 import { ClientMeetings } from '@/features/meetings/ClientMeetings';
 import { InquiryMeetings } from '@/features/meetings/InquiryMeetings';
 import { ClientContacts } from '@/features/contacts/ClientContacts';
+import { ProjectInvoices } from '@/features/invoices/ProjectInvoices';
+import { ClientInvoices } from '@/features/invoices/ClientInvoices';
 import { createMeetingFromProject } from './meetings-actions';
 import { INSTANCE_ID } from './instance';
 
@@ -60,9 +64,10 @@ const projects: CollectionBinding<Fields> = {
   history: new CoreProjectStatusHistory(),
   workflow: new CoreProjectWorkflow(),
   sources: new CoreProjectSourceRegistry(),
-  detailExtras: [ProjectWorklogSummary, ProjectMeetings],
+  detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices],
   recordActions: [
     { id: 'meeting', label: '打ち合わせを作成', run: createMeetingFromProject },
+    { id: 'invoice', label: '請求を作成', run: createInvoiceFromProject },
     { id: 'metrics', label: 'メトリクスを計測', run: openMetricsForProject },
   ],
   derive: async (recordId) => {
@@ -88,7 +93,7 @@ const inquiries: CollectionBinding<Fields> = {
 // 顧客は詳細にその会社の担当者・打ち合わせ一覧を出す。
 const clients: CollectionBinding<Fields> = {
   ...coreCollection('clients', '顧客', clientsSemantics),
-  detailExtras: [ClientContacts, ClientMeetings],
+  detailExtras: [ClientContacts, ClientMeetings, ClientInvoices],
 };
 
 // 顧客担当者（人）。問い合わせから変換で作られ、案件化で会社（client）に紐付く。一覧から手動追加も可。
@@ -136,6 +141,16 @@ const meetings: CollectionBinding<Fields> = {
   },
 };
 
+// 請求書は顧客から作る（client_id を文脈設定・一覧の新規は隠す）。案件からは recordAction で顧客も引き継ぐ。
+const invoices: CollectionBinding<Fields> = {
+  ...coreCollection('invoices', '請求書', invoicesSemantics),
+  meta: {
+    id: 'invoices',
+    label: '請求書',
+    createVia: [{ via: 'clients', fk: 'client_id' }],
+  },
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
   products: products as CollectionBinding<unknown>,
@@ -148,6 +163,7 @@ const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   profile: profile as CollectionBinding<unknown>,
   metric_definitions: coreCollection('metric_definitions', '指標マスタ', metricDefinitionsSemantics) as CollectionBinding<unknown>,
   meetings: meetings as CollectionBinding<unknown>,
+  invoices: invoices as CollectionBinding<unknown>,
   // 工数は一覧から新規作成し、対象の案件はフォームで選ぶ（案件詳細からは作らない）。
   work_logs: coreCollection('work_logs', '工数', workLogsSemantics) as CollectionBinding<unknown>,
 };

@@ -119,6 +119,35 @@ export async function loadPipelineHealth(dueWithinDays = 14, stuckDays = 21): Pr
   return { dueSoon, stuck, href: '/projects' };
 }
 
+// 財務サマリ（請求書から集計）。売上＝入金済合計、未入金＝請求済かつ未入金、期日超過＝そのうち支払期日超過。
+export interface Finance {
+  revenue: number;
+  unpaid: number;
+  overdue: number;
+  overdueCount: number;
+}
+
+export async function loadFinance(): Promise<Finance> {
+  const rows = await new CoreMetricsProvider().rows('invoices', ['subtotal', 'tax', 'status', 'due_on', 'paid_on']);
+  const today = new Date().toISOString().slice(0, 10);
+  const n = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : 0);
+  const s = (v: unknown) => (typeof v === 'string' ? v : '');
+  const f: Finance = { revenue: 0, unpaid: 0, overdue: 0, overdueCount: 0 };
+  for (const r of rows) {
+    const total = n(r.subtotal) + n(r.tax);
+    if (s(r.status) === 'paid') f.revenue += total;
+    else if (s(r.status) === 'sent' && !s(r.paid_on)) {
+      f.unpaid += total;
+      const due = s(r.due_on);
+      if (due && due < today) {
+        f.overdue += total;
+        f.overdueCount++;
+      }
+    }
+  }
+  return f;
+}
+
 // 受注ファネル：問い合わせ→顧客→案件（件数）。どこで落ちるかを可視化。
 export async function loadFunnel(): Promise<FunnelStep[]> {
   const metrics = new CoreMetricsProvider();

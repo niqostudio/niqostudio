@@ -7,6 +7,7 @@ import {
   loadFunnel,
   loadTrend,
   loadPipelineHealth,
+  loadFinance,
   PIPELINE_TITLE,
   IN_PROGRESS_STATUSES,
 } from '@/composition/dashboard';
@@ -25,13 +26,14 @@ function toneClass(tone?: string): string {
 }
 
 export default async function DashboardPage() {
-  const [kpis, delivery, pipeline, funnel, trend, health] = await Promise.all([
+  const [kpis, delivery, pipeline, funnel, trend, health, finance] = await Promise.all([
     loadKpis(),
     loadDeliveryHealth(),
     loadPipeline(),
     loadFunnel(),
     loadTrend(),
     loadPipelineHealth(),
+    loadFinance(),
   ]);
   const deployAvailable = getDeploy().available();
   const inProgress = new Set(IN_PROGRESS_STATUSES);
@@ -42,6 +44,7 @@ export default async function DashboardPage() {
     { label: t('dueRisk'), count: health.dueSoon, href: health.href, tone: 'warning' as const },
     { label: t('stuck'), count: health.stuck, href: health.href, tone: 'warning' as const },
     { label: t('deliveryFailed'), count: delivery.failed, href: delivery.href, tone: 'error' as const },
+    { label: t('paymentOverdue'), count: finance.overdueCount, href: '/invoices?status=sent', tone: 'error' as const },
   ];
 
   return (
@@ -141,7 +144,22 @@ export default async function DashboardPage() {
         </section>
         <section className="flex flex-col gap-3">
           <SectionLabel>{t('finance')}</SectionLabel>
-          <Placeholder>売上 / 入金 / ランウェイ</Placeholder>
+          <Card className="flex flex-col gap-3 p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm text-muted">{t('revenue')}</span>
+              <span className="text-xl font-semibold tabular-nums text-success">¥{finance.revenue.toLocaleString()}</span>
+            </div>
+            <Link href="/invoices?status=sent" className="flex items-baseline justify-between gap-3 hover:text-accent">
+              <span className="text-sm text-muted">{t('unpaid')}</span>
+              <span className="text-xl font-semibold tabular-nums">¥{finance.unpaid.toLocaleString()}</span>
+            </Link>
+            <Link href="/invoices?status=sent" className="flex items-baseline justify-between gap-3 hover:text-accent">
+              <span className="text-sm text-muted">{t('overdue')}</span>
+              <span className={`text-xl font-semibold tabular-nums ${finance.overdue > 0 ? 'text-error' : ''}`}>
+                ¥{finance.overdue.toLocaleString()}
+              </span>
+            </Link>
+          </Card>
         </section>
       </div>
     </div>
