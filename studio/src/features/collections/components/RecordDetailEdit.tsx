@@ -189,9 +189,10 @@ export function DetailFields({
               <button
                 type="button"
                 onClick={() => setEditing(f.key)}
-                className="mt-0.5 flex min-h-9 w-full items-center break-words text-left text-sm transition-colors hover:text-accent"
+                className="group/edit -mx-2 mt-0.5 flex min-h-9 w-full items-center justify-between gap-2 rounded-sm px-2 text-left text-sm transition-colors hover:bg-surface-2"
               >
-                {display(f, v)}
+                <span className="break-words">{display(f, v)}</span>
+                <Pencil className="size-3.5 shrink-0 text-faint opacity-0 transition-opacity group-hover/edit:opacity-100" />
               </button>
             )}
           </div>
