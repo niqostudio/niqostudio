@@ -18,6 +18,40 @@ export function Button({
   return <button className={cn('btn', `btn-${variant}`, className)}>{children}</button>;
 }
 
+// アクションボタン（button/link 兼用）。色は variant の props で変える＝保存/反映/編集で共通化。
+export function Action({
+  children,
+  variant = 'secondary',
+  href,
+  onClick,
+  type = 'button',
+  disabled,
+  title,
+  className,
+}: {
+  children: ReactNode;
+  variant?: 'primary' | 'secondary';
+  href?: string;
+  onClick?: () => void;
+  type?: 'button' | 'submit';
+  disabled?: boolean;
+  title?: string;
+  className?: string;
+}) {
+  const cls = cn('btn', `btn-${variant}`, 'inline-flex items-center gap-1.5', className);
+  if (href)
+    return (
+      <Link href={href} title={title} className={cls}>
+        {children}
+      </Link>
+    );
+  return (
+    <button type={type} onClick={onClick} disabled={disabled} title={title} className={cls}>
+      {children}
+    </button>
+  );
+}
+
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cn('card', className)}>{children}</div>;
 }

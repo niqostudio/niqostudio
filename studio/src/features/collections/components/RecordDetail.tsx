@@ -1,13 +1,10 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Pencil } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
 import { asString, asChildren } from '../collection';
 import { WorkflowActions } from './WorkflowActions';
 import { CreateRelatedButton } from './CreateRelatedButton';
-import { RecordDetailFields } from './RecordDetailFields';
-import { publishAction } from '../actions';
+import { RecordEditProvider, DetailActions, DetailFields } from './RecordDetailEdit';
 import { t } from '@/shared/i18n';
 
 // 一覧の右ペインに出す読み取り詳細＋ワークフロー操作（state machine の次状態へ進める）。
@@ -61,7 +58,8 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
 
   return (
-    <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
+    <RecordEditProvider collectionId={collection} recordId={id} fieldKeys={viewFields.map((f) => f.key)} values={fields}>
+      <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -71,19 +69,12 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           </div>
           <p className="text-xs text-muted">{t('updated')} {working.updatedAt}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {draft && (
-            <form action={publishAction.bind(null, collection, id)}>
-              <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
-                {t('publish')}
-              </button>
-            </form>
-          )}
-          <Link href={`/${collection}/${id}/edit`} className="btn btn-secondary inline-flex items-center gap-1.5">
-            <Pencil className="size-4" />
-            {t('edit')}
-          </Link>
-        </div>
+        <DetailActions
+          collectionId={collection}
+          recordId={id}
+          hasDraft={!!draft}
+          editHref={`/${collection}/${id}/edit`}
+        />
       </header>
 
       {binding.workflow && (
@@ -113,16 +104,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         </section>
       )}
 
-      {viewFields.length > 0 && (
-        <RecordDetailFields
-          key={id}
-          collectionId={collection}
-          recordId={id}
-          fields={viewFields}
-          values={fields}
-          refOptions={refOptions}
-        />
-      )}
+      {viewFields.length > 0 && <DetailFields fields={viewFields} refOptions={refOptions} />}
 
       {schema.children.length > 0 && (
         <section className="flex flex-col gap-1">
@@ -153,6 +135,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
           </ol>
         </section>
       )}
-    </div>
+      </div>
+    </RecordEditProvider>
   );
 }
