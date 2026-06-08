@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { ChevronRight } from 'lucide-react';
 import { getCollection, listCollections } from '@/composition/collections';
 import { StatusBadge } from '@/shared/ui/primitives';
 import { asString, asChildren } from '../collection';
@@ -67,12 +68,41 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
   if (statusOrder.length === 0 && statusDesc?.options) statusOrder = statusDesc.options.map((v) => ({ value: v, label: statusLabel(v) }));
   const nextLabeled = nextStates.map((s) => ({ value: s.value, label: statusLabels.get(s.value) ?? s.label }));
 
+  // 親（createVia の親 FK）を解決してヘッダのパンくずに出す（projects→顧客 / invoices→顧客 等・汎用）。
+  const parentCrumb = (binding.meta.createVia ?? [])
+    .map((cv) => refOptions[cv.fk]?.find((o) => o.value === asString(fields[cv.fk]))?.label)
+    .find((label): label is string => !!label);
+
+  // 作成系アクション（createVia ＋ recordActions）。workflow があれば右に縦積み、無ければ単独で横並び。
+  const actionButtons =
+    createRelated.length > 0 || (binding.recordActions?.length ?? 0) > 0 ? (
+      <>
+        {createRelated.map((r) => (
+          <CreateRelatedButton key={`${r.targetCollection}-${r.fk}`} {...r} />
+        ))}
+        {binding.recordActions?.map((a) => (
+          <form key={a.id} action={a.run.bind(null, id)}>
+            <button type="submit" className="btn btn-secondary inline-flex items-center gap-1.5">
+              {a.icon && <a.icon className="size-4" />}
+              {a.label}
+            </button>
+          </form>
+        ))}
+      </>
+    ) : null;
+
   return (
     <RecordEditProvider collectionId={collection} recordId={id} fieldKeys={viewFields.map((f) => f.key)} values={fields}>
       <div className="flex h-full flex-col gap-7 overflow-y-auto p-5 md:p-8">
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
+            {parentCrumb && (
+              <span className="inline-flex items-center gap-1 text-sm text-muted">
+                {parentCrumb}
+                <ChevronRight className="size-3.5 text-faint" />
+              </span>
+            )}
             <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
             {schema.statusField && <StatusBadge status={status} label={status ? statusLabel(status) : undefined} />}
             {draft && (
@@ -92,46 +122,36 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
         />
       </header>
 
-      {binding.workflow && statusOrder.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <p className="section-label text-xs">{t('workflow')}</p>
-          <WorkflowGraph
-            collectionId={collection}
-            recordId={id}
-            steps={statusOrder}
-            current={status}
-            nextValues={nextLabeled.map((s) => s.value)}
-            visited={timeline.map((e) => e.to)}
-            edges={transitions}
-          />
+      {binding.workflow && statusOrder.length > 0 ? (
+        <section className="flex flex-wrap items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="section-label mb-2 text-xs">{t('workflow')}</p>
+            <WorkflowGraph
+              collectionId={collection}
+              recordId={id}
+              steps={statusOrder}
+              current={status}
+              nextValues={nextLabeled.map((s) => s.value)}
+              visited={timeline.map((e) => e.to)}
+              edges={transitions}
+            />
+          </div>
+          {actionButtons && <div className="flex shrink-0 flex-col items-start gap-2">{actionButtons}</div>}
         </section>
+      ) : (
+        actionButtons && <section className="flex flex-wrap gap-2">{actionButtons}</section>
       )}
 
       {detailExtras.map((Extra, i) => (
         <Extra key={i} id={id} />
       ))}
 
-      {(createRelated.length > 0 || (binding.recordActions?.length ?? 0) > 0) && (
-        <section className="flex flex-wrap gap-2">
-          {createRelated.map((r) => (
-            <CreateRelatedButton key={`${r.targetCollection}-${r.fk}`} {...r} />
-          ))}
-          {binding.recordActions?.map((a) => (
-            <form key={a.id} action={a.run.bind(null, id)}>
-              <button type="submit" className="btn btn-secondary inline-flex items-center gap-1.5">
-                {a.icon && <a.icon className="size-4" />}
-                {a.label}
-              </button>
-            </form>
-          ))}
-        </section>
-      )}
-
       {viewFields.length > 0 && <DetailFields fields={viewFields} refOptions={refOptions} />}
 
       {schema.children.length > 0 && (
         <section className="flex flex-col gap-3">
           <p className="section-label text-xs">{t('related')}</p>
+          <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           {schema.children.map((c) => {
             const items = asChildren(fields[c.key]);
             const labelKey = c.fields[0]?.key ?? 'id';
@@ -153,6 +173,7 @@ export async function RecordDetail({ collection, id }: { collection: string; id:
               </div>
             );
           })}
+          </div>
         </section>
       )}
 
