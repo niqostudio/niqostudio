@@ -5,7 +5,7 @@
 
 ## 環境の見立て（モジュール × 環境）
 どのモジュールがどの環境を持つか。環境は branch で選ぶ（`main`→production / `develop`→staging）。現状は production 単一。
-Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-production`／将来 `infra-staging`）。設計は [ADR 0003](adr/0003-environment-per-module.md)・[ADR 0005](adr/0005-supabase-into-infra-platform.md)。
+Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-production`）。設計は [ADR 0003](adr/0003-environment-per-module.md)・[ADR 0005](adr/0005-supabase-into-infra-platform.md)。
 
 | モジュール | 環境の単位 | 現状 | 複数環境を持つ場合 |
 | --- | --- | --- | --- |

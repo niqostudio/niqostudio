@@ -17,7 +17,7 @@ studio は service_role で core を読み書きし、website は anon で `publ
 - **状態機械（ライフサイクル）**：`project_statuses`（状態マスタ）＋ `project_status_transitions`（許容遷移＝辺）＋ `project_status_events`（遷移履歴）。`projects.status` はマスタ FK で、許容遷移はトリガが強制（**UI でなくデータ層で制約**）。終わり方（完了/失注/中止）は `project_outcomes` view が履歴の closed 直前から派生。
 - **NDA 同意（公開可否）**：`ndas`（案件ごと・カテゴリ単位の公開フラグ）。**truth 行は publishable を持たず、公開ゲートは ndas に集約**。
 - **curation**：`showcase_entries`（公開する1事例の体裁・被写体は project xor product）＋選択結合（`showcase_problems` / `showcase_deliverables` / `showcase_metrics`）。許可分から事例ごとに見せる分を選び、`display_priority` で並べる。
-- **公開射影**：`core.public_showcases`（project/product を畳んで投影。`subject_kind` で識別。project は `published × 選択 × カテゴリ許可`、product は自社所有のため NDA 無しで公開）／`core.public_services`（is_active）／`core.public_profile`。website は projection で画面語彙に翻訳し、今は `/cases` に一本化（将来 `subject_kind` で `/products` 分割可）。
+- **公開射影**：`core.public_showcases`（project/product を畳んで投影。`subject_kind` で識別。project は `published × 選択 × カテゴリ許可`、product は自社所有のため NDA 無しで公開）／`core.public_services`（is_active）／`core.public_profile`。website は projection で画面語彙に翻訳し、`/cases` に一本化する。
 
 補足：
 - **1被写体（project / product）に N 事例（`showcase_entries`）**。各事例が載せる problems/deliverables/metrics を選ぶ。
@@ -126,7 +126,7 @@ erDiagram
 | `testimonial` | jsonb | `{quote, role}`（公開は `ndas.publish_testimonial` で制御） |
 | `started_on` / `ended_on` | date | 着手 / 実終了（CHECK: ended_on ≥ started_on） |
 | `due_on` | date | 計画上の終了（有期性の明示） |
-| `contract_value` | integer | 受注額（**税抜**・JPY・CHECK ≥ 0・null=未確定）。消費税は請求時に当時の税率で別計算する（→ 将来 invoices）。公開しない。 |
+| `contract_value` | integer | 受注額（**税抜**・JPY・CHECK ≥ 0・null=未確定）。消費税は請求時に当時の税率で別計算する（invoices で別管理）。公開しない。 |
 | `external_id` | text | 外部システム（freee 等）の対応 id（非 null 一意） |
 | `internal_notes` | text | |
 
@@ -333,7 +333,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 ※ profile は `updated_at` のみ（`created_at` なし）。
 
 ### inquiries（リード・問い合わせ）
-公開フォーム受付。anon は INSERT 不可（最小権限ロール `inquiry_writer` 経由）。到達状況は webhook が更新。詳細は `20260604000300_inquiry_delivery_tracking.sql`。
+公開フォーム受付。anon は INSERT 不可（最小権限ロール `inquiry_writer` 経由）。到達状況は webhook が更新。詳細は `20260607060000_baseline.sql`。
 
 | 列 | 型 | 備考 |
 |---|---|---|

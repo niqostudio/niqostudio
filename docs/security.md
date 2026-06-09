@@ -25,7 +25,7 @@
 - [x] 最小権限書き込み：`inquiry_writer` JWT 経由のみ INSERT。JWT 欠落時は送信拒否（フェイルクローズ） — `contact.ts`（JWT 必須）／ `supabase.ts`（`inquiryClient`）
 - [x] コスト面：通知メール（Resend）は Worker 経路のみ＝直叩きでメールは飛ばない — `contact.ts` / `email.ts`
 - [x] webhook の署名検証：Svix（HMAC-SHA256）＋ ±5分のリプレイ防止。偽装イベントを拒否 — `email-events.ts`
-- [x] webhook の最小権限：`inquiry_reader` JWT（SELECT＋`delivery_status` UPDATE のみ） — `email-events.ts` / `…000300_inquiry_delivery_tracking.sql`
+- [x] webhook の最小権限：`inquiry_reader` JWT（SELECT＋`delivery_status` UPDATE のみ） — `email-events.ts` / `…060000_baseline.sql`
 
 説明：publishable key は公開なので、攻撃者は Worker（Turnstile・レート制限）を**迂回して Supabase REST に直 INSERT** できる。これを塞ぐのが最小権限ロール `inquiry_writer` と anon の INSERT 剥奪。漏洩しても影響は inquiries への INSERT のみ。webhook は署名検証で偽装を弾き、権限も読取＋到達状況更新だけに限定する。
 
@@ -34,11 +34,11 @@
 publishable key 経由で anon が読めてしまう情報漏洩が脅威。
 
 - [x] 全テーブル RLS 有効（ポリシー無し＝deny 既定） — `core/migrations/`（各テーブル定義）
-- [x] 機密列の遮断：`real_name` / `internal_notes` は anon に列 GRANT しない — `…000000_security_hardening_rls.sql`
-- [x] 顧客の公開同意：`is_public_name_allowed = true` を RLS で必須化（未同意は `public_name` も出さない） — `…000000_…_rls.sql`
-- [x] 多層防御：公開 view 以外（生テーブル）への anon 表特権を REVOKE — `…000000_…_rls.sql`
-- [x] 書込み最小権限：`inquiry_writer` に inquiries の INSERT 列のみ GRANT、anon の INSERT は剥奪 — `…000100_inquiry_writer_role.sql`／ `…000200_revoke_anon_inquiry_insert.sql`
-- [x] **名前空間分離**：業務データを `core` スキーマへ集約し `public` を無効化（API 非公開・`REVOKE`）。anon は `core` に Supabase 既定権限を持たず、明示した `public_showcases` / `public_services` / `public_profile` view だけ SELECT（生テーブルは REVOKE） — `…000200_named_schema_core.sql`
+- [x] 機密列の遮断：`real_name` / `internal_notes` は anon に列 GRANT しない — `…060000_baseline.sql`
+- [x] 顧客の公開同意：`is_public_name_allowed = true` を RLS で必須化（未同意は `public_name` も出さない） — `…060000_baseline.sql`
+- [x] 多層防御：公開 view 以外（生テーブル）への anon 表特権を REVOKE — `…060000_baseline.sql`
+- [x] 書込み最小権限：`inquiry_writer` に inquiries の INSERT 列のみ GRANT、anon の INSERT は剥奪 — `…060000_baseline.sql`
+- [x] **名前空間分離**：業務データを `core` スキーマへ集約し `public` を無効化（API 非公開・`REVOKE`）。anon は `core` に Supabase 既定権限を持たず、明示した `public_showcases` / `public_services` / `public_profile` view だけ SELECT（生テーブルは REVOKE） — `…060000_baseline.sql`
 
 説明：RLS のポリシー有無だけに頼らず、表 GRANT でも書込みを遮断する二段構え。
 
@@ -79,7 +79,7 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 
 - [x] apex SPF は1本に統合（CF 転送用） — `config.production.json`（`email.spf_*`）
 - [x] DKIM（`resend._domainkey`）で `d=niqostudio.com` 整列 — infra DNS（`resend_dns_records`）
-- [ ] DMARC を `p=none` → rua 設定 → `quarantine` → `reject` へ段階強化 — `config.production.json`（`email.dmarc_*`）
+- [ ] DMARC 強化（現状 `p=none`・rua 未設定） — `config.production.json`（`email.dmarc_*`）
 
 ## 攻撃面: 依存・サプライチェーン
 
@@ -109,5 +109,5 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 ## 再点検
 
 - 新しい公開エンドポイント・テーブル・第三者リソースを足したら、対応する攻撃面のチェックリストと対応箇所を更新する。
-- セキュリティ・インフラは今後も増えるため、本ページは継続メンテ対象（変更時に対応箇所を追従）。
+- 本ページは継続メンテ対象（変更時に対応箇所を追従）。
 - 深掘りの再監査には `/code-review ultra` 等を用いる。
