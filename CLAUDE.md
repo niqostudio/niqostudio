@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-NIQO STUDIO のシステム monorepo。屋号 NIQO STUDIO 自身の公開サイト・データ層・業務システム・インフラを単一リポで管理する。
+NIQO STUDIO のシステム monorepo。屋号 NIQO STUDIO 自身の公開サイト・データ層・業務システム・インフラを1つのリポジトリで管理する。
 **プロダクトはここに置かない**（別リポ / private）。
 
 ## モジュール
