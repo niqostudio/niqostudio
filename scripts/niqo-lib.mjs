@@ -7,6 +7,48 @@ import { platform } from 'node:os';
 export const STATE_DIR = '.niqo';
 export const STATE_FILE = `${STATE_DIR}/dev.json`;
 
+// ローカル dev operator（studio 認証ゲート用）。STUDIO_ALLOWED_EMAILS と一致させる。
+export const DEV_EMAIL = 'dev@niqostudio.local';
+export const DEV_PASSWORD = 'devpassword';
+
+// supabase status から URL/keys を拾い dev operator を冪等作成（gotrue admin）。
+// db:reset が auth.users を作り直すと operator が消えるため reset 後に呼ぶ。
+export async function ensureDevOperator() {
+  const env = execFileSync('pnpm', ['--filter', '@niqostudio/infra', 'exec', 'supabase', 'status', '-o', 'env'], {
+    encoding: 'utf8',
+    shell: true,
+  });
+  const pick = (k) => env.match(new RegExp(`^${k}="?([^"\\n]+)"?`, 'm'))?.[1] ?? '';
+  const API = pick('API_URL');
+  const S = pick('SERVICE_ROLE_KEY');
+  if (!API || !S) {
+    console.log('  operator: supabase status から取得できず skip');
+    return;
+  }
+  // reset 直後は auth(gotrue) が起動途中で 502/503 を返すためリトライ。既存(422/409)は成功扱い。
+  for (let i = 0; i < 8; i++) {
+    try {
+      const r = await fetch(`${API}/auth/v1/admin/users`, {
+        method: 'POST',
+        headers: { apikey: S, authorization: `Bearer ${S}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ email: DEV_EMAIL, password: DEV_PASSWORD, email_confirm: true }),
+      });
+      if (r.ok || r.status === 422 || r.status === 409) {
+        console.log(`  + operator: ${DEV_EMAIL}`);
+        return;
+      }
+      if (![502, 503, 504].includes(r.status)) {
+        console.log(`  operator: HTTP ${r.status}`);
+        return;
+      }
+    } catch {
+      // 接続不可（起動途中）。
+    }
+    await new Promise((res) => setTimeout(res, 1500));
+  }
+  console.log('  operator: auth 未起動でタイムアウト');
+}
+
 export function open(url) {
   const cp =
     platform() === 'win32'

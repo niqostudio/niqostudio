@@ -3,10 +3,7 @@
 // 冪等・再実行可。前提: Docker / pnpm。db:reset は DB をクリーンに作り直す（ローカル専用）。
 import { execSync, execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-
-// ローカル dev operator（認証ゲートを通すための既定アカウント）。STUDIO_ALLOWED_EMAILS と一致させる。
-const DEV_EMAIL = 'dev@niqostudio.local';
-const DEV_PASSWORD = 'devpassword';
+import { DEV_EMAIL, DEV_PASSWORD } from './niqo-lib.mjs';
 
 const run = (cmd) => {
   console.log(`\n$ ${cmd}`);
@@ -55,13 +52,7 @@ writeFileSync(
   ].join('\n'),
 );
 
-console.log('== dev operator を作成（gotrue admin・既存なら skip） ==');
-const res = await fetch(`${API_URL}/auth/v1/admin/users`, {
-  method: 'POST',
-  headers: { apikey: SERVICE, authorization: `Bearer ${SERVICE}`, 'content-type': 'application/json' },
-  body: JSON.stringify({ email: DEV_EMAIL, password: DEV_PASSWORD, email_confirm: true }),
-});
-console.log(res.ok ? `  + operator: ${DEV_EMAIL}` : `  operator: HTTP ${res.status}（既存なら OK）`);
+// dev operator は db:reset 内で復旧済み（auth.users もリセットで消えるため）。
 
 console.log(`\n✓ セットアップ完了。dev を起動します（detached）。studio ログイン: ${DEV_EMAIL} / ${DEV_PASSWORD}`);
 run('node scripts/niqo-dev.mjs');
