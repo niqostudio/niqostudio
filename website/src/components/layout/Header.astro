@@ -5,6 +5,8 @@ import LogoMark from '../ui/LogoMark.astro';
 
 const path = Astro.url.pathname;
 const isActive = (href: string) => path === href || path.startsWith(href + '/');
+// 現在地そのもの（完全一致）。サブページ（/cases/<slug> 等）では false ＝リンクを無効化しない。
+const isCurrent = (href: string) => path === href;
 // アクティブのゴールドは英字側のみ。<a> 自体は地の色のみを持つ。
 const linkClass = (href: string) =>
   isActive(href) ? 'text-on-dark' : 'text-on-dark-muted hover:text-on-dark';
@@ -21,8 +23,8 @@ const linkClass = (href: string) =>
       {
         NAV.map((item) => (
           <a
-            href={isActive(item.href) ? undefined : item.href}
-            aria-current={isActive(item.href) ? 'page' : undefined}
+            href={isCurrent(item.href) ? undefined : item.href}
+            aria-current={isCurrent(item.href) ? 'page' : undefined}
             class:list={['flex flex-col items-center leading-tight transition-colors', linkClass(item.href)]}
           >
             <span class:list={[isActive(item.href) && 'text-gold']}>{item.label}</span>
@@ -57,8 +59,8 @@ const linkClass = (href: string) =>
         NAV.map((item) => (
           <li>
             <a
-              href={isActive(item.href) ? undefined : item.href}
-              aria-current={isActive(item.href) ? 'page' : undefined}
+              href={isCurrent(item.href) ? undefined : item.href}
+              aria-current={isCurrent(item.href) ? 'page' : undefined}
               class:list={['flex items-baseline gap-2 py-3 transition-colors', linkClass(item.href)]}
             >
               <span class:list={[isActive(item.href) && 'text-gold']}>{item.label}</span>
