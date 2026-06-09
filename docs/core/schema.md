@@ -101,7 +101,6 @@ erDiagram
 
 | 列 | 型 | 備考 |
 |---|---|---|
-| `slug` | text UNIQUE NOT NULL | |
 | `public_name` | text NOT NULL | 公開表示名（実名NGなら伏せ名） |
 | `real_name` | text | 内部専用 |
 | `is_public_name_allowed` | boolean NOT NULL | 既定 false（公開実名の同意） |
@@ -266,9 +265,10 @@ front 表示の体裁＋選択。物語の本体は被写体（projects/products
 | 列 | 型 | 備考 |
 |---|---|---|
 | `project_id` / `product_id` | uuid FK→projects / products | CASCADE・**どちらか一方**（CHECK num_nonnulls=1） |
-| `slug` | text UNIQUE NOT NULL | |
+| `slug` | text UNIQUE NOT NULL | 公開 URL キー。既定 `gen_short_id(10)`（不透明な短い id・手書き省略可。seed 定義の事例は固定値を明示） |
 | `title` | text NOT NULL | 公開見出し |
-| `summary` | text | 公開リード |
+| `summary` | text | 公開リード（一覧カードの抜粋） |
+| `body_md` | text | 詳細ページの本文（Markdown）。website が marked で描画。summary は抜粋、body_md は読み物 |
 | `thumbnail_url` | text | カードのヒーロー画像 |
 | `period` | text | 表示用の期間 |
 | `client_display` | text NOT NULL | named / anonymized / hidden（既定 anonymized） |
@@ -291,7 +291,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 
 | 列 | 内容 |
 |---|---|
-| `slug` / `title` / `summary` / `thumbnail_url` / `period` / `display_priority` / `project_id` / `product_id` | showcase_entries 由来 |
+| `slug` / `title` / `summary` / `body_md` / `thumbnail_url` / `period` / `display_priority` / `project_id` / `product_id` | showcase_entries 由来 |
 | `subject_kind` | `product_id` 有り＝`product` / それ以外＝`project` |
 | `tech_stack` | 被写体（project または product）由来 |
 | `testimonial` | project かつ `ndas.publish_testimonial` のときだけ testimonial、他は null（product は常に null） |
