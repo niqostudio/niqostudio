@@ -16,6 +16,8 @@ export type CaseView = {
   slug: string;
   title: string;
   summary: string | null;
+  // 詳細ページの本文（Markdown）。summary は抜粋、body は読み物。
+  body: string | null;
   // 被写体が project か product か。今は /cases に一本化、将来 /products 分割の分岐点。
   subjectKind: SubjectKind;
   client: ClientRef | null;

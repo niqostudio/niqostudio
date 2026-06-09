@@ -32,11 +32,11 @@ insert into core.services (
 
 -- クライアント（公開実績に紐づく架空企業）
 insert into core.clients (
-  id, slug, public_name, real_name, is_public_name_allowed,
+  id, public_name, real_name, is_public_name_allowed,
   industry, size, description
 ) values (
   '11111111-1111-4111-8111-111111111111',
-  'fic-bakery', '架空ベーカリー', 'ダミー商号（非公開）', true,
+  '架空ベーカリー', 'ダミー商号（非公開）', true,
   '飲食', 'small', '開発用のダミークライアント。'
 );
 
@@ -137,10 +137,10 @@ insert into core.services (id, slug, name, name_ja, headline, summary, target_pa
   ('66666666-6666-4666-8666-666666666603', 'maintenance', 'Maintenance', '保守・運用', '継続的な改善と安定運用', 'ダミーのサービス概要。', array['更新が滞る','障害対応'], array['監視','更新','改善'], array['月次レポート','改善対応'], '{"plan":"retainer"}'::jsonb, 30000, 'JPY', '月額', false, 5);
 
 -- クライアント追加（業種/規模バリエーション・1社は匿名 is_public_name_allowed=false）
-insert into core.clients (id, slug, public_name, real_name, is_public_name_allowed, industry, size, description) values
-  ('11111111-1111-4111-8111-111111111102', 'fic-clinic', '架空クリニック', 'ダミー医療法人', true, '医療', 'small', '開発用ダミー。'),
-  ('11111111-1111-4111-8111-111111111103', 'fic-apparel', '架空アパレル', 'ダミー商号（非公開）', false, '小売', 'medium', '開発用ダミー（匿名）。'),
-  ('11111111-1111-4111-8111-111111111104', 'fic-saas', '架空ソフトウェア', 'ダミー株式会社', true, 'IT', 'large', '開発用ダミー。');
+insert into core.clients (id, public_name, real_name, is_public_name_allowed, industry, size, description) values
+  ('11111111-1111-4111-8111-111111111102', '架空クリニック', 'ダミー医療法人', true, '医療', 'small', '開発用ダミー。'),
+  ('11111111-1111-4111-8111-111111111103', '架空アパレル', 'ダミー商号（非公開）', false, '小売', 'medium', '開発用ダミー（匿名）。'),
+  ('11111111-1111-4111-8111-111111111104', '架空ソフトウェア', 'ダミー株式会社', true, 'IT', 'large', '開発用ダミー。');
 
 -- 顧客担当者（contacts・会社に紐づく人。問い合わせ変換・案件化で生成される想定）
 insert into core.contacts (id, client_id, name, email, phone, role, notes) values

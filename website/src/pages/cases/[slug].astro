@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCases, getCase } from '../../lib/content';
 import { SITE, PAGES } from '../../config/site';
 import { SectionLabel, ArrowLink, Card, Chip, Jp } from '../../components';
+import { marked } from 'marked';
 
 export async function getStaticPaths() {
   const cases = await getCases();
@@ -20,6 +21,8 @@ const desc = caseItem.summary ?? caseItem.problems[0]?.problem;
 const heroImage = caseItem.thumbnail ?? caseItem.deliverables.flatMap((d) => d.images)[0];
 const liveUrl = caseItem.deliverables.find((d) => d.url)?.url;
 const meta = [caseItem.client?.name, caseItem.period].filter(Boolean).join(' · ');
+// 本文は operator が studio（service_role）で書く一次情報＝信頼コンテンツ。CSP がインライン実行を防ぐ。
+const bodyHtml = caseItem.body ? (marked.parse(caseItem.body) as string) : null;
 const KIND_LABELS: Record<string, string> = {
   public_web: '公開Web',
   cms: 'CMS',
@@ -55,6 +58,8 @@ const schema = {
   {meta && <p class="text-muted mt-2">{meta}</p>}
 
   {caseItem.summary && <p class="text-lg mt-6"><Jp text={caseItem.summary} /></p>}
+
+  {bodyHtml && <div class="case-body mt-8" set:html={bodyHtml} />}
 
   {
     caseItem.problems.length > 0 && (

@@ -19,7 +19,8 @@
     "@niqostudio/ui": "workspace:*",
     "@supabase/supabase-js": "^2.107.0",
     "astro": "^6.4.2",
-    "budoux": "^0.8.4"
+    "budoux": "^0.8.4",
+    "marked": "^15.0.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",

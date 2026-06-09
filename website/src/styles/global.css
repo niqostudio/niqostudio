@@ -89,6 +89,67 @@ dd {
   text-decoration-thickness: 2px;
 }
 
+/* ケース本文: body_md を marked で HTML 化したもの。素の要素を素直に組版する。 */
+.case-body {
+  line-height: 1.9;
+}
+.case-body h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.case-body h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+.case-body p {
+  margin-top: 0.9rem;
+}
+.case-body ul,
+.case-body ol {
+  margin-top: 0.9rem;
+  padding-inline-start: 1.4em;
+}
+.case-body ul {
+  list-style: none;
+  padding-inline-start: 0;
+}
+.case-body ul>li {
+  position: relative;
+  padding-inline-start: 1.1em;
+}
+.case-body ul>li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0.15em;
+  top: 0.85em;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: var(--color-muted);
+}
+.case-body ol {
+  list-style: decimal;
+}
+.case-body li {
+  margin-top: 0.3rem;
+}
+.case-body a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.case-body strong {
+  font-weight: 600;
+}
+.case-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
 /* View Transitions(ClientRouter) の既定フェードを無効化＝遷移は即時。
    目的はドキュメント保持によるフォント維持（FOUT 解消）で、演出は不要。 */
 ::view-transition-old(root),

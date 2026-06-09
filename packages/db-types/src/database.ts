@@ -24,7 +24,6 @@ export type Database = {
           public_name: string
           real_name: string | null
           size: string | null
-          slug: string
           updated_at: string
           website_url: string | null
         }
@@ -42,7 +41,6 @@ export type Database = {
           public_name: string
           real_name?: string | null
           size?: string | null
-          slug: string
           updated_at?: string
           website_url?: string | null
         }
@@ -60,7 +58,6 @@ export type Database = {
           public_name?: string
           real_name?: string | null
           size?: string | null
-          slug?: string
           updated_at?: string
           website_url?: string | null
         }
@@ -1342,6 +1339,7 @@ export type Database = {
       }
       showcase_entries: {
         Row: {
+          body_md: string | null
           client_display: string
           created_at: string
           display_priority: number
@@ -1357,6 +1355,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          body_md?: string | null
           client_display?: string
           created_at?: string
           display_priority?: number
@@ -1364,7 +1363,7 @@ export type Database = {
           period?: string | null
           product_id?: string | null
           project_id?: string | null
-          slug: string
+          slug?: string
           status?: string
           summary?: string | null
           thumbnail_url?: string | null
@@ -1372,6 +1371,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          body_md?: string | null
           client_display?: string
           created_at?: string
           display_priority?: number
@@ -1650,6 +1650,7 @@ export type Database = {
       }
       public_showcases: {
         Row: {
+          body_md: string | null
           client_industry: string | null
           client_name: string | null
           deliverables: Json | null
@@ -1693,7 +1694,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      gen_short_id: { Args: { size?: number }; Returns: string }
     }
     Enums: {
       [_ in never]: never

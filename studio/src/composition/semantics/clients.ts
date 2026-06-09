@@ -4,7 +4,6 @@ import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 export const clientsSemantics: CollectionSemantics = {
   titleField: 'public_name',
   fields: {
-    slug: { label: 'slug' },
     public_name: { label: '公開名' },
     real_name: { label: '実名' },
     is_public_name_allowed: { label: '公開名の使用可', kind: 'boolean' },

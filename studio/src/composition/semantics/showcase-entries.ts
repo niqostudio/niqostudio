@@ -6,9 +6,10 @@ export const showcaseEntriesSemantics: CollectionSemantics = {
   fields: {
     project_id: { label: '案件' },
     product_id: { label: 'プロダクト' },
-    slug: { label: 'slug' },
+    slug: { label: 'slug', hidden: true },
     title: { label: '公開見出し' },
     summary: { label: '公開リード', kind: 'textarea' },
+    body_md: { label: '本文（Markdown）', kind: 'textarea' },
     thumbnail_url: { label: 'サムネ URL' },
     period: { label: '期間（表示）' },
     client_display: {
