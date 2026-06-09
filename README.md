@@ -1,6 +1,6 @@
 # NIQO STUDIO
 
-屋号 NIQO STUDIO のシステム monorepo。NIQO STUDIO 自身の**公開サイト・データ層・業務システム・インフラ**を1リポで管理する。
+屋号 NIQO STUDIO のシステム monorepo。NIQO STUDIO 自身の**公開サイト・データ層・業務システム・インフラ**を単一リポで管理する。
 
 全リポジトリ public。**シークレット（`.env` / `*.tfvars` / state / 各種キー）はコミットしない**（CI は GitHub Environments で注入）。実顧客データはリポジトリに置かない。プロダクトはここに置かない（別リポ / private）。
 
