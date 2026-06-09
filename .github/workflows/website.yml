@@ -40,11 +40,16 @@ jobs:
       - name: "PR: 一時 Supabase に migration＋seed を当て公開値を向ける"
         if: github.event_name == 'pull_request'
         run: |
-          pnpm --filter @niqostudio/infra exec supabase start
-          pnpm db:reset
-          # migration で作った core/studio を PostgREST に確実に露出（スキーマ再読込）。
+          # PostgREST は露出スキーマ(core/studio)の存在を起動時に要求し、無いと health check で落ちる。
+          # まず DB だけ起動 → dbmate でスキーマ作成 → seed → その後 PostgREST を起動、の順にする。
+          pnpm --filter @niqostudio/infra exec supabase start -x postgrest
+          export DATABASE_URL="postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable"
+          pnpm exec dbmate --migrations-dir core/migrations --migrations-table core_migrations --no-dump-schema up
+          pnpm exec dbmate --migrations-dir studio/migrations --migrations-table studio_migrations --no-dump-schema up
           db=$(docker ps --filter name=supabase_db --format '{{.Names}}' | head -1)
-          docker exec "$db" psql -U postgres -d postgres -c "notify pgrst, 'reload schema';" || true
+          docker exec -i "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < core/seeds/dev.sql
+          # スキーマができたので PostgREST を起動（health check が通る）。
+          pnpm --filter @niqostudio/infra exec supabase start
           # 公開値をローカル stack に向ける（ジョブの本番 vars を上書き）。
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
           echo "PUBLIC_SUPABASE_URL=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')" >> "$GITHUB_ENV"
