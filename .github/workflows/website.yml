@@ -17,13 +17,10 @@ jobs:
   build:
     if: github.repository == 'niqostudio/niqostudio'
     runs-on: ubuntu-latest
-    # deploy（push/dispatch）は本番の公開値で実データを build（RLS 準拠の公開鍵）。
-    # PR は本番に触れず、この PR の migration＋seed を当てた一時 Supabase に対して build/check する
-    # （コードとスキーマを同じ PR 内で整合検証＝本番のデプロイ時期に依存しない）。下の PR 専用ステップで PUBLIC_SUPABASE_* を上書き。
+    # PUBLIC_SUPABASE_* は $GITHUB_ENV で出し分ける（PR＝一時 Supabase / deploy＝本番）。
+    # job 直下 env に置くと毎ステップで再適用され、$GITHUB_ENV での上書きを潰すため、ここには置かない。
     # ドメインは root の config.<env>.json を直読（DEPLOY_ENV 未設定＝production）。
     env:
-      PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       # Turnstile の site key（公開・未設定ならウィジェット非表示で検証 skip）。secret は deploy 側で投入。
       PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
     steps:
@@ -54,6 +51,12 @@ jobs:
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
           echo "PUBLIC_SUPABASE_URL=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')" >> "$GITHUB_ENV"
           echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')" >> "$GITHUB_ENV"
+      # deploy（push/dispatch）は本番の公開値で build（本番は migrate 済み前提・ゲート順）。
+      - name: "deploy: 本番 Supabase 公開値を使う（PR 以外）"
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "PUBLIC_SUPABASE_URL=${{ vars.PUBLIC_SUPABASE_URL }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}" >> "$GITHUB_ENV"
       - run: pnpm --filter @niqostudio/website run build
       - run: pnpm --filter @niqostudio/website run check
       # 本番 deploy 用に成果物を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
