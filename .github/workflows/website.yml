@@ -51,9 +51,6 @@ jobs:
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
           api=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')
           anon=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')
-          echo "::group::debug REST"
-          echo "showcases:"; curl -s -H "apikey: $anon" "$api/rest/v1/public_showcases?select=slug,body_md&limit=2"; echo
-          echo "::endgroup::"
           echo "PUBLIC_SUPABASE_URL=$api" >> "$GITHUB_ENV"
           echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon" >> "$GITHUB_ENV"
       # deploy（push/dispatch）は本番の公開値で build（本番は migrate 済み前提・ゲート順）。
