@@ -37,25 +37,22 @@ jobs:
       - name: "PR: 一時 Supabase に migration＋seed を当て公開値を向ける"
         if: github.event_name == 'pull_request'
         run: |
-          # PostgREST は露出スキーマ(core/studio)の存在を起動時に要求し、無いと health check で落ちる。
-          # まず DB だけ起動 → dbmate でスキーマ作成 → seed → その後 PostgREST を起動、の順にする。
-          pnpm --filter @niqostudio/infra exec supabase start -x postgrest
+          # fresh DB だと PostgREST が core 不在で unhealthy になり、通常の start は health check で teardown する。
+          # --ignore-health-check でフル起動を続行 → dbmate でスキーマ＋seed → reload で PostgREST に反映する。
+          pnpm --filter @niqostudio/infra exec supabase start --ignore-health-check
           export DATABASE_URL="postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable"
           pnpm exec dbmate --migrations-dir core/migrations --migrations-table core_migrations --no-dump-schema up
           pnpm exec dbmate --migrations-dir studio/migrations --migrations-table studio_migrations --no-dump-schema up
           db=$(docker ps --filter name=supabase_db --format '{{.Names}}' | head -1)
           docker exec -i "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < core/seeds/dev.sql
-          # スキーマができたので PostgREST を起動（health check が通る）。
-          pnpm --filter @niqostudio/infra exec supabase start
-          # dbmate で作った view/列を PostgREST のスキーマキャッシュに確実に反映させる。
+          # dbmate で作った core/studio（view/列）を PostgREST のスキーマキャッシュに反映。
           docker exec "$db" psql -U postgres -d postgres -c "notify pgrst, 'reload schema';"
-          sleep 5
+          sleep 8
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
           api=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')
           anon=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')
-          echo "::group::debug REST（落ちる場合の真因確認）"
+          echo "::group::debug REST"
           echo "showcases:"; curl -s -H "apikey: $anon" "$api/rest/v1/public_showcases?select=slug,body_md&limit=2"; echo
-          echo "profile:";   curl -s -H "apikey: $anon" "$api/rest/v1/public_profile?select=id,logo_svg&limit=1" | head -c 200; echo
           echo "::endgroup::"
           echo "PUBLIC_SUPABASE_URL=$api" >> "$GITHUB_ENV"
           echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon" >> "$GITHUB_ENV"
