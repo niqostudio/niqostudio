@@ -24,6 +24,7 @@ export function toCaseView(row: CaseRow, related: ContentLink[] = []): CaseView 
     slug: row.slug!,
     title: row.title!,
     summary: row.summary,
+    body: row.body_md,
     subjectKind: (row.subject_kind as SubjectKind | null) ?? 'project',
     client,
     problems: (row.problems as unknown as Problem[] | null) ?? [],

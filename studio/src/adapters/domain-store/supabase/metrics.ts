@@ -13,11 +13,21 @@ export class CoreMetricsProvider implements MetricsProvider {
     return this.client;
   }
 
-  async count(table: string, filter?: CountFilter): Promise<number> {
-    const base = this.getClient().from(table).select('id', { count: 'exact', head: true });
-    const { count, error } = await (filter ? base.in(filter.column, filter.in) : base);
+  async count(table: string, filter?: CountFilter, before?: { column: string; value: string }): Promise<number> {
+    let q = this.getClient().from(table).select('id', { count: 'exact', head: true });
+    if (filter) q = q.in(filter.column, filter.in);
+    if (before) q = q.lte(before.column, before.value);
+    const { count, error } = await q;
     if (error) throw new Error(`${table}.count 失敗: ${error.message}`);
     return count ?? 0;
+  }
+
+  async rows(table: string, columns: string[], match?: { column: string; value: string }): Promise<Record<string, unknown>[]> {
+    let q = this.getClient().from(table).select(columns.join(','));
+    if (match) q = q.eq(match.column, match.value);
+    const { data, error } = await q;
+    if (error) throw new Error(`${table} の取得に失敗: ${error.message}`);
+    return (data ?? []) as unknown as Record<string, unknown>[];
   }
 
   async timestamps(table: string, column = 'created_at', since?: string): Promise<string[]> {
@@ -27,5 +37,15 @@ export class CoreMetricsProvider implements MetricsProvider {
     return ((data ?? []) as unknown as Record<string, unknown>[])
       .map((r) => r[column])
       .filter((v): v is string => typeof v === 'string');
+  }
+
+  async sum(table: string, column: string, filter?: CountFilter): Promise<number> {
+    const base = this.getClient().from(table).select(column);
+    const { data, error } = await (filter ? base.in(filter.column, filter.in) : base);
+    if (error) throw new Error(`${table}.${column} の合計取得に失敗: ${error.message}`);
+    return ((data ?? []) as unknown as Record<string, unknown>[]).reduce(
+      (acc, r) => acc + (typeof r[column] === 'number' ? (r[column] as number) : 0),
+      0,
+    );
   }
 }

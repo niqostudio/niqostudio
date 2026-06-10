@@ -18,6 +18,7 @@ from (
         "title": {"label": "案件名"},
         "status": {"label": "ステータス", "optionLabels": {"consultation": "無料相談", "discovery": "事前設計", "active": "進行中", "delivered": "納品済", "closed": "クローズ"}},
         "client_id": {"label": "顧客", "hidden": true},
+        "contact_id": {"label": "担当者", "kind": "reference"},
         "service_id": {"label": "提供サービス", "kind": "reference"},
         "started_on": {"label": "開始日", "kind": "date"},
         "ended_on": {"label": "終了日", "kind": "date"},
@@ -38,7 +39,6 @@ from (
     ('clients', '{
       "titleField": "public_name",
       "fields": {
-        "slug": {"label": "slug"},
         "public_name": {"label": "公開名"},
         "real_name": {"label": "実名"},
         "is_public_name_allowed": {"label": "公開名の使用可", "kind": "boolean"},
@@ -63,7 +63,7 @@ from (
         "status": {"label": "ステータス"},
         "internal_notes": {"label": "内部メモ", "kind": "textarea"},
         "delivery_status": {"label": "配信状態"},
-        "converted_client_id": {"label": "成約先（顧客）"},
+        "converted_contact_id": {"label": "変換先（担当者）"},
         "auto_reply_id": {"label": "自動返信 ID", "hidden": true}
       }
     }'::jsonb)

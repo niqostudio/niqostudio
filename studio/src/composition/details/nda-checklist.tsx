@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Pencil, X } from 'lucide-react';
 import { Action, StatusBadge, Input, Textarea } from '@/shared/ui/primitives';
+import { DatePicker } from '@/shared/ui/DatePicker';
 import { setFieldsAction, publishAction } from '@/features/collections/actions';
 import { toast } from '@/features/feedback/toast';
 import { useUnsavedGuard } from '@/shared/unsaved';
@@ -30,6 +31,7 @@ export function NdaChecklist({
   editHref,
   closeHref,
   updatedAt,
+  events = [],
 }: {
   recordId: string;
   fields: Fields;
@@ -38,6 +40,7 @@ export function NdaChecklist({
   editHref: string;
   closeHref: string;
   updatedAt: string;
+  events?: { status: string; enabled: string[]; changedAt: string }[];
 }) {
   const [work, setWork] = useState<Fields>(fields);
   const [busy, setBusy] = useState(false);
@@ -62,6 +65,8 @@ export function NdaChecklist({
   }
 
   const status = asStr(work.status);
+  // 合意済は編集不可（読み合わせ・チェック・項目を読み取り専用に）。
+  const locked = status === 'agreed';
   const markAgreed = () => {
     const next = { ...work, status: 'agreed', agreed_on: new Date().toISOString().slice(0, 10) };
     setWork(next);
@@ -83,7 +88,7 @@ export function NdaChecklist({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 print:hidden">
-          {dirty && (
+          {!locked && dirty && (
             <Action variant="primary" onClick={() => persist(work)} disabled={busy}>
               {t('save')}
             </Action>
@@ -98,10 +103,12 @@ export function NdaChecklist({
           <Action variant="secondary" onClick={() => window.print()}>
             PDFに保存
           </Action>
-          <Action variant="secondary" href={editHref}>
-            <Pencil className="size-4" />
-            {t('edit')}
-          </Action>
+          {!locked && (
+            <Action variant="secondary" href={editHref}>
+              <Pencil className="size-4" />
+              {t('edit')}
+            </Action>
+          )}
           <Action variant="secondary" href={closeHref} title="閉じる">
             <X className="size-4" />
           </Action>
@@ -113,19 +120,28 @@ export function NdaChecklist({
         <div className="flex flex-col gap-1.5">
           {CATEGORIES.map((c) => {
             const on = work[c.key] === true;
-            return (
+            const inner = (
+              <>
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-sm border ${on ? 'border-accent text-accent' : 'border-border text-transparent'}`}
+                >
+                  ✓
+                </span>
+                <span className={`text-base ${on ? '' : 'text-muted'}`}>{c.label}</span>
+              </>
+            );
+            return locked ? (
+              <div key={c.key} className="flex items-center gap-3 rounded-sm border border-border-subtle px-4 py-3">
+                {inner}
+              </div>
+            ) : (
               <button
                 key={c.key}
                 type="button"
                 onClick={() => set(c.key, !on)}
                 className="flex items-center gap-3 rounded-sm border border-border-subtle px-4 py-3 text-left transition-colors hover:border-accent"
               >
-                <span
-                  className={`grid size-5 shrink-0 place-items-center rounded-sm border ${on ? 'border-accent text-accent' : 'border-border text-transparent'}`}
-                >
-                  ✓
-                </span>
-                <span className="text-base">{c.label}</span>
+                {inner}
               </button>
             );
           })}
@@ -135,20 +151,53 @@ export function NdaChecklist({
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">NDA 文書</span>
-          <Input value={asStr(work.reference)} className="w-full" onChange={(e) => set('reference', e.target.value || null)} />
+          {locked ? (
+            <p className="text-sm">{asStr(work.reference) || '—'}</p>
+          ) : (
+            <Input value={asStr(work.reference)} className="w-full" onChange={(e) => set('reference', e.target.value || null)} />
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">合意日</span>
-          <Input
-            type="date"
-            value={asStr(work.agreed_on)}
-            className="w-full"
-            onChange={(e) => set('agreed_on', e.target.value || null)}
-          />
+          {locked ? (
+            <p className="text-sm">{asStr(work.agreed_on) || '—'}</p>
+          ) : (
+            <DatePicker value={asStr(work.agreed_on)} className="w-full" onChange={(v) => set('agreed_on', v || null)} />
+          )}
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-muted">メモ</span>
-          <Textarea value={asStr(work.notes)} rows={2} className="w-full" onChange={(e) => set('notes', e.target.value || null)} />
+          {locked ? (
+            <p className="whitespace-pre-wrap text-sm">{asStr(work.notes) || '—'}</p>
+          ) : (
+            <Textarea value={asStr(work.notes)} rows={2} className="w-full" onChange={(e) => set('notes', e.target.value || null)} />
+          )}
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted">PDF（保存した NDA の URL）</span>
+          {locked ? (
+            asStr(work.pdf_url) ? (
+              <a href={asStr(work.pdf_url)} target="_blank" rel="noreferrer" className="text-sm text-accent hover:underline">
+                PDF を開く
+              </a>
+            ) : (
+              <p className="text-sm">—</p>
+            )
+          ) : (
+            <>
+              <Input
+                value={asStr(work.pdf_url)}
+                className="w-full"
+                placeholder="https://（保存した PDF の URL）"
+                onChange={(e) => set('pdf_url', e.target.value || null)}
+              />
+              {asStr(work.pdf_url) && (
+                <a href={asStr(work.pdf_url)} target="_blank" rel="noreferrer" className="mt-0.5 text-xs text-accent hover:underline">
+                  PDF を開く
+                </a>
+              )}
+            </>
+          )}
         </div>
       </section>
 
@@ -158,6 +207,25 @@ export function NdaChecklist({
             合意済にする
           </Action>
         </div>
+      )}
+
+      {events.length > 0 && (
+        <section className="flex flex-col gap-2 print:hidden">
+          <p className="section-label text-xs">変更履歴</p>
+          <ol className="flex flex-col gap-2">
+            {events.map((e, i) => (
+              <li key={i} className="flex items-baseline gap-3 text-sm">
+                <span className="shrink-0 text-xs text-muted tabular-nums">{e.changedAt.slice(0, 10)}</span>
+                <StatusBadge
+                  status={e.status}
+                  label={STATUS_LABEL[e.status] ?? e.status}
+                  tone={e.status === 'agreed' ? 'success' : 'neutral'}
+                />
+                <span className="text-muted">{e.enabled.length ? e.enabled.join('・') : '公開なし'}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
       </div>
     </div>

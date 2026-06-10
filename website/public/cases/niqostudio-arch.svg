@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#44403c"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="675" fill="#faf9f8"/>
+
+  <!-- 見出し（1リポ・public） -->
+  <text x="600" y="185" text-anchor="middle" font-size="34" fill="#57534e">1つのリポジトリ ・ 全コード public</text>
+
+  <!-- 箱（日本語ラベル） -->
+  <rect x="72" y="305" width="256" height="190" rx="6" fill="#ffffff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="200" y="415" text-anchor="middle" font-size="38" font-weight="600" fill="#1c1917">公開サイト</text>
+
+  <rect x="472" y="305" width="256" height="190" rx="6" fill="#ffffff" stroke="#16a34a" stroke-width="3"/>
+  <rect x="540" y="285" width="120" height="40" rx="20" fill="#16a34a"/>
+  <text x="600" y="313" text-anchor="middle" font-size="26" font-weight="600" fill="#ffffff">正本</text>
+  <text x="600" y="415" text-anchor="middle" font-size="38" font-weight="600" fill="#16a34a">DB・スキーマ</text>
+
+  <rect x="872" y="305" width="256" height="190" rx="6" fill="#ffffff" stroke="#d6d3d1" stroke-width="2"/>
+  <text x="1000" y="415" text-anchor="middle" font-size="38" font-weight="600" fill="#1c1917">業務システム</text>
+
+  <!-- 編集：studio → core（直線・上下中央） -->
+  <line x1="870" y1="400" x2="732" y2="400" stroke="#44403c" stroke-width="2.5" marker-end="url(#arw)"/>
+  <text x="800" y="352" text-anchor="middle" font-size="42" fill="#57534e">編集</text>
+
+  <!-- 反映：core → website（直線）＋大きい漏斗（NDAゲート） -->
+  <line x1="470" y1="400" x2="452" y2="400" stroke="#44403c" stroke-width="2.5"/>
+  <path d="M450 362 L390 394 L360 394 L360 406 L390 406 L450 438 Z" fill="#ffffff" stroke="#44403c" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="358" y1="400" x2="332" y2="400" stroke="#44403c" stroke-width="2.5" marker-end="url(#arw)"/>
+  <text x="400" y="352" text-anchor="middle" font-size="40" fill="#57534e">反映</text>
+  <text x="400" y="468" text-anchor="middle" font-size="28" font-weight="600" fill="#1c1917">NDA</text>
+  <text x="400" y="496" text-anchor="middle" font-size="28" font-weight="600" fill="#1c1917">ゲート</text>
+</svg>

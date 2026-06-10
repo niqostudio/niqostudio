@@ -30,28 +30,48 @@ export default async function RecordList({
   }
 
   const schema = await binding.resolveSchema();
-  const published = await binding.store.list();
-  const drafts = await binding.drafts.list().catch(() => [] as CollectionRecord<Fields>[]);
+  // 本体・下書き・参照選択肢は互いに独立なので並列に取る（直列 round-trip を畳む）。
+  const refFields = schema.fields.filter((f) => f.kind === 'reference' && f.refTable);
+  const [published, drafts, refResolved] = await Promise.all([
+    binding.store.list(),
+    binding.drafts.list().catch(() => [] as CollectionRecord<Fields>[]),
+    binding.references
+      ? Promise.all(
+          refFields.map(async (f) => {
+            const opts = await binding.references!.options(f.refTable!, f.refColumn ?? 'id').catch(() => []);
+            return [f.key, opts.map((o) => ({ value: o.value, label: f.optionLabels?.[o.value] ?? o.label }))] as const;
+          }),
+        )
+      : Promise.resolve([] as (readonly [string, { value: string; label: string }[]])[]),
+  ]);
   const publishedIds = new Set(published.map((r) => r.id));
   const newDrafts = drafts.filter((d) => !publishedIds.has(d.id));
+  const refOptions: Record<string, { value: string; label: string }[]> = Object.fromEntries(refResolved);
 
   return (
     <div className="flex h-full">
-      <div className="flex w-full max-w-md shrink-0 flex-col gap-8 overflow-y-auto border-r border-border-subtle p-5 md:p-8">
+      <div className="flex w-full max-w-xl shrink-0 flex-col gap-8 overflow-y-auto border-r border-border-subtle p-5 md:p-8">
         <header className="flex min-h-10 items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">{binding.meta.label}</h1>
           <div className="flex items-center gap-3">
             <Link href={`/schema/${collectionId}`} title="スキーマ設定" className="text-muted transition-colors hover:text-accent">
               <Settings className="size-5" />
             </Link>
-            {!binding.meta.createVia?.length && !binding.meta.singleton && (
-              <form action={createRecordAction.bind(null, collectionId, undefined)}>
-                <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
+            {!binding.meta.singleton &&
+              (binding.meta.createHref || !binding.meta.createVia?.length) &&
+              (binding.meta.createHref ? (
+                <Link href={binding.meta.createHref} className="btn btn-primary inline-flex items-center gap-1.5">
                   <Plus className="size-4" />
                   {t('new')}
-                </button>
-              </form>
-            )}
+                </Link>
+              ) : (
+                <form action={createRecordAction.bind(null, collectionId, undefined)}>
+                  <button type="submit" className="btn btn-primary inline-flex items-center gap-1.5">
+                    <Plus className="size-4" />
+                    {t('new')}
+                  </button>
+                </form>
+              ))}
           </div>
         </header>
 
@@ -62,6 +82,7 @@ export default async function RecordList({
           newDrafts={newDrafts}
           selectedId={selectedId}
           statusFilter={statusFilter}
+          refOptions={refOptions}
         />
       </div>
 

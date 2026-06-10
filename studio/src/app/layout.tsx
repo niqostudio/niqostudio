@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" data-theme="neutral" className={`${inter.variable} ${notoSansJp.variable}`}>
+    <html lang="ja" className={`${inter.variable} ${notoSansJp.variable}`}>
       <body>
         <AppShell>{children}</AppShell>
         <Toaster />

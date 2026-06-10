@@ -17,17 +17,12 @@ jobs:
   build:
     if: github.repository == 'niqostudio/niqostudio'
     runs-on: ubuntu-latest
-    # SSG ビルドは公開値で実データを取得する（公開鍵＝Repository Variable・RLS 準拠）。
-    # prebuild / build / check のいずれでも参照され得るのでジョブレベルで渡す。
+    # PUBLIC_SUPABASE_* は $GITHUB_ENV で出し分ける（PR＝一時 Supabase / deploy＝本番）。
+    # job 直下 env に置くと毎ステップで再適用され、$GITHUB_ENV での上書きを潰すため、ここには置かない。
     # ドメインは root の config.<env>.json を直読（DEPLOY_ENV 未設定＝production）。
     env:
-      PUBLIC_SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       # Turnstile の site key（公開・未設定ならウィジェット非表示で検証 skip）。secret は deploy 側で投入。
       PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
-    defaults:
-      run:
-        working-directory: website
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -36,10 +31,36 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      # workspace の root lockfile を使う。website とその workspace 依存（db-types）のみ入れる。
-      - run: pnpm install --frozen-lockfile --filter @niqostudio/website...
-      - run: pnpm build
-      - run: pnpm check
+      # website（＋workspace 依存）。PR は一時 Supabase 用に infra（supabase CLI）と root（dbmate / seed）も入れる。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/website... --filter @niqostudio/infra --filter niqostudio-mono
+      # PR は本番に触れず、この PR の migration＋seed を当てた一時 Supabase で検証する（本番は読みも書きもしない）。
+      - name: "PR: 一時 Supabase に migration＋seed を当て公開値を向ける"
+        if: github.event_name == 'pull_request'
+        run: |
+          # fresh DB だと PostgREST が core 不在で unhealthy になり、通常の start は health check で teardown する。
+          # --ignore-health-check でフル起動を続行 → dbmate でスキーマ＋seed → reload で PostgREST に反映する。
+          pnpm --filter @niqostudio/infra exec supabase start --ignore-health-check
+          export DATABASE_URL="postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable"
+          pnpm exec dbmate --migrations-dir core/migrations --migrations-table core_migrations --no-dump-schema up
+          pnpm exec dbmate --migrations-dir studio/migrations --migrations-table studio_migrations --no-dump-schema up
+          db=$(docker ps --filter name=supabase_db --format '{{.Names}}' | head -1)
+          docker exec -i "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < core/seeds/dev.sql
+          # dbmate で作った core/studio（view/列）を PostgREST のスキーマキャッシュに反映。
+          docker exec "$db" psql -U postgres -d postgres -c "notify pgrst, 'reload schema';"
+          sleep 8
+          env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
+          api=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')
+          anon=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')
+          echo "PUBLIC_SUPABASE_URL=$api" >> "$GITHUB_ENV"
+          echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon" >> "$GITHUB_ENV"
+      # deploy（push/dispatch）は本番の公開値で build（本番は migrate 済み前提・ゲート順）。
+      - name: "deploy: 本番 Supabase 公開値を使う（PR 以外）"
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "PUBLIC_SUPABASE_URL=${{ vars.PUBLIC_SUPABASE_URL }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}" >> "$GITHUB_ENV"
+      - run: pnpm --filter @niqostudio/website run build
+      - run: pnpm --filter @niqostudio/website run check
       # 本番 deploy 用に成果物を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
       # @astrojs/cloudflare は dist/client（静的）と dist/server（Worker＝entry.mjs + wrangler.json）に分割する。
       # Worker デプロイには両方要る（wrangler.json の assets.directory が ../client を指す）。

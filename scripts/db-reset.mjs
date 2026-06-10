@@ -3,6 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { Client } from 'pg';
+import { ensureDevOperator } from './niqo-lib.mjs';
 
 const DB_URL =
   process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable';
@@ -35,4 +36,9 @@ try {
 } finally {
   await client.end();
 }
+
+// auth.users もリセットで消えるため dev operator を復旧（これが無いと niqo:dev でログイン不可になる）。
+console.log('▶ dev operator を復旧（gotrue admin）');
+await ensureDevOperator();
+
 console.log('✓ db:reset 完了');

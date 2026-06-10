@@ -1,22 +1,42 @@
 @import "tailwindcss";
 
-/* studio は業務システム＝白ベースの中立トークン（website のブランド warm とは分離）。
-   色は機能（accent＝操作・status＝success/error/warning/info）に絞り、面は白/淡灰。
+/* studio の配色＝セマンティック・トークン（light 単一）。役割で色を決め、面・文字・枠・状態を分けて持つ。
+   ・neutral（面/文字/枠）が地。色は意味のあるときだけ＝accent（操作）と status（success/warning/error/info）。
+   ・各 status は solid（文字・罫・図形）と soft（淡い背景）の対で持ち、チップ等は soft 面＋solid 文字で出す。
    fonts は next/font が --font-inter / --font-noto-jp を実行時に注入する。 */
 @theme {
+  /* 面（奥→手前）と subtle な塗り（ヘッダ・hover・inset）。寒色寄りニュートラル。 */
   --color-bg: #f6f7f9;
   --color-surface: #ffffff;
-  --color-fg: #1c2024;
-  --color-muted: #6b7280;
-  --color-border: #e3e6ea;
-  --color-border-subtle: #eef0f3;
-  --color-accent: #2563eb;
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-info: #2563eb;
+  --color-surface-2: #eceef2;
 
-  --radius-sm: 0;
+  /* 文字（主→副→三次）。寒色寄りの near-black。 */
+  --color-fg: #14161a;
+  --color-muted: #596170;
+  --color-faint: #899099;
+
+  /* 罫：ヘアライン（細く薄く＝箱で囲わずトーンと余白で分ける）。 */
+  --color-border: #e3e6eb;
+  --color-border-subtle: #edeff3;
+
+  /* ブランド＝操作・選択・現在・focus（indigo） */
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef2ff;
+  --color-on-accent: #ffffff;
+
+  /* status（solid＝文字/罫/図形、soft＝淡い背景） */
+  --color-success: #16a34a;
+  --color-success-soft: #e7f7ec;
+  --color-warning: #d97706;
+  --color-warning-soft: #fbeecf;
+  --color-error: #dc2626;
+  --color-error-soft: #fbe5e5;
+  --color-info: #0284c7;
+  --color-info-soft: #e2f1fb;
+
+  /* 角丸は solid（2px）＝共有 @niqostudio/ui と同値。website のカードと一致させる。 */
+  --radius-sm: 0.125rem;
   --container-readable: 48rem;
   --breakpoint-sm: 768px;
 
@@ -30,20 +50,21 @@
     @apply inline-block rounded-sm border px-4 py-2 text-sm;
   }
   .btn-primary {
-    @apply border-transparent bg-accent text-surface transition-opacity hover:opacity-90;
+    @apply border-transparent bg-accent text-on-accent transition-colors hover:bg-accent-hover;
   }
   .btn-secondary {
-    @apply border-border bg-surface transition-colors hover:border-muted;
+    @apply border-border bg-surface transition-colors hover:border-muted hover:bg-surface-2;
   }
+  /* カード＝website / 共有 ui と同一スキン（角丸 solid・ヘアライン罫・影なし）。 */
   .card {
-    @apply border border-border bg-surface;
+    @apply rounded-sm border border-border-subtle bg-surface;
   }
   .chip {
-    @apply border text-xs text-muted;
+    @apply rounded-sm border text-xs text-muted;
   }
-  /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus 枠色は下のグローバル規則。 */
+  /* 入力面の共通スキン（input/select/textarea）。幅は呼び出し側が決める。focus は下のグローバル規則。 */
   .field {
-    @apply rounded-sm border border-border bg-surface px-2 py-1.5 text-sm;
+    @apply rounded-sm border border-border bg-surface px-2 py-2 text-sm;
   }
   .chip-mono {
     @apply border-border px-2 py-0.5 font-mono;
@@ -55,21 +76,36 @@
 
 html {
   scrollbar-gutter: stable;
+  color-scheme: light;
 }
 
-/* フォーカスは枠線の色だけ変える（太い既定アウトラインは出さない）。 */
+/* フォーカス：枠を accent にし、淡い soft リングを薄く添える（太い既定アウトラインは出さない）。 */
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+/* 日付入力：アイコンを控えめに。 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+/* グラフ（recharts）はクリックでフォーカス枠を出さない（棒/セクタ/SVG）。 */
+.recharts-wrapper:focus,
+.recharts-wrapper :focus,
+.recharts-surface:focus {
+  outline: none;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -83,4 +119,3 @@ body {
     background: var(--color-surface);
   }
 }
-

@@ -1,6 +1,6 @@
 # NIQO STUDIO
 
-屋号 NIQO STUDIO のシステム monorepo。NIQO STUDIO 自身の**公開サイト・データ層・業務システム・インフラ**を1リポで管理する。
+屋号 NIQO STUDIO のシステム monorepo。NIQO STUDIO 自身の**公開サイト・データ層・業務システム・インフラ**を1つのリポジトリで管理する。
 
 全リポジトリ public。**シークレット（`.env` / `*.tfvars` / state / 各種キー）はコミットしない**（CI は GitHub Environments で注入）。実顧客データはリポジトリに置かない。プロダクトはここに置かない（別リポ / private）。
 
@@ -40,6 +40,16 @@ packages/ui（warm tokens ＋ UI skin）──► website / studio
 - パッケージマネージャは **pnpm**（workspace）。
 - モジュール別のコマンド・前提は各ディレクトリの `CLAUDE.md` を参照。
 - ドキュメントは [docs/](docs/)（mkdocs で公開）。
+
+## 開発フロー
+
+単独開発者＋AI 支援の高速開発を前提にしている。そのため一般的な「機能ごとの短命ブランチ＋逐一の PR レビュー」は採らず、広めのトピックブランチ（`feat/*` 等）に直接コミットし、区切りで `main` に取り込む（履歴はほぼ線形）。public 履歴に細かい PR が見えないのは**意図的な選択**。
+
+レビュー相手のいない単独開発では PR は儀式コストになりやすい。品質・安全は**ブランチ保護や PR ではなく、CI とデプロイゲートで担保する**：
+
+- **push / PR ごとの CI**：型チェック・テスト・秘密値スキャン（gitleaks・履歴走査）・衛生チェック（絶対パス／秘密ファイルの誤追跡）をモジュール別に実行。
+- **本番反映は承認ゲート付き**：migration / terraform apply / deploy は GitHub Environments のゲートを通す（誤反映を構造で止める）。
+- **fail-closed**：秘密値や公開定数が欠けるとビルド／実行を止める。
 
 ## 規約
 

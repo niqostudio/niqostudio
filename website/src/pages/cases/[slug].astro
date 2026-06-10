@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCases, getCase } from '../../lib/content';
 import { SITE, PAGES } from '../../config/site';
 import { SectionLabel, ArrowLink, Card, Chip, Jp } from '../../components';
+import { marked } from 'marked';
 
 export async function getStaticPaths() {
   const cases = await getCases();
@@ -19,7 +20,9 @@ if (!caseItem) {
 const desc = caseItem.summary ?? caseItem.problems[0]?.problem;
 const heroImage = caseItem.thumbnail ?? caseItem.deliverables.flatMap((d) => d.images)[0];
 const liveUrl = caseItem.deliverables.find((d) => d.url)?.url;
-const meta = [caseItem.client?.name, caseItem.period].filter(Boolean).join(' · ');
+const meta = [caseItem.client?.name, caseItem.period && `制作期間: ${caseItem.period}`].filter(Boolean).join(' · ');
+// 本文は operator が studio（service_role）で書く一次情報＝信頼コンテンツ。CSP がインライン実行を防ぐ。
+const bodyHtml = caseItem.body ? (marked.parse(caseItem.body) as string) : null;
 const KIND_LABELS: Record<string, string> = {
   public_web: '公開Web',
   cms: 'CMS',
@@ -56,27 +59,26 @@ const schema = {
 
   {caseItem.summary && <p class="text-lg mt-6"><Jp text={caseItem.summary} /></p>}
 
+  {heroImage && <img src={heroImage} alt={caseItem.title} loading="lazy" class="w-full rounded-sm border border-border-subtle mt-8" />}
+
   {
     caseItem.problems.length > 0 && (
       <section class="mt-10">
-        <SectionLabel as="h2">課題と解決</SectionLabel>
-        <div class="mt-4 flex flex-col gap-8">
+        <SectionLabel as="h2" icon="target">課題と解決</SectionLabel>
+        <div class="mt-5 flex flex-col gap-5">
           {caseItem.problems.map((p) => (
-            <div class="border-l-2 border-border-subtle pl-4 flex flex-col gap-3">
-              <div>
-                <p class="font-mono text-xs uppercase tracking-wide text-muted">課題</p>
-                <p class="mt-1"><Jp text={p.problem} /></p>
-              </div>
+            <div class="border border-border rounded-sm bg-surface p-5">
+              <p class="font-medium leading-relaxed"><Jp text={p.problem} /></p>
               {p.solution && (
-                <div>
-                  <p class="font-mono text-xs uppercase tracking-wide text-muted">アプローチ</p>
-                  <p class="mt-1"><Jp text={p.solution} /></p>
+                <div class="mt-4">
+                  <p class="text-xs text-muted">アプローチ</p>
+                  <p class="mt-1 text-muted leading-relaxed"><Jp text={p.solution} /></p>
                 </div>
               )}
               {p.outcome && (
-                <div>
-                  <p class="font-mono text-xs uppercase tracking-wide text-accent">成果</p>
-                  <p class="mt-1"><Jp text={p.outcome} /></p>
+                <div class="mt-4 pt-4 border-t border-border-subtle">
+                  <p class="text-xs font-medium text-accent">成果</p>
+                  <p class="mt-1 font-medium leading-relaxed"><Jp text={p.outcome} /></p>
                 </div>
               )}
             </div>
@@ -89,7 +91,7 @@ const schema = {
   {
     caseItem.metrics.length > 0 && (
       <section class="mt-8">
-        <SectionLabel as="h2">数値</SectionLabel>
+        <SectionLabel as="h2" icon="trending-up">数値</SectionLabel>
         <table class="w-full mt-3 text-sm border border-border rounded-sm overflow-hidden">
           <thead>
             <tr class="text-left text-muted border-b border-border">
@@ -115,18 +117,18 @@ const schema = {
   {
     caseItem.deliverables.length > 0 && (
       <section class="mt-8">
-        <SectionLabel as="h2">作ったもの</SectionLabel>
-        <div class="mt-3 flex flex-col gap-6">
+        <SectionLabel as="h2" icon="package">作ったもの</SectionLabel>
+        <div class="mt-3 flex flex-col gap-3">
           {caseItem.deliverables.map((d) => (
             <div>
-              <div class="flex flex-wrap items-baseline gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <Chip>{KIND_LABELS[d.kind] ?? d.kind}</Chip>
                 {d.url ? (
-                  <a href={d.url} target="_blank" rel="noopener" class="text-accent hover:underline">
+                  <a href={d.url} target="_blank" rel="noopener" class="text-sm text-accent hover:underline">
                     {d.name}
                   </a>
                 ) : (
-                  <span class="font-medium">{d.name}</span>
+                  <span class="text-sm">{d.name}</span>
                 )}
               </div>
               {d.images.length > 0 && (
@@ -146,7 +148,7 @@ const schema = {
   {
     caseItem.techStack.length > 0 && (
       <section class="mt-8">
-        <SectionLabel as="h2">技術・基盤</SectionLabel>
+        <SectionLabel as="h2" icon="layers">技術・基盤</SectionLabel>
         <ul class="flex flex-wrap gap-1.5 mt-2">
           {caseItem.techStack.map((t) => (
             <Chip>{t}</Chip>
@@ -155,6 +157,8 @@ const schema = {
       </section>
     )
   }
+
+  {bodyHtml && <div class="case-body mt-8" set:html={bodyHtml} />}
 
   {
     caseItem.testimonial && (

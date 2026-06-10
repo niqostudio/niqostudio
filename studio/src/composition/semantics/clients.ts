@@ -4,7 +4,6 @@ import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 export const clientsSemantics: CollectionSemantics = {
   titleField: 'public_name',
   fields: {
-    slug: { label: 'slug' },
     public_name: { label: '公開名' },
     real_name: { label: '実名' },
     is_public_name_allowed: { label: '公開名の使用可', kind: 'boolean' },
@@ -13,7 +12,9 @@ export const clientsSemantics: CollectionSemantics = {
     description: { label: '説明', kind: 'textarea' },
     logo_url: { label: 'ロゴ URL' },
     website_url: { label: 'サイト URL' },
+    address: { label: '住所 / 請求先', kind: 'textarea' },
     first_contact_date: { label: '初回接触日', kind: 'date' },
     internal_notes: { label: '内部メモ', kind: 'textarea' },
+    external_id: { label: '連携 id（freee 等）' },
   },
 };

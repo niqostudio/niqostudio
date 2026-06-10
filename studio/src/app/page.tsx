@@ -1,6 +1,16 @@
 import Link from 'next/link';
 import { APP_NAME } from '@/composition/instance';
-import { loadKpis, loadDeliveryHealth, loadPipeline, loadFunnel, loadTrend, PIPELINE_TITLE } from '@/composition/dashboard';
+import {
+  loadKpis,
+  loadDeliveryHealth,
+  loadPipeline,
+  loadFunnel,
+  loadTrend,
+  loadPipelineHealth,
+  loadFinance,
+  PIPELINE_TITLE,
+  IN_PROGRESS_STATUSES,
+} from '@/composition/dashboard';
 import { QUICK_LINKS } from '@/composition/links';
 import { DEPLOY_TARGETS, getDeploy } from '@/composition/deploy';
 import { DeployButton } from '@/features/deploy/DeployButton';
@@ -10,18 +20,35 @@ import { t } from '@/shared/i18n';
 
 export const dynamic = 'force-dynamic';
 
+// 要対応カードの数値色（0 のときは無色＝騒がしくしない）。
+function toneClass(tone?: string): string {
+  return tone === 'error' ? 'text-error' : tone === 'warning' ? 'text-warning' : tone === 'info' ? 'text-info' : '';
+}
+
 export default async function DashboardPage() {
-  const [kpis, delivery, pipeline, funnel, trend] = await Promise.all([
+  const [kpis, delivery, pipeline, funnel, trend, health, finance] = await Promise.all([
     loadKpis(),
     loadDeliveryHealth(),
     loadPipeline(),
     loadFunnel(),
     loadTrend(),
+    loadPipelineHealth(),
+    loadFinance(),
   ]);
   const deployAvailable = getDeploy().available();
+  const inProgress = new Set(IN_PROGRESS_STATUSES);
+  const forecast = pipeline.filter((s) => inProgress.has(s.status)).reduce((a, s) => a + s.value, 0);
+  // 要対応＝動くべき件数を1グリッドに集約（散らばった行をやめる）。
+  const attention = [
+    ...kpis,
+    { label: t('dueRisk'), count: health.dueSoon, href: health.href, tone: 'warning' as const },
+    { label: t('stuck'), count: health.stuck, href: health.href, tone: 'warning' as const },
+    { label: t('deliveryFailed'), count: delivery.failed, href: delivery.href, tone: 'error' as const },
+    { label: t('paymentOverdue'), count: finance.overdueCount, href: '/invoices?status=sent', tone: 'error' as const },
+  ];
 
   return (
-    <div className="flex flex-col gap-10 p-5 md:p-10">
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 p-5 md:p-10">
       <header>
         <SectionLabel>{t('dashboard')}</SectionLabel>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -29,25 +56,19 @@ export default async function DashboardPage() {
         </h1>
       </header>
 
-      {/* 要対応：今あなたが動くべきもの */}
+      {/* 要対応：今あなたが動くべき件数を1グリッドに */}
       <section className="flex flex-col gap-3">
         <SectionLabel>{t('attention')}</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {kpis.map((k) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {attention.map((k) => (
             <Link key={k.label} href={k.href} className="group">
-              <Card className="h-full p-5 transition-colors hover:border-accent">
-                <p className="text-3xl font-semibold tabular-nums">{k.count}</p>
+              <Card className="h-full p-4 transition-colors hover:border-accent">
+                <p className={`text-2xl font-semibold tabular-nums ${k.count > 0 ? toneClass(k.tone) : ''}`}>{k.count}</p>
                 <p className="mt-1 text-sm text-muted">{k.label}</p>
               </Card>
             </Link>
           ))}
         </div>
-        <Link
-          href={delivery.href}
-          className={`text-sm hover:underline ${delivery.failed > 0 ? 'text-accent' : 'text-muted'}`}
-        >
-          {t('deliveryFailed')}：{delivery.failed}
-        </Link>
       </section>
 
       {/* 可視化：受注ファネル ＋ 月次推移 */}
@@ -66,9 +87,15 @@ export default async function DashboardPage() {
         </section>
       </div>
 
-      {/* 案件パイプライン（バーをクリックで絞り込み一覧へ） */}
+      {/* 案件パイプライン（受注額・バーをクリックで絞り込み一覧へ） */}
       <section className="flex flex-col gap-3">
-        <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
+        <div className="flex items-end justify-between gap-3">
+          <SectionLabel>{PIPELINE_TITLE}</SectionLabel>
+          <div className="text-right">
+            <p className="text-xs text-muted">{t('salesForecast')}</p>
+            <p className="text-3xl font-semibold tabular-nums text-success">¥{forecast.toLocaleString()}</p>
+          </div>
+        </div>
         <Card className="p-4">
           <PipelineBar data={pipeline} />
         </Card>
@@ -117,7 +144,22 @@ export default async function DashboardPage() {
         </section>
         <section className="flex flex-col gap-3">
           <SectionLabel>{t('finance')}</SectionLabel>
-          <Placeholder>売上 / 入金 / ランウェイ</Placeholder>
+          <Card className="flex flex-col gap-3 p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm text-muted">{t('revenue')}</span>
+              <span className="text-xl font-semibold tabular-nums text-success">¥{finance.revenue.toLocaleString()}</span>
+            </div>
+            <Link href="/invoices?status=sent" className="flex items-baseline justify-between gap-3 hover:text-accent">
+              <span className="text-sm text-muted">{t('unpaid')}</span>
+              <span className="text-xl font-semibold tabular-nums">¥{finance.unpaid.toLocaleString()}</span>
+            </Link>
+            <Link href="/invoices?status=sent" className="flex items-baseline justify-between gap-3 hover:text-accent">
+              <span className="text-sm text-muted">{t('overdue')}</span>
+              <span className={`text-xl font-semibold tabular-nums ${finance.overdue > 0 ? 'text-error' : ''}`}>
+                ¥{finance.overdue.toLocaleString()}
+              </span>
+            </Link>
+          </Card>
         </section>
       </div>
     </div>

@@ -1,16 +1,25 @@
 ---
-// 詳細ページのセクションラベル（mono 小見出し）。先頭の緑ティックでブランド色を通す。
-// タイポは共有 .section-label（@niqostudio/ui）。サイズ・ティック・配置はここで持つ。
+// 詳細ページのセクションラベル（mono 小見出し）。既定は先頭の緑ティック、icon 指定時はアイコンを
+// アンカーに使う（視線誘導）。タイポは共有 .section-label（@niqostudio/ui）。
+import Icon from './Icon.astro';
+import type { ComponentProps } from 'astro/types';
 interface Props {
   as?: 'h2' | 'p' | 'dt';
+  icon?: ComponentProps<typeof Icon>['name'];
   class?: string;
 }
-const { as: Tag = 'p', class: className } = Astro.props;
+const { as: Tag = 'p', icon, class: className } = Astro.props;
 ---
 
 <Tag
   class:list={['section-label flex items-center gap-2 text-sm', className]}
 >
-  <span class="inline-block h-3.5 w-0.5 bg-accent" aria-hidden="true"></span>
+  {
+    icon ? (
+      <Icon name={icon} class="text-accent" />
+    ) : (
+      <span class="inline-block h-3.5 w-0.5 bg-accent" aria-hidden="true" />
+    )
+  }
   <slot />
 </Tag>

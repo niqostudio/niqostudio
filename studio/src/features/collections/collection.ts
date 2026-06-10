@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type {
   CollectionStore,
   SourceRegistry,
@@ -34,10 +34,14 @@ export function orderByList<T>(values: T[], order: T[]): T[] {
 export interface CollectionMeta {
   id: string;
   label: string;
+  // nav・作成ボタンで使うアイコン（その collection が表す実体＝請求=円 / NDA=文書 等）。
+  icon?: ComponentType<{ className?: string }>;
   // この collection を親 collection の画面から作る導線（案件←顧客、事例←案件/プロダクト 等）。
   // 指定があると一覧の新規ボタンは出さず、各親の詳細に作成ボタンを出す（fk に親 id を入れる）。
   // 配列＝複数の親を持てる（showcase は project_id xor product_id）。
   createVia?: { via: string; fk: string }[];
+  // 一覧の「新規」をこの URL への遷移にする（専用の作成 UI＝カスケード選択等。createVia と併用可）。
+  createHref?: string;
   // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
   singleton?: boolean;
 }
@@ -66,11 +70,15 @@ export interface CollectionBinding<F> {
   recordActions?: RecordAction[];
   // この collection 専用の詳細ビュー（汎用 RecordDetail を上書き）。composition が差す（例：NDA 読み合わせ）。
   detail?: (props: { collection: string; id: string }) => ReactNode | Promise<ReactNode>;
+  // 汎用詳細の中に足す読み取りの補助表示（例：案件の総工数・打ち合わせ一覧）。composition が差す（複数可）。
+  detailExtras?: ((props: { id: string }) => ReactNode | Promise<ReactNode>)[];
 }
 
 // 詳細ペインの record 単位アクション（例：問い合わせ→顧客 転換）。run は server action。
 export interface RecordAction {
   id: string;
   label: string;
+  // ボタンのアイコン（意味で統一＝作成は Plus・変換は UserPlus/FolderPlus・計測は Activity）。createVia の作成ボタンと揃える。
+  icon?: ComponentType<{ className?: string }>;
   run: (recordId: string, formData?: FormData) => Promise<void>;
 }

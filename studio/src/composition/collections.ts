@@ -17,9 +17,45 @@ import { servicesSemantics } from '@/composition/semantics/services';
 import { showcaseEntriesSemantics } from '@/composition/semantics/showcase-entries';
 import { ndasSemantics } from '@/composition/semantics/ndas';
 import { profileSemantics } from '@/composition/semantics/profile';
-import { convertInquiryToClient } from './conversions';
+import { meetingsSemantics } from '@/composition/semantics/meetings';
+import { workLogsSemantics } from '@/composition/semantics/work-logs';
+import { contactsSemantics } from '@/composition/semantics/contacts';
+import { metricDefinitionsSemantics } from '@/composition/semantics/metric-definitions';
+import { invoicesSemantics } from '@/composition/semantics/invoices';
+import { convertInquiryToContact } from './conversions';
+import { createProjectFromContact } from './contact-actions';
+import { openMetricsForProject } from './metrics-actions';
+import { createInvoiceFromProject } from './invoice-actions';
 import { NdaDetail } from './details/nda';
+import { InquiryReply } from './details/InquiryReply';
+import { ProjectWorklogSummary } from '@/features/worklog/ProjectWorklogSummary';
+import { ProjectMeetings } from '@/features/meetings/ProjectMeetings';
+import { ClientMeetings } from '@/features/meetings/ClientMeetings';
+import { InquiryMeetings } from '@/features/meetings/InquiryMeetings';
+import { ClientContacts } from '@/features/contacts/ClientContacts';
+import { ProjectInvoices } from '@/features/invoices/ProjectInvoices';
+import { ClientInvoices } from '@/features/invoices/ClientInvoices';
+import { createMeetingFromProject } from './meetings-actions';
 import { INSTANCE_ID } from './instance';
+import type { ComponentType } from 'react';
+import {
+  Activity,
+  FolderPlus,
+  UserPlus,
+  Briefcase,
+  Package,
+  Building2,
+  Contact,
+  Inbox,
+  Layers,
+  Sparkles,
+  FileText,
+  CircleUser,
+  Gauge,
+  Users,
+  JapaneseYen,
+  Clock,
+} from 'lucide-react';
 
 // この app の collection 配線。構造は core から live、意味は overlay（seed＝任意の初期意味、
 // 確定は store の overlay）。store は core 列を動的に読む generic＝テーブルごとの手書き写像なし。
@@ -47,6 +83,12 @@ const projects: CollectionBinding<Fields> = {
   history: new CoreProjectStatusHistory(),
   workflow: new CoreProjectWorkflow(),
   sources: new CoreProjectSourceRegistry(),
+  detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices],
+  recordActions: [
+    { id: 'meeting', label: '打ち合わせを作成', icon: Users, run: createMeetingFromProject },
+    { id: 'invoice', label: '請求を作成', icon: JapaneseYen, run: createInvoiceFromProject },
+    { id: 'metrics', label: 'メトリクスを計測', icon: Activity, run: openMetricsForProject },
+  ],
   derive: async (recordId) => {
     const [{ deriveProjectDrafts }, { GitRepositoryProjectionEngine, GitCliSourceAccess }] =
       await Promise.all([import('./projects/derive'), import('@/features/git-import')]);
@@ -63,13 +105,31 @@ const profile: CollectionBinding<Fields> = {
 // inquiries は顧客への転換アクションを持つ（接続先固有のワークフロー＝composition が差す）。
 const inquiries: CollectionBinding<Fields> = {
   ...coreCollection('inquiries', '問い合わせ', inquiriesSemantics),
-  recordActions: [{ id: 'convert', label: '顧客に転換', run: convertInquiryToClient }],
+  recordActions: [{ id: 'convert', label: '顧客担当者に変換', icon: UserPlus, run: convertInquiryToContact }],
+  detailExtras: [InquiryReply, InquiryMeetings],
+};
+
+// 顧客は詳細にその会社の担当者・打ち合わせ一覧を出す。
+const clients: CollectionBinding<Fields> = {
+  ...coreCollection('clients', '顧客', clientsSemantics),
+  detailExtras: [ClientContacts, ClientMeetings, ClientInvoices],
+};
+
+// 顧客担当者（人）。問い合わせから変換で作られ、案件化で会社（client）に紐付く。一覧から手動追加も可。
+const contacts: CollectionBinding<Fields> = {
+  ...coreCollection('contacts', '顧客担当者', contactsSemantics),
+  recordActions: [{ id: 'projectize', label: '案件化', icon: FolderPlus, run: createProjectFromContact }],
+};
+
+// プロダクトは web アプリ中心で metrics 入力導線は出さない（core の polymorphic な metrics 対応は温存）。
+const products: CollectionBinding<Fields> = {
+  ...coreCollection('products', 'プロダクト'),
 };
 
 // ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。
 const ndas: CollectionBinding<Fields> = {
   ...coreCollection('ndas', 'NDA', ndasSemantics),
-  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }] },
+  meta: { id: 'ndas', label: 'NDA', createVia: [{ via: 'projects', fk: 'project_id' }], createHref: '/ndas/new' },
   detail: NdaDetail,
 };
 
@@ -86,16 +146,63 @@ const showcaseEntries: CollectionBinding<Fields> = {
   },
 };
 
+// 打ち合わせは顧客から作る（client_id を文脈設定）。案件は任意で後から紐付け。
+const meetings: CollectionBinding<Fields> = {
+  ...coreCollection('meetings', '打ち合わせ', meetingsSemantics),
+  meta: {
+    id: 'meetings',
+    label: '打ち合わせ',
+    createVia: [
+      { via: 'clients', fk: 'client_id' },
+      { via: 'inquiries', fk: 'inquiry_id' },
+    ],
+  },
+};
+
+// 請求書は顧客から作る（client_id を文脈設定・一覧の新規は隠す）。案件からは recordAction で顧客も引き継ぐ。
+const invoices: CollectionBinding<Fields> = {
+  ...coreCollection('invoices', '請求書', invoicesSemantics),
+  meta: {
+    id: 'invoices',
+    label: '請求書',
+    createVia: [{ via: 'clients', fk: 'client_id' }],
+  },
+};
+
 const COLLECTIONS: Record<string, CollectionBinding<unknown>> = {
   projects: projects as CollectionBinding<unknown>,
-  products: coreCollection('products', 'プロダクト') as CollectionBinding<unknown>,
-  clients: coreCollection('clients', '顧客', clientsSemantics) as CollectionBinding<unknown>,
+  products: products as CollectionBinding<unknown>,
+  clients: clients as CollectionBinding<unknown>,
+  contacts: contacts as CollectionBinding<unknown>,
   inquiries: inquiries as CollectionBinding<unknown>,
   services: coreCollection('services', 'サービス', servicesSemantics) as CollectionBinding<unknown>,
   showcase_entries: showcaseEntries as CollectionBinding<unknown>,
   ndas: ndas as CollectionBinding<unknown>,
   profile: profile as CollectionBinding<unknown>,
+  metric_definitions: coreCollection('metric_definitions', '指標マスタ', metricDefinitionsSemantics) as CollectionBinding<unknown>,
+  meetings: meetings as CollectionBinding<unknown>,
+  invoices: invoices as CollectionBinding<unknown>,
+  // 工数は一覧から新規作成し、対象の案件はフォームで選ぶ（案件詳細からは作らない）。
+  work_logs: coreCollection('work_logs', '工数', workLogsSemantics) as CollectionBinding<unknown>,
 };
+
+// 各 collection のアイコン（その実体を表す）。nav・作成ボタンで共通に使う。
+const ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  projects: Briefcase,
+  products: Package,
+  clients: Building2,
+  contacts: Contact,
+  inquiries: Inbox,
+  services: Layers,
+  showcase_entries: Sparkles,
+  ndas: FileText,
+  profile: CircleUser,
+  metric_definitions: Gauge,
+  meetings: Users,
+  invoices: JapaneseYen,
+  work_logs: Clock,
+};
+for (const [id, b] of Object.entries(COLLECTIONS)) b.meta.icon = ICONS[id];
 
 // collection id → 汎用 binding。各 collection の F は UI では Fields として扱う。
 export function getCollection(id: string): CollectionBinding<Fields> | undefined {

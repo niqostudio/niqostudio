@@ -3,10 +3,14 @@ import type { TrendPoint, FunnelStep } from '@/features/dashboard/types';
 
 // ダッシュボードの構成（KPI / 配信ヘルス / パイプライン / 最近の活動）。どの値を「未対応/進行中/公開待ち」と
 // みなすか・stage の並び＝ドメイン判断なので composition が持つ。count 機構は adapter（CoreMetricsProvider）。
+export type KpiTone = 'warning' | 'error' | 'info';
+
 export interface Kpi {
   label: string;
   count: number;
   href: string;
+  // 0 超のとき数値を色づけする（要対応の温度感）。
+  tone?: KpiTone;
 }
 
 interface KpiDef {
@@ -14,15 +18,19 @@ interface KpiDef {
   table: string;
   filter?: { column: string; in: string[] };
   href: string;
+  tone?: KpiTone;
 }
+
+// 進行中（受注予測の対象）の案件 status。KPI と受注予測で共用する。
+export const IN_PROGRESS_STATUSES = ['consultation', 'discovery', 'active'];
 
 // 業務 KPI はドメイン均等に1枚ずつ（問い合わせに寄せない）。
 const KPI_DEFS: KpiDef[] = [
-  { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new' },
+  { label: '未対応の問い合わせ', table: 'inquiries', filter: { column: 'status', in: ['new'] }, href: '/inquiries?status=new', tone: 'warning' },
   {
     label: '進行中の案件',
     table: 'projects',
-    filter: { column: 'status', in: ['consultation', 'discovery', 'active'] },
+    filter: { column: 'status', in: IN_PROGRESS_STATUSES },
     href: '/projects',
   },
   { label: '公開待ちの事例', table: 'showcase_entries', filter: { column: 'status', in: ['draft'] }, href: '/showcase_entries?status=draft' },
@@ -31,7 +39,7 @@ const KPI_DEFS: KpiDef[] = [
 export async function loadKpis(): Promise<Kpi[]> {
   const metrics = new CoreMetricsProvider();
   return Promise.all(
-    KPI_DEFS.map(async (d) => ({ label: d.label, href: d.href, count: await metrics.count(d.table, d.filter) })),
+    KPI_DEFS.map(async (d) => ({ label: d.label, href: d.href, count: await metrics.count(d.table, d.filter), tone: d.tone })),
   );
 }
 
@@ -49,6 +57,8 @@ export interface PipelineStage {
   label: string;
   status: string;
   count: number;
+  // その stage の受注額合計（contract_value 合算）。
+  value: number;
   href: string;
 }
 
@@ -63,12 +73,89 @@ const STAGES: { label: string; status: string }[] = [
 export async function loadPipeline(): Promise<PipelineStage[]> {
   const metrics = new CoreMetricsProvider();
   return Promise.all(
-    STAGES.map(async (s) => ({
-      ...s,
-      count: await metrics.count('projects', { column: 'status', in: [s.status] }),
-      href: `/projects?status=${s.status}`,
-    })),
+    STAGES.map(async (s) => {
+      const filter = { column: 'status', in: [s.status] };
+      const [count, value] = await Promise.all([
+        metrics.count('projects', filter),
+        metrics.sum('projects', 'contract_value', filter),
+      ]);
+      return { ...s, count, value, href: `/projects?status=${s.status}` };
+    }),
   );
+}
+
+// パイプラインの健康度：納期リスク（進行中で due_on が dueWithinDays 以内/超過）＋滞留（現ステージに stuckDays 以上）。
+export interface PipelineHealth {
+  dueSoon: number;
+  stuck: number;
+  href: string;
+}
+
+export async function loadPipelineHealth(dueWithinDays = 14, stuckDays = 21): Promise<PipelineHealth> {
+  const metrics = new CoreMetricsProvider();
+  const now = new Date();
+  const dueLimit = new Date(now);
+  dueLimit.setDate(now.getDate() + dueWithinDays);
+  const dueSoon = await metrics.count(
+    'projects',
+    { column: 'status', in: IN_PROGRESS_STATUSES },
+    { column: 'due_on', value: dueLimit.toISOString().slice(0, 10) },
+  );
+  // 滞留：最新 status イベントの changed_at が古い進行中案件（イベントの to_status ＝現 status）。
+  const events = await metrics.rows('project_status_events', ['project_id', 'to_status', 'changed_at']);
+  const latest = new Map<string, { to: string; at: string }>();
+  for (const e of events) {
+    const pid = String(e.project_id);
+    const at = String(e.changed_at);
+    const cur = latest.get(pid);
+    if (!cur || at > cur.at) latest.set(pid, { to: String(e.to_status), at });
+  }
+  const cutoff = new Date(now);
+  cutoff.setDate(now.getDate() - stuckDays);
+  const cutoffIso = cutoff.toISOString();
+  const inProgress = new Set(IN_PROGRESS_STATUSES);
+  let stuck = 0;
+  for (const e of latest.values()) if (inProgress.has(e.to) && e.at < cutoffIso) stuck++;
+  return { dueSoon, stuck, href: '/projects' };
+}
+
+// 財務サマリ（請求書から集計）。売上＝入金済合計、未入金＝請求済かつ未入金、期日超過＝そのうち支払期日超過。
+export interface Finance {
+  revenue: number;
+  unpaid: number;
+  overdue: number;
+  overdueCount: number;
+}
+
+export async function loadFinance(): Promise<Finance> {
+  const rows = await new CoreMetricsProvider().rows('invoices', [
+    'subtotal',
+    'tax',
+    'withholding',
+    'paid_amount',
+    'status',
+    'due_on',
+    'paid_on',
+  ]);
+  const today = new Date().toISOString().slice(0, 10);
+  const n = (v: unknown) => (typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : 0);
+  const s = (v: unknown) => (typeof v === 'string' ? v : '');
+  const f: Finance = { revenue: 0, unpaid: 0, overdue: 0, overdueCount: 0 };
+  for (const r of rows) {
+    // 入金予定＝請求総額−源泉。売上は実入金（paid_amount）、無ければ入金予定で代替。
+    const expected = n(r.subtotal) + n(r.tax) - n(r.withholding);
+    if (s(r.status) === 'paid') {
+      f.revenue += r.paid_amount != null ? n(r.paid_amount) : expected;
+    } else if (s(r.status) === 'sent' && !s(r.paid_on)) {
+      f.unpaid += expected;
+      const due = s(r.due_on);
+      if (due && due < today) {
+        f.overdue += expected;
+        f.overdueCount++;
+      }
+    }
+  }
+  return f;
 }
 
 // 受注ファネル：問い合わせ→顧客→案件（件数）。どこで落ちるかを可視化。
