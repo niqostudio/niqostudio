@@ -47,10 +47,18 @@ jobs:
           docker exec -i "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < core/seeds/dev.sql
           # スキーマができたので PostgREST を起動（health check が通る）。
           pnpm --filter @niqostudio/infra exec supabase start
-          # 公開値をローカル stack に向ける（ジョブの本番 vars を上書き）。
+          # dbmate で作った view/列を PostgREST のスキーマキャッシュに確実に反映させる。
+          docker exec "$db" psql -U postgres -d postgres -c "notify pgrst, 'reload schema';"
+          sleep 5
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
-          echo "PUBLIC_SUPABASE_URL=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')" >> "$GITHUB_ENV"
-          echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')" >> "$GITHUB_ENV"
+          api=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')
+          anon=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')
+          echo "::group::debug REST（落ちる場合の真因確認）"
+          echo "showcases:"; curl -s -H "apikey: $anon" "$api/rest/v1/public_showcases?select=slug,body_md&limit=2"; echo
+          echo "profile:";   curl -s -H "apikey: $anon" "$api/rest/v1/public_profile?select=id,logo_svg&limit=1" | head -c 200; echo
+          echo "::endgroup::"
+          echo "PUBLIC_SUPABASE_URL=$api" >> "$GITHUB_ENV"
+          echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon" >> "$GITHUB_ENV"
       # deploy（push/dispatch）は本番の公開値で build（本番は migrate 済み前提・ゲート順）。
       - name: "deploy: 本番 Supabase 公開値を使う（PR 以外）"
         if: github.event_name != 'pull_request'
