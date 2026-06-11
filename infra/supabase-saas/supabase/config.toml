@@ -1,0 +1,75 @@
+# niqostudio-saas（SaaS 共通アカウント基盤）のローカルスタック。
+# 内部スタック（../supabase）と並走できるよう、ポートは 55xxx 帯にずらしてある。
+# 起動は infra の `saas:*` スクリプト（supabase --workdir supabase-saas …）。
+project_id = "niqostudio-saas"
+
+[api]
+enabled = true
+port = 55321
+# 露出は identity スキーマのみ。本番値は stacks/supabase-saas（supabase_settings）と一致させる。
+schemas = ["identity", "graphql_public"]
+extra_search_path = ["identity", "extensions"]
+max_rows = 1000
+
+[db]
+port = 55322
+shadow_port = 55320
+health_timeout = "2m"
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 55329
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+# seed は root の saas:reset オーケストレータが dbmate 適用後に pg で投入する（supabase 自動 seed は無効）。
+enabled = false
+
+# identity 基盤に不要なサービスは止めてスタックを軽くする（realtime / storage / functions / analytics）。
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 55323
+api_url = "http://127.0.0.1"
+
+# ローカルの auth メール（確認・リセット）の確認用 UI。
+[inbucket]
+enabled = true
+port = 55324
+
+[storage]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[auth]
+enabled = true
+# ローカルは製品の dev サーバ（ポートは製品 repo 側の任意）からの redirect を受ける。
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+minimum_password_length = 8
+password_requirements = ""
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# ローカルはメール確認なしで signUp を完結させる（本番は mailer_autoconfirm=false＝確認必須）。
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
