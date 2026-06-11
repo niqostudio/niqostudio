@@ -192,7 +192,9 @@ begin
         select access_period_days into v_access_days
         from billing.product_offers
         where product_id = v_product_id and key = p_offer_key and is_active;
-        v_expires_at := case when v_access_days is null then null else now() + make_interval(days => v_access_days) end;
+        -- 付与窓は「決済時刻（p_event_at）＋日数」。webhook 処理時刻（now）でなくイベント時刻基準にして、
+        -- 処理遅延・リトライに左右されず決定的にする（再購入は新しい event_at で延長される）。
+        v_expires_at := case when v_access_days is null then null else p_event_at + make_interval(days => v_access_days) end;
       else
         v_expires_at := p_period_end;
       end if;

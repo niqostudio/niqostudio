@@ -55,6 +55,23 @@ test('invoice.paid（初回）: kind=purchase・period.end が期限になる', 
   assert.equal(n.periodEnd, new Date(periodEnd * 1000).toISOString());
 });
 
+test('invoice.paid（複数明細）: proration 行に惑わされず最大 period.end を採る', () => {
+  const prorationEnd = 1_781_000_000; // 古い（proration 行）
+  const coverageEnd = 1_782_592_000; // 新しい（本来の被覆終端）
+  const n = normalizeStripeEvent({
+    id: 'evt_ml', type: 'invoice.paid', created: at,
+    data: { object: {
+      id: 'in_ml', billing_reason: 'subscription_cycle', amount_paid: 1900, currency: 'usd',
+      metadata: { product: 'demo-app', offer: 'pro_monthly' },
+      lines: { data: [
+        { period: { end: prorationEnd } },
+        { period: { end: coverageEnd } },
+      ] },
+    } },
+  });
+  assert.equal(n.periodEnd, new Date(coverageEnd * 1000).toISOString(), '最大の period.end を期末にする');
+});
+
 test('invoice.paid（更新）: kind=renewal', () => {
   const n = normalizeStripeEvent({
     id: 'evt_4', type: 'invoice.paid', created: at,

@@ -53,7 +53,12 @@ export function normalizeStripeEvent(event) {
     case 'invoice.paid': {
       const md = o.subscription_details?.metadata ?? o.metadata ?? {};
       const isFirst = o.billing_reason === 'subscription_create';
-      const periodEnd = o.lines?.data?.[0]?.period?.end;
+      // 明細は複数になりうる（proration 行 + 期間行）。被覆の終端は最大の period.end を採る
+      // （[0] 固定は proration 行を掴む取り違えの温床）。
+      const periodEnd = (o.lines?.data ?? [])
+        .map((l) => l?.period?.end)
+        .filter((e) => typeof e === 'number')
+        .reduce((max, e) => (e > max ? e : max), 0);
       return {
         ...b,
         kind: isFirst ? 'purchase' : 'renewal',
@@ -66,7 +71,7 @@ export function normalizeStripeEvent(event) {
         currency: o.currency ?? null,
         externalInvoiceId: o.id ?? null,
         externalPaymentId: str(o.payment_intent),
-        periodEnd: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+        periodEnd: periodEnd > 0 ? new Date(periodEnd * 1000).toISOString() : null,
       };
     }
     case 'charge.refunded': {

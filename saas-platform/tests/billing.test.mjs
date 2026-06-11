@@ -74,16 +74,16 @@ async function record(args) {
 const grant = async (orgId, scope) =>
   (
     await c.query(
-      `select status, expires_at, plan from identity.product_grants
+      `select status, expires_at, plan, provider_synced_at from identity.product_grants
        where organization_id=$1 and scope is not distinct from $2`,
       [orgId, scope],
     )
   ).rows[0];
 
-test('一回課金: purchase で scoped grant が active・期限は now()+access_period_days', async () => {
+test('一回課金: scoped grant が active・期限は event_at + access_period_days（値をピン留め）', async () => {
   const { orgId } = await fixtures();
   const r = await record({
-    p_event_id: 'evt_1', p_event_type: 'checkout.completed', p_org_id: orgId,
+    p_event_id: 'evt_1', p_event_type: 'checkout.completed', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId,
     p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase',
     p_external_checkout_id: 'cs_1',
   });
@@ -91,19 +91,23 @@ test('一回課金: purchase で scoped grant が active・期限は now()+acces
   const g = await grant(orgId, 'proj-a');
   assert.equal(g.status, 'active');
   assert.equal(g.plan, 'launch_pass');
-  // 期限は約30日後（イベント時刻でなく now() 基準・存在のみ確認）
-  assert.ok(g.expires_at !== null, '一回課金は期限付き');
+  // access_period_days=30 → event_at + 30日 を厳密に検証（30 を別値に変えれば落ちる）。
+  assert.equal(new Date(g.expires_at).toISOString(), '2026-07-13T00:00:00.000Z');
   assert.equal(await count(`select count(*)::int n from billing.purchases where source_event_id='evt_1'`), 1);
 });
 
-test('冪等: 同一イベントの再処理は duplicate・台帳もgrantも二重化しない', async () => {
+test('冪等: 同一イベントの再処理は duplicate・台帳/grant が二重化も変化もしない', async () => {
   const { orgId } = await fixtures();
   const a = await record({ p_event_id: 'evt_2', p_event_type: 'x', p_org_id: orgId, p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_2' });
+  const before = await grant(orgId, 'proj-a');
   const b = await record({ p_event_id: 'evt_2', p_event_type: 'x', p_org_id: orgId, p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_2' });
+  const after = await grant(orgId, 'proj-a');
   assert.equal(a, 'applied');
   assert.equal(b, 'duplicate');
   assert.equal(await count(`select count(*)::int n from billing.purchases where source_event_id='evt_2'`), 1, '台帳1件');
   assert.equal(await count(`select count(*)::int n from identity.product_grants where organization_id='${orgId}' and scope='proj-a'`), 1, 'grant1件');
+  // duplicate 処理で grant の中身（status/expires/plan/provider_synced_at）が変化しないこと。
+  assert.deepEqual(after, before, 'duplicate で grant の中身は不変');
 });
 
 test('順序ガード: 古いイベントは新しい状態を上書きしない', async () => {
@@ -141,22 +145,54 @@ test('匿名: org 未確定（NULL）なら grants を触らず台帳のみ', as
   assert.equal(await count(`select count(*)::int n from identity.product_grants`), 0, 'grants は作られない');
 });
 
-test('未知製品: unknown_product を返し台帳も grants も作らない', async () => {
+test('未知製品: unknown_product・台帳/grants は作らないが provider_events は記録（再送で無限リトライしない）', async () => {
   const { orgId } = await fixtures();
   const r = await record({ p_event_id: 'evt_u', p_event_type: 'purchase', p_org_id: orgId, p_product_code: 'nope', p_offer_key: 'launch_pass', p_scope: 'p', p_kind: 'purchase', p_external_checkout_id: 'cs_u' });
   assert.equal(r, 'unknown_product');
-  assert.equal(await count(`select count(*)::int n from billing.purchases where source_event_id='evt_u'`), 0);
+  assert.equal(await count(`select count(*)::int n from billing.purchases where source_event_id='evt_u'`), 0, '台帳なし');
+  // 未知でもイベントは記録され processed_at が埋まる＝再送が冪等に消化される（無限リトライ防止）。
+  assert.equal(await count(`select count(*)::int n from billing.provider_events where event_id='evt_u' and processed_at is not null`), 1, 'イベントは処理済み記録');
+  // 再送は duplicate
+  const r2 = await record({ p_event_id: 'evt_u', p_event_type: 'purchase', p_org_id: orgId, p_product_code: 'nope', p_offer_key: 'launch_pass', p_scope: 'p', p_kind: 'purchase', p_external_checkout_id: 'cs_u' });
+  assert.equal(r2, 'duplicate');
 });
 
-test('再購入: 別イベントで同一 (org,product,scope) を upsert し expires_at が延長される', async () => {
+test('再購入: 同一 (org,product,scope) を upsert し expires_at が実際に延長される', async () => {
   const { orgId } = await fixtures();
+  // 期限は event_at 基準なので、別 event_at の2回で期限が動く（now 固定トランザクションでも観測可能）。
   await record({ p_event_id: 'evt_buy1', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_b1' });
-  const first = (await grant(orgId, 'proj-a')).expires_at;
-  // 後続イベント（より新しい）で再購入 → 同一行を更新・期限は now() 基準で再計算（延長）。
+  assert.equal(new Date((await grant(orgId, 'proj-a')).expires_at).toISOString(), '2026-07-13T00:00:00.000Z', '1回目: 6/13+30');
   await record({ p_event_id: 'evt_buy2', p_event_at: '2026-06-14T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_b2' });
   assert.equal(await count(`select count(*)::int n from identity.product_grants where organization_id='${orgId}' and scope='proj-a'`), 1, 'grant は1行のまま');
   assert.equal(await count(`select count(*)::int n from billing.purchases where organization_id='${orgId}'`), 2, '台帳は2件');
-  assert.ok((await grant(orgId, 'proj-a')).expires_at >= first, '期限は延長（短縮されない）');
+  // 厳密大なり：2回目（6/14+30）が1回目（6/13+30）より後＝延長。
+  assert.equal(new Date((await grant(orgId, 'proj-a')).expires_at).toISOString(), '2026-07-14T00:00:00.000Z', '2回目: 6/14+30 へ延長');
+});
+
+test('順序ガード（順方向）: より新しいイベントは状態を上書きする', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_o1', p_event_at: '2026-06-13T01:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_period_end: '2026-07-13T00:00:00Z', p_external_invoice_id: 'in_o1' });
+  assert.equal((await grant(orgId, null)).status, 'active');
+  await record({ p_event_id: 'evt_o2', p_event_at: '2026-06-13T05:00:00Z', p_org_id: orgId, p_event_type: 'refund', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'refund', p_external_invoice_id: 'in_o2' });
+  assert.equal((await grant(orgId, null)).status, 'suspended', 'より新しい refund で suspended に進む');
+});
+
+test('順序ガード（等値）: 同一 timestamp の後続イベントは上書きしない（< の境界）', async () => {
+  const { orgId } = await fixtures();
+  const t = '2026-06-13T03:00:00Z';
+  await record({ p_event_id: 'evt_e1', p_event_at: t, p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_period_end: '2026-07-13T00:00:00Z', p_external_invoice_id: 'in_e1' });
+  assert.equal((await grant(orgId, null)).status, 'active');
+  await record({ p_event_id: 'evt_e2', p_event_at: t, p_org_id: orgId, p_event_type: 'refund', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'refund', p_external_invoice_id: 'in_e2' });
+  assert.equal((await grant(orgId, null)).status, 'active', '同一時刻では上書きしない（provider_synced_at < の仕様）');
+});
+
+test('サブスク更新: kind=renewal も active・period_end で更新される（DB 経路）', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_rn1', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'invoice.paid', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_amount: 1900, p_period_end: '2026-07-13T00:00:00Z', p_external_invoice_id: 'in_rn1' });
+  await record({ p_event_id: 'evt_rn2', p_event_at: '2026-07-13T00:00:00Z', p_org_id: orgId, p_event_type: 'invoice.paid', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'renewal', p_amount: 1900, p_period_end: '2026-08-13T00:00:00Z', p_external_invoice_id: 'in_rn2' });
+  const g = await grant(orgId, null);
+  assert.equal(g.status, 'active');
+  assert.equal(new Date(g.expires_at).toISOString(), '2026-08-13T00:00:00.000Z', '更新で期末が進む');
 });
 
 test('chargeback / dispute: grant が suspended になる', async () => {
