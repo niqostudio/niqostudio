@@ -1,0 +1,9 @@
+<h2>Confirm your email</h2>
+<p>
+  {{ if .Data.product_name }}Thanks for signing up for {{ .Data.product_name }} — a product built and
+  operated by NIQO STUDIO. Your account is managed by the NIQO STUDIO account platform.{{ else }}Thanks
+  for signing up for a NIQO STUDIO account.{{ end }}
+</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm your email address</a></p>
+<p>If you did not request this, you can safely ignore this email.</p>
+<p>— NIQO STUDIO · <a href="https://niqostudio.com/en">niqostudio.com/en</a></p>

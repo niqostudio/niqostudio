@@ -3,6 +3,8 @@
 locals {
   cfg  = jsondecode(file("${path.module}/../../../config.${var.env}.json"))
   saas = local.cfg.saas
+  # auth メールの差出人は既存の送信系（website 自動返信）と同じアドレス・表示名に揃える。
+  mail = local.cfg.domains[local.cfg.primary].email
 }
 
 # config.<env>.json の値の健全性チェック（plan 時に検出）。

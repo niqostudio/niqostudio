@@ -101,7 +101,7 @@ SaaS 共通アカウント基盤は**別 Supabase プロジェクト**（[ADR 00
 | PR チェック | `db: check` | `saas-platform: check` |
 | 本番適用 | `db: migrate`（`infra-production`） | `saas-platform: migrate`（`saas-platform-production`） |
 
-設定 IaC は `infra/stacks/supabase-saas`（api 露出＋auth＝サインアップ・redirect 允許リスト。製品ドメインの追加は root `config.<env>.json` の `saas.auth.additional_redirect_urls`）。プロジェクト作成・SMTP・ES256 署名鍵はダッシュボード管理。
+設定 IaC は `infra/stacks/supabase-saas`（api 露出＋auth＝サインアップ・redirect 允許リスト・SMTP 設定・メールテンプレート。製品ドメインの追加は root `config.<env>.json` の `saas.auth.additional_redirect_urls`）。プロジェクト作成・SMTP パスワード・ES256 署名鍵のみダッシュボード管理。
 
 ## コミット
 
