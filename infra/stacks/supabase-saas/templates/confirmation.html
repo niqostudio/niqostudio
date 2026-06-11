@@ -1,14 +1,36 @@
-<h2>Confirm your email address</h2>
-<p>
-  {{ if .Data.product_name }}Thanks for signing up for {{ .Data.product_name }}, a product by NIQO
-  STUDIO.{{ else }}Thanks for creating your NIQO STUDIO account.{{ end }}
-  Please confirm your email address to finish setting up your account.
-</p>
-<p><a href="{{ .ConfirmationURL }}">Confirm email address</a></p>
-<p>If you didn't create this account, you can safely ignore this email.</p>
-<hr />
-<p style="color: #6b7280; font-size: 12px">
-  NIQO STUDIO · <a href="https://niqostudio.com/en">niqostudio.com/en</a>
-  {{ if .Data.product_name }}<br />You're receiving this email because this address was used to sign
-  up for {{ .Data.product_name }}.{{ end }}
-</p>
+<!doctype html>
+<!-- 視覚言語は website/src/lib/email.ts の shell（warm 配色・gold 上線＋暗色バー＋wordmark PNG）を踏襲。
+     デザインを変えるときは両方を揃えること。画像・リンクは本番サイトの絶対 URL。 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+  </head>
+  <body style="margin:0;padding:0;background:#faf9f8;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1c1917;line-height:1.8;-webkit-text-size-adjust:100%">
+    <div style="max-width:600px;margin:0 auto;padding:24px 16px">
+      <div style="background:#ffffff;border:1px solid #eae7e3;border-radius:2px;overflow:hidden">
+        <div style="background:#211d19;border-top:3px solid #dcb441;padding:16px 24px">
+          <img src="https://niqostudio.com/email-logo.png" alt="NIQO STUDIO" height="24" style="display:block;height:24px;width:auto;border:0" />
+        </div>
+        <div style="padding:24px 24px 28px">
+          <h2 style="margin:0 0 12px;font-size:18px">Confirm your email address</h2>
+          <p style="margin:0 0 8px">
+            {{ if .Data.product_name }}Thanks for signing up for {{ .Data.product_name }}, a product by
+            NIQO STUDIO.{{ else }}Thanks for creating your NIQO STUDIO account.{{ end }}
+            Please confirm your email address to finish setting up your account.
+          </p>
+          <p style="margin:24px 0">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#15803d;color:#ffffff;text-decoration:none;padding:10px 22px;border-radius:2px;font-weight:600">Confirm email address</a>
+          </p>
+          <p style="color:#57534e;font-size:13px;margin:0">If you didn't create this account, you can safely ignore this email.</p>
+        </div>
+      </div>
+      <div style="padding:14px 24px 0;color:#57534e;font-size:12px;text-align:center">
+        <a href="https://niqostudio.com/en" style="color:#15803d;text-decoration:none">NIQO STUDIO</a>
+        {{ if .Data.product_name }}<br />You're receiving this email because this address was used to sign up
+        for {{ .Data.product_name }}.{{ end }}
+      </div>
+    </div>
+  </body>
+</html>
