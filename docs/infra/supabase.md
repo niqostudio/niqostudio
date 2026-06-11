@@ -17,9 +17,12 @@
 block のみ partial 更新し、未宣言の設定には触れない（delete は no-op）。auth / storage / network は据え置き（後日 additive）。
 
 - 必要な値：`SUPABASE_ACCESS_TOKEN`（Account → Access Tokens・発行名 `infra-supabase`・Secret）／`SUPABASE_PROJECT_REF`（Variable → `TF_VAR_project_ref`）／R2 state キー。配置は [変数の配置](../variables.md)。
-- **plan-first**：初回は `pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase plan` で本番現行値と突合し、差分が意図したもの（例: `studio` 露出の追加）だけになることを確認してから apply（無断の設定変更を避ける）。
-- **順序**：本番 `studio` スキーマは migration（`db: migrate`）適用後に作成されるため、`db_schema` への `studio` 追加 apply はその後に行う（存在するスキーマだけを露出に足す）。
-- apply は当面手動。reconcile 済みを確認後に `infra: apply` へ取り込める。
+- **plan / apply は CI**：Actions の **`infra: supabase settings`** を dispatch する（対象 stack を選択・
+  既定は plan のみ）。**plan-first**＝まず plan のログで本番現行値との差分が意図したものだけか確認し、
+  apply=true で再 dispatch（無断の設定変更を避ける）。秘密（`SUPABASE_ACCESS_TOKEN`・R2 キー）は
+  `infra-production` Environment に集約し、ローカルへ散らばらせない。
+- **順序**：露出スキーマは migration（`db: migrate` / `saas-platform: migrate`）適用後に apply する
+  （存在するスキーマだけを露出に足す）。
 
 ### niqostudio-saas の SMTP パスワード（唯一の秘密・API で投入）
 
