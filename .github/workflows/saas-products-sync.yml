@@ -1,0 +1,78 @@
+name: "saas-products: sync"
+
+# 製品・商品マスタ（core.products / core.product_offers・正本は core DB）を
+# Stripe（terraform）と identity.products（saas 側レジストリ）へ反映する。
+# 明示の dispatch のみ（将来は studio の操作ボタンが workflow_dispatch を叩く）。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# state への同時書き込みを防ぐ（infra: apply と同じ直列化グループ）。
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+jobs:
+  stripe:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    environment: infra-production # core DB 読み出し＋Stripe/state 鍵（プラットフォーム反映）
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.R2_TFSTATE_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_TFSTATE_SECRET_KEY }}
+      STRIPE_API_KEY:        ${{ secrets.STRIPE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: core からマスタを書き出し
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/saas-products-export.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: products
+          path: infra/stacks/stripe/products.auto.tfvars.json
+      - name: terraform apply（Stripe Product / Price）
+        env:
+          R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
+          CF_ACCOUNT_ID:     ${{ vars.CF_ACCOUNT_ID }}
+        working-directory: infra
+        run: |
+          cat > stacks/stripe/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "stripe/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/stripe init -backend-config=backend.tfbackend -input=false
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/stripe apply -auto-approve -input=false
+
+  identity:
+    if: github.repository == 'niqostudio/niqostudio'
+    needs: stripe
+    runs-on: ubuntu-latest
+    environment: saas-platform-production # saas DB への射影は顧客側 Environment にスコープ
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - uses: actions/download-artifact@v4
+        with:
+          name: products
+          path: infra/stacks/stripe
+      - name: identity.products へ射影
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/saas-products-identity-sync.mjs

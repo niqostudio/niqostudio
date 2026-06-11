@@ -31,6 +31,7 @@ terraform plan
 
 | Name | Type |
 |------|------|
+| [cloudflare_ruleset.contact_ratelimit](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/ruleset) | resource |
 | [cloudflare_workers_custom_domain.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/workers_custom_domain) | resource |
 
 ## Inputs
@@ -40,7 +41,7 @@ terraform plan
 | forward\_to | Email Routing の既定転送先（Cloudflare で検証済みの個人受信箱） | `string` | n/a | yes |
 | cloudflare\_account\_id | Cloudflare アカウント ID（空ならゾーンから導出） | `string` | `""` | no |
 | env | デプロイ環境（読み込む config.<env>.json を選ぶ） | `string` | `"production"` | no |
-| inbound\_forwards | 受信転送ルール。キー=ローカルパート（@より前）、値=転送先。空なら hi@ を forward\_to へ1本作る。 | `map(string)` | `{}` | no |
+| inbound\_forwards | 受信転送ルールの追加/上書き。キー=ローカルパート（@より前）、値=転送先。既定の hi@ / dmarc@（→ forward\_to）にマージされる。 | `map(string)` | `{}` | no |
 | resend\_dns\_records | Resend ドメイン認証用の DNS レコード群 | <pre>list(object({<br/>    name     = string<br/>    type     = string<br/>    content  = string<br/>    ttl      = optional(number, 1)<br/>    priority = optional(number)<br/>    comment  = optional(string)<br/>  }))</pre> | `[]` | no |
 | zone\_id | ゾーン ID（空ならドメイン名から導出） | `string` | `""` | no |
 

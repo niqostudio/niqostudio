@@ -41,6 +41,9 @@ nav:
   - データベース:
       - スキーマ: core/schema.md
       - 運用: database.md
+  - SaaS 基盤:
+      - アーキテクチャ: saas/architecture.md
+      - 製品統合契約: saas/contract.md
   - infra:
       - Cloudflare 手順: infra/cloudflare.md
       - Resend 手順: infra/resend.md
@@ -55,3 +58,5 @@ nav:
       - 0004 migration ツール: adr/0004-migration-tooling.md
       - 0005 Supabase を infra へ: adr/0005-supabase-into-infra-platform.md
       - 0006 公開 view の SECURITY DEFINER: adr/0006-public-views-security-definer.md
+      - 0007 SaaS identity を別プロジェクトへ: adr/0007-saas-identity-project.md
+      - 0008 SaaS 課金の横断集約: adr/0008-saas-billing-centralized.md

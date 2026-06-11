@@ -5,8 +5,8 @@ Terraform で管理する。アプリ実装は持たない。
 
 ## 責任範囲
 
-- **管理する**: Cloudflare（DNS / Email Routing / Worker のカスタムドメイン / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定（`stacks/supabase`＝`supabase_settings` の api 露出スキーマ）・keep-alive、Terraform state。
-- **管理しない**: アプリのコード/ビルド/Worker スクリプト本体（→ website の `wrangler deploy`）、core のスキーマ/RLS（→ core）、シークレットの**値**（→ CI Secret / Environment / `wrangler secret`。state にも残さない）。
+- **管理する**: Cloudflare（DNS / Email Routing / Worker のカスタムドメイン / Turnstile）、Resend のドメイン認証 DNS、Supabase 設定（`stacks/supabase`＝内部プロジェクトの api 露出 / `stacks/supabase-saas`＝niqostudio-saas の api＋auth）・keep-alive（両プロジェクト）、Terraform state。ローカルスタックも2系統（`supabase/`＝内部 54xxx / `supabase-saas/`＝saas 55xxx）。
+- **管理しない**: アプリのコード/ビルド/Worker スクリプト本体（→ website の `wrangler deploy`）、core / saas-platform のスキーマ/RLS（→ 各モジュール）、シークレットの**値**（→ CI Secret / Environment / `wrangler secret`。state にも残さない）。
 
 ## 構成
 

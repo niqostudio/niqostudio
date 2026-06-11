@@ -26,3 +26,17 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             -H "Accept-Profile: core" \
             -o /dev/null
+
+      - name: ping Supabase (niqostudio-saas)
+        # 2プロジェクト目（SaaS アカウント基盤）。anon に開いている identity.products を叩いて実 DB 活動にする。
+        # Variables 未設定（プロジェクト未作成）の間は skip。
+        if: vars.PUBLIC_SAAS_SUPABASE_URL != ''
+        env:
+          SUPABASE_URL:             ${{ vars.PUBLIC_SAAS_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.PUBLIC_SAAS_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 --max-time 30 \
+            "$SUPABASE_URL/rest/v1/products?select=id&limit=1" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            -H "Accept-Profile: identity" \
+            -o /dev/null

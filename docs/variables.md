@@ -11,6 +11,7 @@ Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-prod
 | --- | --- | --- | --- |
 | infra | 共有 Cloudflare アカウント＋Supabase（infra 所有） | `infra-production` のみ | 共有のため分割しない（staging は `infra-staging`） |
 | core | Supabase プロジェクト（infra 所有） | 専用 env なし＝`infra-production` を借用 | supabase が infra 所有のため infra に従う（[ADR 0005](adr/0005-supabase-into-infra-platform.md)） |
+| saas-platform | Supabase プロジェクト niqostudio-saas（infra 所有） | `saas-platform-production` | 顧客向け信頼ドメインのため infra と分離（[ADR 0007](adr/0007-saas-identity-project.md)） |
 | website | デプロイ単位 | production のみ | staging サイトを `website-staging` で出し分け |
 | core-types | 環境なし（build 時の型生成） | — | — |
 
@@ -30,6 +31,7 @@ Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-prod
 | `domains.<domain>.workers.<role>.*` | ✋ | infra, website | `name`（Worker 名＝CI が deploy 名に使用＆infra が service 束ね） / `subdomain`（role マップ） |
 | `domains.<domain>.rate_limit.contact.*` | ✋ | infra | `POST /api/contact` のエッジ流量しきい値 `period` / `requests_per_period` / `mitigation_timeout`（`ratelimit.tf` が読む。Free は timeout=period 固定） |
 | `domains.<domain>.{redirect_to,placeholder_ip}` | ✋ | infra | リダイレクト専用ドメイン |
+| `saas.auth.{site_url,additional_redirect_urls}` | ✋ | infra | niqostudio-saas の auth 設定（`stacks/supabase-saas` が読む）。`additional_redirect_urls` が**製品ドメインの正本**＝製品追加時にここへ足して apply |
 
 > `zone_id` / `account_id` は各ドメイン名から **data source で導出**（🤖）＝書かない。
 
@@ -87,7 +89,13 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `SUPABASE_SECRET_KEY`（必要時のみ） | ✋ | core | `sb_secret_`・BYPASSRLS。migration には不要 | — |
 | `CF_TERRAFORM_TOKEN` | ✋ | infra | TF が CF 操作。最小権限。発行名 `infra-terraform`（→ `CLOUDFLARE_API_TOKEN`） | Account(NIQO STUDIO)<br>　Workers Scripts: Edit<br>　Email Routing Addresses: Edit<br>　Account Rulesets: Edit<br>Zone(niqostudio.com / niqo.studio)<br>　DNS: Edit<br>　Email Routing Rules: Edit<br>　Dynamic URL Redirects: Edit<br>　Zone: Read |
 | `R2_TFSTATE_KEY_ID` / `R2_TFSTATE_SECRET_KEY` | ✋ | infra | S3 鍵ペア（ID も機密）。発行名 `infra-tfstate` | バケット `niqostudio-tfstate`<br>　Object: Read & Write |
+| `STRIPE_API_KEY` | ✋ | infra（`saas-products: sync`） | `stacks/stripe`（Product / Price の IaC）用。restricted key で発行 | Products / Prices: Write のみ |
 | `EMAIL_FORWARD_TO` | ✋ | infra | 転送先メール（PII）→ `TF_VAR_forward_to` | — |
+
+### `saas-platform-production`
+| 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
+| --- | --- | --- | --- | --- |
+| `SUPABASE_DB_URL` | ✋ | saas-platform（`saas-platform: migrate`） | **niqostudio-saas** の Session pooler 接続文字列。dbmate 適用（承認ゲート）。**CI は IPv4 のみ**。infra-production の同名 secret とは別プロジェクト | DB ロール（migration 適用） |
 
 ### `website-production`
 | 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
@@ -109,6 +117,7 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | --- | --- | --- | --- |
 | `R2_TFSTATE_BUCKET` | ✋ | infra | R2 の state バケット名（endpoint は `CF_ACCOUNT_ID` から組み立て・ローカルは backend.tfbackend） |
 | `SUPABASE_PROJECT_REF` | ✋ | infra | `supabase_settings` の対象プロジェクト参照 ID（→ `TF_VAR_project_ref`）。ダッシュボード URL の `<ref>`（半公開） |
+| `SAAS_SUPABASE_PROJECT_REF` | ✋ | infra | `stacks/supabase-saas` の対象プロジェクト参照 ID（→ `TF_VAR_project_ref`） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS。**JSON 配列のみ**（`resend_dns_records =` の代入頭は付けない）。CI が `.auto.tfvars.json` に包んで渡す。ローカルは `terraform.tfvars`（HCL）側に書く |
 
 > website のメール送信元・宛先（noreply / hi@）は GitHub Variable ではなく config.json（`email.addresses`・astro.config が inline 注入）に集約。
@@ -121,6 +130,7 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `CF_ACCOUNT_ID` | ✋ | infra, website | Cloudflare アカウント ID（非秘密）。infra=R2 endpoint 組立 / website=Worker deploy（wrangler `accountId`） |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✋ | website, infra(keep-alive) | フロントに載る公開鍵（`sb_publishable_`・RLS 準拠）。SSG ビルド＆ping |
 | `PUBLIC_TURNSTILE_SITE_KEY` | ✋ | website | ボット対策の公開 site key（未設定なら検証 skip） |
+| `PUBLIC_SAAS_SUPABASE_URL` / `PUBLIC_SAAS_SUPABASE_PUBLISHABLE_KEY` | ✋ | infra(keep-alive)、各製品 repo | **niqostudio-saas** の公開 URL / publishable key。keep-alive の ping ＋ 製品側ログインフォームが使う値と同一 |
 
 ## Worker ランタイム値（独立した置き場を持たない）
 
