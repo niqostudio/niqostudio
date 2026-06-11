@@ -755,11 +755,62 @@ export type Database = {
           },
         ]
       }
+      product_offers: {
+        Row: {
+          access_period_days: number | null
+          billing_interval: string | null
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          key: string
+          product_id: string
+          unit_amount: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          access_period_days?: number | null
+          billing_interval?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          product_id: string
+          unit_amount: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          access_period_days?: number | null
+          billing_interval?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          product_id?: string
+          unit_amount?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_offers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string
           id: string
           internal_notes: string | null
+          is_saas: boolean
           launched_on: string | null
           name: string
           slug: string
@@ -772,6 +823,7 @@ export type Database = {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          is_saas?: boolean
           launched_on?: string | null
           name: string
           slug: string
@@ -784,6 +836,7 @@ export type Database = {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          is_saas?: boolean
           launched_on?: string | null
           name?: string
           slug?: string

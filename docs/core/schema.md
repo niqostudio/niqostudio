@@ -29,7 +29,7 @@ studio は service_role で core を読み書きし、website は anon で `publ
 
 | レイヤ | テーブル/ビュー | anon（公開サイト）からのアクセス |
 |---|---|---|
-| 🔒 truth | `clients` / `projects` / `products` / `requirements` / `problems` / `scope_items` / `project_decisions` / `deliverables` / `metrics` / `project_repositories` | 不可（REVOKE・service_role 専用） |
+| 🔒 truth | `clients` / `projects` / `products` / `product_offers` / `requirements` / `problems` / `scope_items` / `project_decisions` / `deliverables` / `metrics` / `project_repositories` | 不可（REVOKE・service_role 専用） |
 | 🔒 状態機械 | `project_statuses` / `project_status_transitions` / `project_status_events` | 不可 |
 | 🔒 NDA | `ndas` / `nda_events` | 不可（公開可否の正本＋変更履歴・projects 専用） |
 | 🔒 curation | `showcase_entries` / `showcase_problems` / `showcase_deliverables` / `showcase_metrics` | 不可 |
@@ -73,6 +73,7 @@ erDiagram
     projects     ||--o{ project_decisions : "project_id"
     projects     ||--o{ project_repositories : "project_id"
     projects     ||--o{ problems          : "project_id (xor product_id)"
+    products     ||--o{ product_offers    : "product_id (SaaS の販売単位)"
     products     ||--o{ problems          : "product_id (xor project_id)"
     projects     ||--o{ deliverables      : "project_id (xor product_id)"
     products     ||--o{ deliverables      : "product_id (xor project_id)"
@@ -141,6 +142,26 @@ erDiagram
 | `tech_stack` | text[] NOT NULL | 技術＋横断的基盤 |
 | `launched_on` | date | 公開・運用開始 |
 | `internal_notes` | text | 内部専用 |
+| `is_saas` | boolean NOT NULL | 顧客がサインアップ・課金できる SaaS 製品（既定 false）。saas 側レジストリ（identity.products）と Stripe への反映対象集合（[ADR 0008](../adr/0008-saas-billing-centralized.md)） |
+
+### product_offers（truth・SaaS の商品＝販売単位）
+
+SaaS 製品（`is_saas`）の offer・価格マスタ。Stripe 反映（lookup key = `<slug>_<key>_v<version>`）と
+billing の plan 解決の正本。**売値の定義（currency / unit_amount / billing_interval）は version 単位で不変**
+（トリガで UPDATE 拒否）。改定＝新 version 行の追加＋旧 `is_active` off。販売中の版は (product, key) ごとに
+1つ（partial unique）。設計は [ADR 0008](../adr/0008-saas-billing-centralized.md)、saas 側全体像は
+[SaaS 基盤アーキテクチャ](../saas/architecture.md)。
+
+| 列 | 型 | 備考 |
+|---|---|---|
+| `product_id` | uuid FK→products NOT NULL | ON DELETE CASCADE |
+| `key` | text NOT NULL | offer キー（例 launch_pass / pro_monthly）。(product_id, key, version) UNIQUE |
+| `version` | integer NOT NULL | 1 始まり。改定ごとに増える |
+| `currency` | text NOT NULL | ISO 小文字3字（既定 usd） |
+| `unit_amount` | integer NOT NULL | 最小通貨単位（usd ならセント）・正 |
+| `billing_interval` | text | day / week / month / year。NULL＝一回課金 |
+| `access_period_days` | integer | 一回課金の付与窓（日数・NULL=無期限）。表示（billing-prices）と grant.expires_at の単一正本。billing_interval と相互排他（CHECK） |
+| `is_active` | boolean NOT NULL | 販売中の版か（既定 true） |
 
 ### project_statuses / project_status_transitions / project_status_events（状態機械）
 案件ライフサイクルを「状態マスタ × 許容遷移 × 履歴」でデータ層に持つ。`projects.status` は `project_statuses.code` への FK。
