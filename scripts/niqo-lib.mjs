@@ -89,7 +89,7 @@ export function clearState() {
 }
 
 // この repo の dev プロセス（next/astro/pnpm ラッパ・ビルドワーカ）を CommandLine で特定して停止。
-// state 追跡外のゾンビも掃除する（兄弟 repo＝sindo/preflight 等は CommandLine が一致しないので対象外）。
+// state 追跡外のゾンビも掃除する（兄弟 repo は CommandLine が一致しないので対象外）。
 export function killRepoDev() {
   try {
     if (platform() === 'win32') {

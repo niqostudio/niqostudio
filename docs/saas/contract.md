@@ -121,6 +121,40 @@ const isPaid = (target: string | null) => plansFor(target).some((p) => p !== 'fr
 - 前提（基盤側で保証）：`identity.products` は authenticated に SELECT が開かれている（上記 join の成立条件）。
   列名は `memberships` / `product_grants` とも `organization_id`（生成型を正とする）。
 
+## ブランド・運営者情報（正本は manifest 配信）
+
+運営者情報（名称・リンク・ロゴ・将来の特商法表記等）の正本は **`GET https://niqostudio.com/operator.json`**。
+製品はフッターの attribution・©・法務リンク・ロゴをこの manifest から描画する——運営情報の改定
+（住所・表記・ページ URL）で製品の再デプロイを不要にするため。**値をハードコードしない**。
+
+```jsonc
+{
+  "schema_version": 1,
+  "name": "NIQO STUDIO",
+  "copyright_holder": "NIQO STUDIO",        // © 表記は「© <year> <copyright_holder>」（year は製品側で算出）
+  "contact": "hi@niqostudio.com",
+  "links": {
+    "site": "https://niqostudio.com/en",     // attribution のリンク先（英語の運営者ページ）
+    "site_ja": "https://niqostudio.com",
+    "privacy": "https://niqostudio.com/privacy"
+    // 特商法表記ページの公開後に "legal_jp_tokushoho" が追加される。
+    // 課金（billing）提供開始時には、購入導線からの特商法リンク表示を必須化する
+  },
+  "logos": {
+    "wordmark_png_dark": "https://niqostudio.com/email-logo.png", // ダーク地用・auth メールと同一アセット
+    "mark_svg": "https://niqostudio.com/favicon.svg"              // currentColor 継承
+  }
+}
+```
+
+- **取得はビルド時**を推奨（fetch してフッターに焼き込む＝ランタイム依存を作らない）。
+  キーの削除・意味変更は破壊的変更（`schema_version` を上げる＋ADR・通知）。キー追加は非破壊。
+- **attribution の文言規約**：*"{{製品名}} is built and operated by NIQO STUDIO"*（短縮形 *"by NIQO STUDIO"*）、
+  リンク先は `links.site`。ロゴの改変（色変更・変形・余白侵食）はしない。テキストで足りる場面は
+  mono・大文字・字間広めの「NIQO STUDIO」表記でもよい。
+- サインアップ導線の差出人予告（前述）とこの attribution が対になって、auth メールの
+  「NIQO STUDIO から届く」体験が説明可能になる。
+
 ## セキュリティ注記（製品側の責務）
 
 - セッションは supabase-js 既定（localStorage）＝**XSS でトークン窃取されうる前提**で扱う。
@@ -159,7 +193,7 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
 
 ```jsonc
 {
-  "product": "preflight",          // 製品コード（registry の code）
+  "product": "exampleapp",         // 製品コード（registry の code）
   "offer": "launch_pass",          // offer キー（バージョン・price ID は billing が現行版に解決）
   "scope": "<projectKey>",         // 対象束縛の一回課金のみ。org 全体（サブスク）は null
   "success_url": "https://…",      // 允許リスト登録済み origin のみ
