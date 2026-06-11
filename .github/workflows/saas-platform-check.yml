@@ -50,6 +50,12 @@ jobs:
         env:
           DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:55322/postgres?sslmode=disable"
         run: pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations --no-dump-schema up
+      - name: seed 投入（products マスタ）
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:55322/postgres?sslmode=disable"
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f saas-platform/seeds/dev.sql
+      - name: RLS / GRANT テスト
+        run: pnpm saas:test
       - name: migrations から型を生成
         run: pnpm db:types:saas
       - name: ドリフト検知（差分があれば fail）
