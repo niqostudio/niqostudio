@@ -17,6 +17,7 @@
 
 - 全リポ public 前提。**シークレットの値は追跡ファイルに置かない**（`.env` / `*.tfvars` / state は gitignore、CI Secret / Environment で注入）。
 - 実顧客データをコミットしない（seed・サンプルに実データを入れない）。本番データは各サービスのコンソールから投入。
+- **未公開プロダクトの名前・コードネームを追跡ファイルに書かない**（seed・docs・例示・コメントは架空名を使う）。
 - 公開定数は root の [`config.<env>.json`](../../config.production.json)（env ごとに1ファイル・committed）に集約（ドメイン等）。infra（Terraform）と website が直読する。
 
 ## ツール / 型

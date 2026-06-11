@@ -35,7 +35,11 @@ const saas = createClient(SAAS_SUPABASE_URL, SAAS_SUPABASE_PUBLISHABLE_KEY, {
 await saas.auth.signUp({
   email, password,
   options: {
-    data: { product: PRODUCT_CODE, display_name: name }, // display_name は任意
+    data: {
+      product: PRODUCT_CODE, // 製品コードのみでよい。表示名は registry から自動付与（下記）
+      display_name: name,    // 任意
+      locale: 'en',          // 任意・将来のメール多言語化用（フロントの表示言語をそのまま渡す。現状は英語のみ）
+    },
     emailRedirectTo: 'https://<製品ドメイン>/auth/callback', // 允許リスト登録済みの URL のみ
   },
 });
@@ -43,6 +47,13 @@ await saas.auth.signUp({
 
 - **ログイン**：`signInWithPassword` / `signInWithOtp`（マジックリンク）。セッション管理は supabase-js に委譲。
 - パスワードリセット等の `redirectTo` も允許リスト登録済み URL のみ有効（未登録は site_url にフォールバック）。
+- **auth メールの差出人は `noreply@niqostudio.com`（NIQO STUDIO 名義）**で全製品共通。
+  件名・文面には**製品の表示名が自動で入る**——`product` コードから registry の表示名
+  （core.products.name の射影）が挿入時に metadata へ正規化されるため、**製品側から表示名を渡さない**
+  （改竄・改名ドリフトの根を断つ。製品の改名はマスタ変更＋sync だけで以後のメールに反映）。
+  製品側の責務として、**サインアップフォーム近くに「確認メールは NIQO STUDIO（アカウント基盤）から届く」旨を
+  一行表示する**こと——見知らぬ差出人によるスパム誤認・confirmation 率低下を防ぐ。
+  製品ドメイン差出人・製品ブランド（色・フォント）のメールは Send Email hook で後段（必要が実測されたら）。
 
 ## テナント解決（org）
 
@@ -110,6 +121,72 @@ const isPaid = (target: string | null) => plansFor(target).some((p) => p !== 'fr
 - 前提（基盤側で保証）：`identity.products` は authenticated に SELECT が開かれている（上記 join の成立条件）。
   列名は `memberships` / `product_grants` とも `organization_id`（生成型を正とする）。
 
+## ブランド・運営者情報（正本は manifest 配信）
+
+運営者情報（名称・リンク・ロゴ・将来の特商法表記等）の正本は **`GET https://niqostudio.com/operator.json`**。
+製品はフッターの attribution・©・法務リンク・ロゴをこの manifest から描画する——運営情報の改定
+（住所・表記・ページ URL）で製品の再デプロイを不要にするため。**値をハードコードしない**。
+
+```jsonc
+{
+  "schema_version": 1,
+  "name": "NIQO STUDIO",
+  "copyright_holder": "NIQO STUDIO",        // © 表記は「© <year> <copyright_holder>」（year は製品側で算出）
+  "contact": "hi@niqostudio.com",
+  "links": {
+    "site": "https://niqostudio.com/en",     // attribution のリンク先（英語の運営者ページ）
+    "site_ja": "https://niqostudio.com",
+    "privacy": "https://niqostudio.com/privacy"
+  },
+  "logos": {
+    "wordmark_png_dark": "https://niqostudio.com/email-logo.png", // ダーク地用・auth メールと同一アセット
+    "mark_svg": "https://niqostudio.com/favicon.svg"              // currentColor 継承
+  },
+  // 特商法表記の事業者ブロック（正本データ・登録後に出現。キー構成は core 側の正本に従う）
+  "legal_jp_tokushoho": {
+    "seller_name": "…",          // 事業者名（屋号）
+    "responsible_person": "…",   // 運営責任者
+    "address": "…",              // または "disclosure_policy" で「請求があり次第遅滞なく開示」方式
+    "phone": "…",
+    "contact_email": "…"
+  }
+}
+```
+
+### 特商法ページ（製品側の責務・billing 提供開始時に必須化）
+
+**特商法表記ページは各製品が自ドメインに持つ**。構成は：
+
+- **事業者ブロック**（名称・責任者・所在地・連絡先）＝ manifest の `legal_jp_tokushoho` から描画
+  （ハードコードしない。運営者情報の改定は manifest 再取得＝ビルドで追従）
+- **製品固有の項目**（販売価格＝`billing-prices` から・支払時期 / 方法・提供時期・キャンセル / 返金規定）＝製品が記載
+- 購入導線（pricing / checkout 周辺）からこのページへのリンクを表示する
+- **ページは日本語**（特商法は日本の消費者保護法に基づく開示。英語 UI メインでもこのページ自体は日本語でよく、
+  英訳は参考訳の位置づけ）。**UI 言語に依存せず到達可能**にする（英語 UI 上のリンク名は
+  "Legal Notice (Japan)" 等で可）。法的販売者は NIQO STUDIO（billing の主体）＝事業者ブロックが
+  manifest 配信である理由。なお ToS / Privacy（製品の利用規約・英語が主）はこれとは別に製品が持つ。
+
+- **取得規約（データの性質で分ける）**：
+  - **法務・運営者情報**（`name` / `links` / `legal_jp_tokushoho`）＝**ランタイム取得＋キャッシュ**
+    （日次 revalidate 程度の ISR）。運営情報・特商法の改定が**製品の再デプロイを待たずに反映される**のが
+    manifest の存在理由なので、この部分をビルド焼き込みにしない。
+  - **cosmetic**（ロゴ・attribution 文言）＝ビルド時取り込みで可。**ロゴはバンドル推奨**
+    （hotlink はランタイム依存を作り、製品のトラフィックが配信側のログに乗る。ロゴ改定は稀で stale 許容）。
+- **耐障害（fail-static）**：製品は manifest の**スナップショットをコミットして同梱**し、ランタイム取得の
+  成功時のみ上書きする。取得失敗（配信ダウン・ネット断）時は前回値 / 同梱スナップショットで描画を続け、
+  **ビルドも描画も落とさない**（manifest を製品のクリティカルパスにしない）。
+- **欠落キーは防御的に省略**：`legal_jp_tokushoho` は正本データの登録後に出現する。欠落中の特商法ページは
+  プレースホルダ（準備中）でよいが、**決済導線を出す時点で存在チェックを必須化**する
+  （無ければ課金 UI を出さない＝fail-closed の原則と整合）。
+- **未知の `schema_version`**：既知キーだけを使い、描画を壊さない。未知のメジャーを検知したら
+  同梱スナップショットへフォールバックしてよい（メジャー上昇は事前通知済みの破壊的変更）。
+  キーの削除・意味変更は破壊的変更（`schema_version` を上げる＋ADR・通知）。キー追加は非破壊。
+- **attribution の文言規約**：*"{{製品名}} is built and operated by NIQO STUDIO"*（短縮形 *"by NIQO STUDIO"*）、
+  リンク先は `links.site`。ロゴの改変（色変更・変形・余白侵食）はしない。テキストで足りる場面は
+  mono・大文字・字間広めの「NIQO STUDIO」表記でもよい。
+- サインアップ導線の差出人予告（前述）とこの attribution が対になって、auth メールの
+  「NIQO STUDIO から届く」体験が説明可能になる。
+
 ## セキュリティ注記（製品側の責務）
 
 - セッションは supabase-js 既定（localStorage）＝**XSS でトークン窃取されうる前提**で扱う。
@@ -148,7 +225,7 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
 
 ```jsonc
 {
-  "product": "preflight",          // 製品コード（registry の code）
+  "product": "exampleapp",         // 製品コード（registry の code）
   "offer": "launch_pass",          // offer キー（バージョン・price ID は billing が現行版に解決）
   "scope": "<projectKey>",         // 対象束縛の一回課金のみ。org 全体（サブスク）は null
   "success_url": "https://…",      // 允許リスト登録済み origin のみ

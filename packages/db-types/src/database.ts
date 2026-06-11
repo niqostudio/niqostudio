@@ -854,6 +854,7 @@ export type Database = {
           display_name: string
           handle: string
           id: string
+          legal_jp: Json | null
           logo_svg: string | null
           operation_policy: string | null
           skills: string[]
@@ -867,6 +868,7 @@ export type Database = {
           display_name: string
           handle: string
           id?: string
+          legal_jp?: Json | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[]
@@ -880,6 +882,7 @@ export type Database = {
           display_name?: string
           handle?: string
           id?: string
+          legal_jp?: Json | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[]
@@ -1618,6 +1621,7 @@ export type Database = {
           display_name: string | null
           handle: string | null
           id: string | null
+          legal_jp: Json | null
           logo_svg: string | null
           operation_policy: string | null
           skills: string[] | null
@@ -1630,6 +1634,7 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string | null
+          legal_jp?: Json | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[] | null
@@ -1642,6 +1647,7 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string | null
+          legal_jp?: Json | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[] | null

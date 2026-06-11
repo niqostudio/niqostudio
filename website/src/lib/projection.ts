@@ -68,5 +68,6 @@ export function toProfileView(p: Profile): ProfileView {
     operationPolicy: p.operation_policy,
     contactEmail: p.contact_email,
     socialLinks: (p.social_links as unknown as SocialLink[] | null) ?? [],
+    legalJp: (p.legal_jp as Record<string, unknown> | null) ?? null,
   };
 }

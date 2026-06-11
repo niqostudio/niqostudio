@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- 視覚言語は website/src/lib/email.ts の shell（warm 配色・gold 上線＋暗色バー＋wordmark PNG）を踏襲。
+     デザインを変えるときは両方を揃えること。画像・リンクは本番サイトの絶対 URL。 -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+  </head>
+  <body style="margin:0;padding:0;background:#faf9f8;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1c1917;line-height:1.8;-webkit-text-size-adjust:100%">
+    <div style="max-width:600px;margin:0 auto;padding:24px 16px">
+      <div style="background:#ffffff;border:1px solid #eae7e3;border-radius:2px;overflow:hidden">
+        <div style="background:#211d19;border-top:3px solid #dcb441;padding:16px 24px">
+          <img src="https://niqostudio.com/email-logo.png" alt="NIQO STUDIO" height="24" style="display:block;height:24px;width:auto;border:0" />
+        </div>
+        <div style="padding:24px 24px 28px">
+          <h2 style="margin:0 0 12px;font-size:18px">Sign in to {{ if .Data.product_name }}{{ .Data.product_name }}{{ else }}your NIQO STUDIO account{{ end }}</h2>
+          <p style="margin:0 0 8px">Click the button below to sign in. This link can only be used once.</p>
+          <p style="margin:24px 0">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#15803d;color:#ffffff;text-decoration:none;padding:10px 22px;border-radius:2px;font-weight:600">Sign in</a>
+          </p>
+          <p style="color:#57534e;font-size:13px;margin:0">If you didn't request this email, you can safely ignore it — no one can sign in without this link.</p>
+        </div>
+      </div>
+      <div style="padding:14px 24px 0;color:#57534e;font-size:12px;text-align:center">
+        <a href="https://niqostudio.com/en" style="color:#15803d;text-decoration:none">NIQO STUDIO</a>
+        {{ if .Data.product_name }}<br />{{ .Data.product_name }} is built and operated by NIQO STUDIO.
+        Accounts work across all NIQO STUDIO products.{{ end }}
+      </div>
+    </div>
+  </body>
+</html>
