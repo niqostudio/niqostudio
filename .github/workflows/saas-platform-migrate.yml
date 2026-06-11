@@ -1,0 +1,43 @@
+name: "saas-platform: migrate"
+
+# 本番 DB（niqostudio-saas / identity スキーマ）への適用。明示の dispatch のみ（apply=false は status のみ）。
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "true で本番適用 / false は status（pending 表示）のみ"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    # 顧客向け信頼ドメインのため infra-production と分離した専用 Environment（同名 secret を env でスコープ）。
+    environment: saas-platform-production
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # dbmate は root devDep。root のみ入れる。
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - name: dbmate（identity を本番へ）
+        # 接続は Session pooler（IPv4）。GitHub runner は IPv6 直結に届かないため。
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            echo "::group::identity 適用"
+            pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations --no-dump-schema up
+          else
+            echo "::group::identity status（dry-run）"
+            pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations status
+          fi
+          echo "::endgroup::"

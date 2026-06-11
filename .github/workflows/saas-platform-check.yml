@@ -1,0 +1,56 @@
+name: "saas-platform: check"
+
+# PR チェック（db-check と同型・対象は saas-platform）：(1) 適用済み migration の改竄防止、
+# (2) migrations から生成した型がコミット済み db-types（saas-database.ts）とドリフトしていないか。
+on:
+  pull_request:
+    paths:
+      - "saas-platform/migrations/**"
+      - "packages/db-types/src/saas-database.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: 既存 migration の変更/削除がないか
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          changed=$(git diff --diff-filter=MD --name-only "$base"...HEAD -- 'saas-platform/migrations/*.sql')
+          if [ -n "$changed" ]; then
+            echo "::error::適用済み migration の変更/削除は禁止です（前進 migration を追加してください）:"
+            echo "$changed"
+            exit 1
+          fi
+          echo "OK: 既存 migration は不変"
+
+  drift:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: local supabase 起動（saas スタック・PostgREST は不要）
+        # PostgREST は露出スキーマ（identity）の存在を起動時に要求するが、それは後段の dbmate で作るため除外する。
+        run: pnpm --filter @niqostudio/infra exec supabase --workdir supabase-saas start -x postgrest
+      - name: dbmate で identity スキーマを適用
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:55322/postgres?sslmode=disable"
+        run: pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations --no-dump-schema up
+      - name: migrations から型を生成
+        run: pnpm db:types:saas
+      - name: ドリフト検知（差分があれば fail）
+        run: git diff --exit-code -- packages/db-types/src/saas-database.ts
