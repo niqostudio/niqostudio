@@ -69,4 +69,5 @@ export type ProfileView = {
   operationPolicy: string | null;
   contactEmail: string | null;
   socialLinks: { label: string; url: string }[];
+  legalJp: Record<string, unknown> | null;
 };

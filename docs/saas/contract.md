@@ -137,15 +137,30 @@ const isPaid = (target: string | null) => plansFor(target).some((p) => p !== 'fr
     "site": "https://niqostudio.com/en",     // attribution のリンク先（英語の運営者ページ）
     "site_ja": "https://niqostudio.com",
     "privacy": "https://niqostudio.com/privacy"
-    // 特商法表記ページの公開後に "legal_jp_tokushoho" が追加される。
-    // 課金（billing）提供開始時には、購入導線からの特商法リンク表示を必須化する
   },
   "logos": {
     "wordmark_png_dark": "https://niqostudio.com/email-logo.png", // ダーク地用・auth メールと同一アセット
     "mark_svg": "https://niqostudio.com/favicon.svg"              // currentColor 継承
+  },
+  // 特商法表記の事業者ブロック（正本データ・登録後に出現。キー構成は core 側の正本に従う）
+  "legal_jp_tokushoho": {
+    "seller_name": "…",          // 事業者名（屋号）
+    "responsible_person": "…",   // 運営責任者
+    "address": "…",              // または "disclosure_policy" で「請求があり次第遅滞なく開示」方式
+    "phone": "…",
+    "contact_email": "…"
   }
 }
 ```
+
+### 特商法ページ（製品側の責務・billing 提供開始時に必須化）
+
+**特商法表記ページは各製品が自ドメインに持つ**。構成は：
+
+- **事業者ブロック**（名称・責任者・所在地・連絡先）＝ manifest の `legal_jp_tokushoho` から描画
+  （ハードコードしない。運営者情報の改定は manifest 再取得＝ビルドで追従）
+- **製品固有の項目**（販売価格＝`billing-prices` から・支払時期 / 方法・提供時期・キャンセル / 返金規定）＝製品が記載
+- 購入導線（pricing / checkout 周辺）からこのページへのリンクを表示する
 
 - **取得はビルド時**を推奨（fetch してフッターに焼き込む＝ランタイム依存を作らない）。
   キーの削除・意味変更は破壊的変更（`schema_version` を上げる＋ADR・通知）。キー追加は非破壊。
