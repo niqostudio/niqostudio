@@ -12,3 +12,35 @@ SaaS の**製品・商品（offer・価格）マスタ**を Stripe の Product /
   書き出しから消えた旧 version の price は destroy ＝ Stripe 上はアーカイブ（既存サブスクは旧 price のまま継続）。
 - API キーは環境変数 `STRIPE_API_KEY`（restricted key: Products / Prices Write のみ。値はコード・state に書かない）。
 - init: `terraform init -backend-config=backend.tfbackend`（key は `stripe/terraform.tfstate`）。
+
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| terraform | >= 1.6 |
+| stripe | ~> 3.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| stripe | ~> 3.0 |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [stripe_price.this](https://registry.terraform.io/providers/lukasaron/stripe/latest/docs/resources/price) | resource |
+| [stripe_product.this](https://registry.terraform.io/providers/lukasaron/stripe/latest/docs/resources/product) | resource |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| products | SaaS 製品・商品（offer・価格）マスタ（core からの書き出し） | <pre>list(object({<br/>    code   = string<br/>    name   = string<br/>    status = optional(string)<br/>    offers = list(object({<br/>      key                = string<br/>      version            = number<br/>      currency           = string<br/>      unit_amount        = number<br/>      interval           = optional(string)<br/>      access_period_days = optional(number) # identity 射影・billing 用（この stack では使わない）<br/>    }))<br/>  }))</pre> | `[]` | no |
+
+## Outputs
+
+No outputs.
+<!-- END_TF_DOCS -->
