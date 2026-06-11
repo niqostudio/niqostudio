@@ -79,11 +79,11 @@ enable_confirmations = false
 # テンプレートは本番（stacks/supabase-saas が Management API へ宣言）と同じファイルを参照する＝単一ソース。
 # プレビュー: saas:start 後にメールを発火し Mailpit（http://127.0.0.1:55324）で見る。
 [auth.email.template.confirmation]
-subject = "Confirm your email — NIQO STUDIO account"
+subject = "{{ if .Data.product_name }}Confirm your email — {{ .Data.product_name }}{{ else }}Confirm your email — NIQO STUDIO account{{ end }}"
 content_path = "../stacks/supabase-saas/templates/confirmation.html"
 
 [auth.email.template.magic_link]
-subject = "Your login link — NIQO STUDIO account"
+subject = "{{ if .Data.product_name }}Your login link — {{ .Data.product_name }}{{ else }}Your login link — NIQO STUDIO account{{ end }}"
 content_path = "../stacks/supabase-saas/templates/magic_link.html"
 
 [auth.email.template.recovery]

@@ -13,8 +13,8 @@
         },
         "rate_limit_per_hour": 30,
         "subjects": {
-          "confirmation": "Confirm your email — NIQO STUDIO account",
-          "magic_link": "Your login link — NIQO STUDIO account",
+          "confirmation": "{{ if .Data.product_name }}Confirm your email — {{ .Data.product_name }}{{ else }}Confirm your email — NIQO STUDIO account{{ end }}",
+          "magic_link": "{{ if .Data.product_name }}Your login link — {{ .Data.product_name }}{{ else }}Your login link — NIQO STUDIO account{{ end }}",
           "recovery": "Reset your password — NIQO STUDIO account"
         }
       }

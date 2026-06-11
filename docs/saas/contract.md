@@ -36,9 +36,8 @@ await saas.auth.signUp({
   email, password,
   options: {
     data: {
-      product: PRODUCT_CODE,
-      product_name: 'preflight', // 任意・auth メールの文面に製品名として埋め込まれる
-      display_name: name,        // 任意
+      product: PRODUCT_CODE, // 製品コードのみでよい。表示名は registry から自動付与（下記）
+      display_name: name,    // 任意
     },
     emailRedirectTo: 'https://<製品ドメイン>/auth/callback', // 允許リスト登録済みの URL のみ
   },
@@ -47,10 +46,13 @@ await saas.auth.signUp({
 
 - **ログイン**：`signInWithPassword` / `signInWithOtp`（マジックリンク）。セッション管理は supabase-js に委譲。
 - パスワードリセット等の `redirectTo` も允許リスト登録済み URL のみ有効（未登録は site_url にフォールバック）。
-- **auth メールの差出人は `noreply@niqostudio.com`（NIQO STUDIO 名義）**で全製品共通。文面には
-  `product_name` が埋め込まれる。製品側の責務として、**サインアップフォーム近くに
-  「確認メールは NIQO STUDIO（アカウント基盤）から届く」旨を一行表示する**こと——見知らぬ差出人による
-  スパム誤認・confirmation 率低下を防ぐ。製品ドメイン差出人（Send Email hook）は必要が実測されたら後段。
+- **auth メールの差出人は `noreply@niqostudio.com`（NIQO STUDIO 名義）**で全製品共通。
+  件名・文面には**製品の表示名が自動で入る**——`product` コードから registry の表示名
+  （core.products.name の射影）が挿入時に metadata へ正規化されるため、**製品側から表示名を渡さない**
+  （改竄・改名ドリフトの根を断つ。製品の改名はマスタ変更＋sync だけで以後のメールに反映）。
+  製品側の責務として、**サインアップフォーム近くに「確認メールは NIQO STUDIO（アカウント基盤）から届く」旨を
+  一行表示する**こと——見知らぬ差出人によるスパム誤認・confirmation 率低下を防ぐ。
+  製品ドメイン差出人・製品ブランド（色・フォント）のメールは Send Email hook で後段（必要が実測されたら）。
 
 ## テナント解決（org）
 
