@@ -209,10 +209,12 @@ const isPaid = (target: string | null) => plansFor(target).some((p) => p !== 'fr
 supabase gen types typescript --project-id <ref> --schema identity > src/types/saas-database.ts
 ```
 
-## 課金（billing v1・実装中＝この形で固定予定。「確定」表記になるまで実 URL は叩けない）
+## 課金（billing v1・実装済み＝この形で固定。実 URL はデプロイ後に有効）
 
 製品が触るのは次の3点だけ。**Stripe のコード・鍵・price ID は製品から完全に消える**。
 エンドポイントは niqostudio-saas の Edge Functions（`https://<ref>.supabase.co/functions/v1/...`）。
+**製品は事前に「製品コード」と「success/cancel URL の origin 允許リスト」を niqostudio に登録する**
+（origin 允許は config の `saas.billing.allowed_origins` が正本＝オープンリダイレクト防止）。
 
 ### 1. checkout 作成 — `POST /functions/v1/billing-checkout`
 
