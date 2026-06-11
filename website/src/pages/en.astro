@@ -1,33 +1,25 @@
 ---
 // 英語圏向けの単一ページ。SaaS 製品からの「by NIQO STUDIO」導線の着地先。
 // サイト本体（日本語・受託向け）の Shell は日本語ナビ/CTA/パンくず前提のため使わず、
-// トークン・部品（LogoMark / Wordmark / SectionLabel / Button）だけ共有する self-contained 構成。
+// トークン・部品（LogoMark / Wordmark / SectionLabel / Button / Chip / SocialLinks）だけ共有する
+// self-contained 構成。英語コピーは config の EN、ブランド要素（ロゴ・skills・SNS・tagline）は profile 駆動。
 import '../styles/global.css';
 import { Font } from 'astro:assets';
-import { SITE, THEME } from '../config/site';
+import { SITE, THEME, EN } from '../config/site';
+import { getProfile } from '../lib/content';
 import LogoMark from '../components/ui/LogoMark.astro';
 import Wordmark from '../components/ui/Wordmark.astro';
 import SectionLabel from '../components/ui/SectionLabel.astro';
 import Button from '../components/ui/Button.astro';
+import Chip from '../components/ui/Chip.astro';
+import SocialLinks from '../components/layout/SocialLinks.astro';
 
-const title = `${SITE.name} — Independent software studio in Japan`;
-const description =
-  'NIQO STUDIO is an independent software studio based in Japan. We build and operate SaaS products, and provide software design, development, and operations for businesses in Japan.';
+const profile = await getProfile();
 const canonical = new URL('/en', Astro.site);
 // OG 画像はトップ用を流用（生成対象は日本語の固定ページのみ）。
 const ogImage = new URL('/og/index.png', Astro.site);
 const year = new Date().getFullYear();
-
-const work = [
-  {
-    name: 'Products',
-    desc: 'We build and operate our own SaaS products for a global audience. Each product has its own site, documentation, and support channel.',
-  },
-  {
-    name: 'Client work',
-    desc: 'Software consulting, design, development, and operations for small businesses and startups in Japan — offered in Japanese.',
-  },
-];
+const contactEmail = profile.contactEmail ?? SITE.email;
 ---
 
 <!doctype html>
@@ -37,12 +29,13 @@ const work = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-noto-jp" />
     <Font cssVariable="--font-jetbrains-mono" />
-    <title>{title}</title>
+    <title>{EN.title}</title>
     <link rel="canonical" href={canonical.href} />
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta name="description" content={EN.description} />
+    <meta property="og:title" content={EN.title} />
+    <meta property="og:description" content={EN.description} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content="en_US" />
@@ -50,21 +43,21 @@ const work = [
     <meta property="og:image" content={ogImage.href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={title} />
+    <meta property="og:image:alt" content={EN.title} />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body class="min-h-screen flex flex-col">
     <header class="w-full max-w-page mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex items-center justify-between">
-      <p class="inline-flex items-center gap-3">
+      <a href="/en" aria-label={SITE.name} class="inline-flex items-center gap-3 hover:opacity-80 transition-opacity">
         <LogoMark class="w-9 h-9" />
         <Wordmark class="text-sm" />
-      </p>
-      <a href="/" class="text-xs text-muted hover:text-fg tracking-wide transition-colors">Japanese site →</a>
+      </a>
+      <a href="/" class="text-xs text-muted hover:text-fg tracking-wide transition-colors">日本語サイト →</a>
     </header>
 
     <main class="flex-1 w-full max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* 日本語トップと同じヒーロー文法: 右にウォーターマーク・上下中央・min-h で余白量を決める */}
-      <section class="relative isolate flex min-h-[24rem] flex-col justify-center overflow-hidden">
+      <section class="relative isolate -mt-6 flex min-h-[26rem] flex-col justify-center overflow-hidden">
         <div
           class="pointer-events-none absolute inset-y-0 right-0 -z-10 aspect-square h-full text-border-subtle opacity-50 [--logo-pair:currentColor] [--logo-diag:currentColor]"
           aria-hidden="true"
@@ -72,27 +65,31 @@ const work = [
           <LogoMark class="h-full w-full" cover />
         </div>
         <h1>
-          <span class="block font-mono text-sm text-muted uppercase tracking-wide">{SITE.name}</span>
-          <span class="block text-4xl sm:text-5xl font-semibold tracking-tight mt-3">
-            An independent software studio based in Japan.
-          </span>
+          <span class="block font-mono text-sm text-muted uppercase tracking-wide">{EN.eyebrow}</span>
+          <span class="block text-4xl sm:text-5xl font-semibold tracking-tight mt-3">{EN.headline}</span>
         </h1>
-        <p class="text-xl sm:text-2xl font-medium tracking-tight text-accent mt-2">Fast, smart, just right —</p>
-        <p class="text-base text-muted mt-3 max-w-xl">
-          We design, build, and run software end to end: SaaS products for a global audience, and
-          client work for businesses in Japan.
-        </p>
+        <p class="text-xl sm:text-2xl font-medium tracking-tight text-accent mt-2">{EN.tagline}</p>
+        <p class="text-base text-muted mt-3 max-w-xl">{EN.lead}</p>
         <div class="flex gap-4 mt-8">
-          <Button href={`mailto:${SITE.email}`}>Get in touch</Button>
-          <Button href="/" variant="secondary">Japanese site</Button>
+          <Button href={`mailto:${contactEmail}`}>Get in touch</Button>
+          <Button href="/" variant="secondary">日本語サイト</Button>
         </div>
+        {
+          profile.skills.length > 0 && (
+            <ul class="flex flex-wrap gap-2 mt-8">
+              {profile.skills.map((skill) => (
+                <Chip>{skill}</Chip>
+              ))}
+            </ul>
+          )
+        }
       </section>
 
       <section class="py-12 border-t border-border mt-8">
         <SectionLabel as="h2">What we do</SectionLabel>
         <div class="mt-8 grid gap-x-6 gap-y-7 sm:gap-8 sm:grid-cols-2">
           {
-            work.map((item, i) => (
+            EN.work.map((item, i) => (
               <div class="flex items-baseline gap-4 sm:block">
                 <p class="font-mono text-3xl text-accent">{String(i + 1).padStart(2, '0')}</p>
                 <div class="sm:mt-3">
@@ -108,27 +105,40 @@ const work = [
       <section class="py-12 border-t border-border">
         <SectionLabel as="h2">Contact</SectionLabel>
         <p class="text-sm text-muted mt-6 max-w-xl">
-          For product-specific questions, please use the support channel on the product&apos;s own site.
-          For everything else:
-          <a href={`mailto:${SITE.email}`} class="link-rich">{SITE.email}</a>
+          {EN.contactLead}
+          <a href={`mailto:${contactEmail}`} class="link-rich ml-1">{contactEmail}</a>
         </p>
       </section>
     </main>
 
-    {/* 日本語サイトのフッターと同じダーク面・ゴールド罫の文法 */}
+    {/* 日本語サイトのフッターと同じダーク面・ゴールド罫の文法（ロゴ＋tagline＋Connect の3カラム） */}
     <footer class="bg-surface-dark text-on-dark border-t-2 border-gold">
-      <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center gap-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-        <p class="inline-flex items-center gap-3">
-          <LogoMark class="w-10 h-10 [--logo-accent:var(--color-gold)]" />
-          <Wordmark class="text-base" />
-        </p>
-        <p class="text-sm text-on-dark-muted max-w-xs">Fast, smart, just right.</p>
+      <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 py-14 flex flex-col items-center gap-10 text-center sm:grid sm:grid-cols-3 sm:items-start sm:gap-10 sm:text-left">
+        <div class="flex flex-col items-center sm:items-start">
+          <a href="/en" aria-label={SITE.name} class="inline-flex items-center gap-3 text-on-dark hover:opacity-80 transition-opacity">
+            <LogoMark class="w-12 h-12 [--logo-accent:var(--color-gold)]" />
+            <Wordmark class="text-base" />
+          </a>
+          <p class="text-sm text-on-dark-muted mt-4 max-w-xs">{EN.tagline}</p>
+          {/* ブランドの日本語タグライン（原語の署名）。a studio in Japan のバイリンガルな手触り。 */}
+          {profile.tagline && <p class="font-mono text-xs text-on-dark-muted mt-3 tracking-wide">{profile.tagline}</p>}
+        </div>
+
+        <nav>
+          <p class="text-xs uppercase tracking-widest text-gold">Site</p>
+          <ul class="mt-4 flex flex-col gap-2.5 text-sm text-on-dark-muted">
+            <li><a href="/" class="hover:text-on-dark transition-colors">日本語サイト</a></li>
+            <li><a href="/privacy" class="hover:text-on-dark transition-colors">Privacy (Japanese)</a></li>
+          </ul>
+        </nav>
+
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gold">Connect</p>
+          <SocialLinks links={profile.socialLinks} contactHref={`mailto:${contactEmail}`} class="mt-4 text-on-dark" />
+        </div>
       </div>
-      <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 pb-10 flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="max-w-page mx-auto px-4 sm:px-6 lg:px-8 pb-10">
         <p class="text-xs text-on-dark-muted uppercase tracking-wide">&copy; {year} <Wordmark /></p>
-        <a href="/privacy" class="text-xs text-on-dark-muted hover:text-on-dark tracking-wide transition-colors">
-          Privacy policy (Japanese)
-        </a>
       </div>
     </footer>
   </body>

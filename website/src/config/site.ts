@@ -71,6 +71,30 @@ export const HOME = {
   description: SITE.description,
 } as const;
 
+// 英語圏向けページ（/en）の固定コピー。SaaS 製品からのブランド導線の着地先。
+// 日本語サイトは core.profile（CMS）駆動だが、英語面は対訳を持たないためここを単一ソースにする。
+export const EN = {
+  title: `${SITE.name} — Independent software studio in Japan`,
+  description:
+    'NIQO STUDIO is an independent software studio in Japan. We build and operate our own SaaS products, and take on software design, development, and operations for businesses in Japan.',
+  eyebrow: SITE.name,
+  headline: 'An independent software studio in Japan.',
+  // ブランドの英語タグライン（日本語 tagline の対）。
+  tagline: 'Fast, smart, and just right.',
+  lead: 'We design, build, and run software end to end — our own SaaS products for a global audience, and client work for businesses in Japan.',
+  work: [
+    {
+      name: 'Products',
+      desc: 'We build and operate our own SaaS products for a global audience. Each product has its own site, documentation, and support.',
+    },
+    {
+      name: 'Client work',
+      desc: 'Software consulting, design, development, and operations for small businesses and startups — delivered in Japanese.',
+    },
+  ],
+  contactLead: "For product-specific questions, use the support channel on the product's own site. For everything else:",
+} as const;
+
 // ページ末尾の CTA（Shell が描画。/about・/contact では非表示）
 export const CTA = {
   heading: 'まずは無料相談から',
