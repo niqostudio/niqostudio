@@ -13,6 +13,7 @@
     "saas:stop": "pnpm --filter @niqostudio/infra run saas:stop",
     "saas:status": "pnpm --filter @niqostudio/infra run saas:status",
     "saas:reset": "node scripts/saas-reset.mjs",
+    "saas:functions:serve": "node scripts/saas-functions-serve.mjs",
     "db:types:saas": "pnpm --filter @niqostudio/infra run types:saas",
     "niqo:up": "node scripts/niqo-up.mjs",
     "niqo:dev": "node scripts/niqo-dev.mjs",

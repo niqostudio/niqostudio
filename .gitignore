@@ -31,3 +31,6 @@ org-icon.png
 
 # niqo dev（detached プロセスの state / ログ）
 .niqo/
+
+# billing 関数のローカル env
+saas-platform/functions/.env.local
