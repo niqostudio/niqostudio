@@ -90,5 +90,9 @@ content_path = "../stacks/supabase-saas/templates/magic_link.html"
 subject = "Reset your password"
 content_path = "../stacks/supabase-saas/templates/recovery.html"
 
+[auth.email.template.email_change]
+subject = "Confirm your new email address"
+content_path = "../stacks/supabase-saas/templates/email_change.html"
+
 [auth.sms]
 enable_signup = false

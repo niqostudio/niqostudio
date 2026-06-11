@@ -39,11 +39,15 @@ resource "supabase_settings" "this" {
     smtp_sender_name      = local.mail.sender_name
     rate_limit_email_sent = local.saas.auth.email.rate_limit_per_hour
 
+    # テンプレートは「発火しうるフロー」の分だけ宣言管理する（invite・reauth・通知系は
+    # 対応フローを有効化するときに足す＝使わない文面の負債を持たない）。
     mailer_subjects_confirmation          = local.saas.auth.email.subjects.confirmation
     mailer_subjects_magic_link            = local.saas.auth.email.subjects.magic_link
     mailer_subjects_recovery              = local.saas.auth.email.subjects.recovery
+    mailer_subjects_email_change          = local.saas.auth.email.subjects.email_change
     mailer_templates_confirmation_content = file("${path.module}/templates/confirmation.html")
     mailer_templates_magic_link_content   = file("${path.module}/templates/magic_link.html")
     mailer_templates_recovery_content     = file("${path.module}/templates/recovery.html")
+    mailer_templates_email_change_content = file("${path.module}/templates/email_change.html")
   })
 }
