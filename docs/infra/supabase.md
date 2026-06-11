@@ -5,6 +5,9 @@
 > [core 運用](../database.md)、値の置き場は [変数の配置](../variables.md)、反映の順序は [デプロイ手順](../deploy.md)。
 
 ## プロジェクト / 接続
+- **命名規約：プロジェクト名＝信頼ドメイン**（スキーマ名・モジュール名を名乗らない）。
+  `niqostudio`（内部＝core / studio / 公開 view）／`niqostudio-saas`（顧客向け＝identity / billing）／
+  将来 `niqostudio-staging`（混載・実データなし）。名前は表示専用でいつでも変更可（ref・URL・キーは不変）。
 - プロジェクトを作成し、`PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_PUBLISHABLE_KEY`（公開鍵）を控える（配置は [変数の配置](../variables.md)）。
 - 本番 migration（dbmate）用の接続文字列は Database → Connection string → **Session pooler**（CI は IPv4 のみ）。`SUPABASE_DB_URL` に設定。詳細は [core 運用](../database.md)。
 
