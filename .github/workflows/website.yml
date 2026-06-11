@@ -45,12 +45,25 @@ jobs:
           pnpm exec dbmate --migrations-dir studio/migrations --migrations-table studio_migrations --no-dump-schema up
           db=$(docker ps --filter name=supabase_db --format '{{.Names}}' | head -1)
           docker exec -i "$db" psql -U postgres -d postgres -v ON_ERROR_STOP=1 < core/seeds/dev.sql
-          # dbmate で作った core/studio（view/列）を PostgREST のスキーマキャッシュに反映。
-          docker exec "$db" psql -U postgres -d postgres -c "notify pgrst, 'reload schema';"
-          sleep 8
+          # スキーマ不在のまま起動した PostgREST は notify ではキャッシュ復帰しないことがある
+          # （タイミング依存で build が 500）。コンテナ再起動＋実クエリでの readiness 待ちで決定的にする。
+          rest=$(docker ps -a --filter name=supabase_rest --format '{{.Names}}' | head -1)
+          docker restart "$rest"
           env_out=$(pnpm --filter @niqostudio/infra exec supabase status -o env)
           api=$(printf '%s' "$env_out" | sed -n 's/^API_URL="\?\([^"]*\)"\?$/\1/p')
           anon=$(printf '%s' "$env_out" | sed -n 's/^ANON_KEY="\?\([^"]*\)"\?$/\1/p')
+          code=000
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$api/rest/v1/public_profile?select=id&limit=1" \
+              -H "apikey: $anon" -H "Accept-Profile: core") || true
+            [ "$code" = "200" ] && break
+            sleep 2
+          done
+          if [ "$code" != "200" ]; then
+            echo "::error::PostgREST が復帰しませんでした（last status=$code）"
+            docker logs --tail 50 "$rest"
+            exit 1
+          fi
           echo "PUBLIC_SUPABASE_URL=$api" >> "$GITHUB_ENV"
           echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon" >> "$GITHUB_ENV"
       # deploy（push/dispatch）は本番の公開値で build（本番は migrate 済み前提・ゲート順）。
