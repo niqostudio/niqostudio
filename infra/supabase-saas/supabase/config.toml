@@ -65,11 +65,30 @@ enable_manual_linking = false
 minimum_password_length = 8
 password_requirements = ""
 
+[auth.rate_limit]
+# CLI 既定の 2/h だとテンプレートのプレビュー（複数通）で詰まる。本番（config.json）と同値に。
+email_sent = 30
+
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
 # ローカルはメール確認なしで signUp を完結させる（本番は mailer_autoconfirm=false＝確認必須）。
+# テンプレートのプレビューで confirmation を出したいときだけ一時的に true にして stop/start。
 enable_confirmations = false
+
+# テンプレートは本番（stacks/supabase-saas が Management API へ宣言）と同じファイルを参照する＝単一ソース。
+# プレビュー: saas:start 後にメールを発火し Mailpit（http://127.0.0.1:55324）で見る。
+[auth.email.template.confirmation]
+subject = "Confirm your email — NIQO STUDIO account"
+content_path = "../stacks/supabase-saas/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Your login link — NIQO STUDIO account"
+content_path = "../stacks/supabase-saas/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password — NIQO STUDIO account"
+content_path = "../stacks/supabase-saas/templates/recovery.html"
 
 [auth.sms]
 enable_signup = false
