@@ -1,0 +1,65 @@
+---
+// メールアドレスを「見える文字」として出し、クリックでコピー＋mailto を試みる。
+// メーラー未設定環境（Web メール / モバイル）でも mailto 無反応の行き止まりにならない
+// （アドレスが常に画面に出ているので最悪コピー or 手入力できる）。JS 無効でも素の mailto に縮退。
+interface Props {
+  email: string;
+  class?: string;
+}
+const { email, class: className } = Astro.props;
+---
+
+<span class:list={['copy-email', className]} data-email={email}>
+  <a href={`mailto:${email}`} class="copy-email-link link-rich">{email}</a>
+  <button type="button" class="copy-email-btn" aria-label="Copy email address" hidden>
+    <span class="copy-email-label">Copy</span>
+  </button>
+</span>
+
+<style>
+  .copy-email {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .copy-email-btn {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    padding: 0.1rem 0.45rem;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .copy-email-btn:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+</style>
+
+<script>
+  // 進歩的強化：JS が動くときだけコピーボタンを出す。クリックでクリップボードへ。
+  document.querySelectorAll<HTMLElement>('.copy-email').forEach((el) => {
+    const email = el.dataset.email ?? '';
+    const btn = el.querySelector<HTMLButtonElement>('.copy-email-btn');
+    const label = el.querySelector<HTMLElement>('.copy-email-label');
+    if (!btn || !label || !email || !navigator.clipboard) return;
+    btn.hidden = false;
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(email);
+        const prev = label.textContent;
+        label.textContent = 'Copied';
+        setTimeout(() => {
+          label.textContent = prev;
+        }, 1600);
+      } catch {
+        /* コピー不可でもアドレスは表示済み＝行き止まりにはならない */
+      }
+    });
+  });
+</script>
