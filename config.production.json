@@ -13,9 +13,9 @@
         },
         "rate_limit_per_hour": 30,
         "subjects": {
-          "confirmation": "{{ if .Data.product_name }}Confirm your email — {{ .Data.product_name }}{{ else }}Confirm your email — NIQO STUDIO account{{ end }}",
-          "magic_link": "{{ if .Data.product_name }}Your login link — {{ .Data.product_name }}{{ else }}Your login link — NIQO STUDIO account{{ end }}",
-          "recovery": "Reset your password — NIQO STUDIO account"
+          "confirmation": "{{ if .Data.product_name }}Confirm your email for {{ .Data.product_name }}{{ else }}Confirm your email address{{ end }}",
+          "magic_link": "{{ if .Data.product_name }}Sign in to {{ .Data.product_name }}{{ else }}Sign in to NIQO STUDIO{{ end }}",
+          "recovery": "Reset your password"
         }
       }
     }

@@ -38,6 +38,7 @@ await saas.auth.signUp({
     data: {
       product: PRODUCT_CODE, // 製品コードのみでよい。表示名は registry から自動付与（下記）
       display_name: name,    // 任意
+      locale: 'en',          // 任意・将来のメール多言語化用（フロントの表示言語をそのまま渡す。現状は英語のみ）
     },
     emailRedirectTo: 'https://<製品ドメイン>/auth/callback', // 允許リスト登録済みの URL のみ
   },
