@@ -45,6 +45,5 @@ pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase plan
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
+No outputs.
 <!-- END_TF_DOCS -->
