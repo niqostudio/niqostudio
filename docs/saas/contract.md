@@ -35,7 +35,11 @@ const saas = createClient(SAAS_SUPABASE_URL, SAAS_SUPABASE_PUBLISHABLE_KEY, {
 await saas.auth.signUp({
   email, password,
   options: {
-    data: { product: PRODUCT_CODE, display_name: name }, // display_name は任意
+    data: {
+      product: PRODUCT_CODE,
+      product_name: 'preflight', // 任意・auth メールの文面に製品名として埋め込まれる
+      display_name: name,        // 任意
+    },
     emailRedirectTo: 'https://<製品ドメイン>/auth/callback', // 允許リスト登録済みの URL のみ
   },
 });
@@ -43,6 +47,10 @@ await saas.auth.signUp({
 
 - **ログイン**：`signInWithPassword` / `signInWithOtp`（マジックリンク）。セッション管理は supabase-js に委譲。
 - パスワードリセット等の `redirectTo` も允許リスト登録済み URL のみ有効（未登録は site_url にフォールバック）。
+- **auth メールの差出人は `noreply@niqostudio.com`（NIQO STUDIO 名義）**で全製品共通。文面には
+  `product_name` が埋め込まれる。製品側の責務として、**サインアップフォーム近くに
+  「確認メールは NIQO STUDIO（アカウント基盤）から届く」旨を一行表示する**こと——見知らぬ差出人による
+  スパム誤認・confirmation 率低下を防ぐ。製品ドメイン差出人（Send Email hook）は必要が実測されたら後段。
 
 ## テナント解決（org）
 
