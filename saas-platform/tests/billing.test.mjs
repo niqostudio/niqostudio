@@ -148,4 +148,44 @@ test('未知製品: unknown_product を返し台帳も grants も作らない', 
   assert.equal(await count(`select count(*)::int n from billing.purchases where source_event_id='evt_u'`), 0);
 });
 
+test('再購入: 別イベントで同一 (org,product,scope) を upsert し expires_at が延長される', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_buy1', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_b1' });
+  const first = (await grant(orgId, 'proj-a')).expires_at;
+  // 後続イベント（より新しい）で再購入 → 同一行を更新・期限は now() 基準で再計算（延長）。
+  await record({ p_event_id: 'evt_buy2', p_event_at: '2026-06-14T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-a', p_kind: 'purchase', p_external_checkout_id: 'cs_b2' });
+  assert.equal(await count(`select count(*)::int n from identity.product_grants where organization_id='${orgId}' and scope='proj-a'`), 1, 'grant は1行のまま');
+  assert.equal(await count(`select count(*)::int n from billing.purchases where organization_id='${orgId}'`), 2, '台帳は2件');
+  assert.ok((await grant(orgId, 'proj-a')).expires_at >= first, '期限は延長（短縮されない）');
+});
+
+test('chargeback / dispute: grant が suspended になる', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_cp', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'purchase', p_external_checkout_id: 'cs_c' });
+  await record({ p_event_id: 'evt_cb', p_event_at: '2026-06-13T05:00:00Z', p_org_id: orgId, p_event_type: 'dispute', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'chargeback', p_external_payment_id: 'pi_c' });
+  assert.equal((await grant(orgId, 'proj-c')).status, 'suspended');
+});
+
+test('無期限の一回課金: access_period_days NULL の offer は expires_at NULL', async () => {
+  const { orgId, productId } = await fixtures();
+  await c.query(`insert into billing.product_offers (product_id, key, version, currency, unit_amount) values ($1,'lifetime',1,'usd',5000)`, [productId]);
+  await record({ p_event_id: 'evt_life', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'lifetime', p_scope: 'proj-l', p_kind: 'purchase', p_amount: 5000, p_external_checkout_id: 'cs_l' });
+  const g = await grant(orgId, 'proj-l');
+  assert.equal(g.status, 'active');
+  assert.equal(g.expires_at, null, '無期限は expires_at NULL');
+});
+
+test('通貨: 大文字や3字以外は CHECK で拒否される（台帳の通貨健全性）', async () => {
+  const { orgId } = await fixtures();
+  await c.query('savepoint sp');
+  let rejected = false;
+  try {
+    await record({ p_event_id: 'evt_cur', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-cur', p_kind: 'purchase', p_currency: 'USD', p_external_checkout_id: 'cs_cur' });
+  } catch (e) {
+    rejected = e.code === '23514';
+    await c.query('rollback to savepoint sp');
+  }
+  assert.ok(rejected, '大文字通貨は CHECK 違反');
+});
+
 const count = async (sql) => Number((await c.query(sql)).rows[0].n);

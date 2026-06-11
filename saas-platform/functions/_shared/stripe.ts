@@ -7,6 +7,8 @@ import type {
   NormalizedEvent,
   PaymentProvider,
 } from './provider.ts';
+// イベント→正規化は純粋 JS に切り出してテストで固定（フィールドパスの取り違え防止）。
+import { normalizeStripeEvent } from './normalize.mjs';
 
 const PROVIDER = 'stripe';
 
@@ -60,97 +62,6 @@ export const stripeProvider: PaymentProvider = {
     if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not set');
     // Deno は同期 crypto 不可 → async 版で署名検証。
     const event = await stripe.webhooks.constructEventAsync(rawBody, signature, secret);
-    return normalize(event);
+    return normalizeStripeEvent(event as unknown as Record<string, unknown>) as NormalizedEvent;
   },
 };
-
-// Stripe event → PSP 非依存の正規化イベント。扱うイベントだけ kind を埋める。
-function normalize(event: Stripe.Event): NormalizedEvent {
-  const base: NormalizedEvent = {
-    provider: PROVIDER,
-    eventId: event.id,
-    type: event.type,
-    eventAt: new Date(event.created * 1000).toISOString(),
-    kind: null,
-    customerEmail: null,
-    externalCustomerId: null,
-    productCode: null,
-    offerKey: null,
-    scope: null,
-    amount: null,
-    currency: null,
-    externalCheckoutId: null,
-    externalPaymentId: null,
-    externalInvoiceId: null,
-    periodEnd: null,
-  };
-
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const s = event.data.object as Stripe.Checkout.Session;
-      // サブスクの初回は invoice 側で確定するため、ここでは payment（一回課金）のみ付与扱い。
-      const md = s.metadata ?? {};
-      return {
-        ...base,
-        kind: s.mode === 'payment' ? 'purchase' : null,
-        customerEmail: s.customer_details?.email ?? s.customer_email ?? null,
-        externalCustomerId: typeof s.customer === 'string' ? s.customer : null,
-        productCode: md.product ?? null,
-        offerKey: md.offer ?? null,
-        scope: md.scope ? md.scope : null,
-        amount: s.amount_total,
-        currency: s.currency,
-        externalCheckoutId: s.id,
-        externalPaymentId: typeof s.payment_intent === 'string' ? s.payment_intent : null,
-      };
-    }
-    case 'invoice.paid': {
-      const inv = event.data.object as Stripe.Invoice;
-      const md = (inv.subscription_details?.metadata ?? inv.metadata ?? {}) as Record<string, string>;
-      const isFirst = inv.billing_reason === 'subscription_create';
-      return {
-        ...base,
-        kind: isFirst ? 'purchase' : 'renewal',
-        customerEmail: inv.customer_email,
-        externalCustomerId: typeof inv.customer === 'string' ? inv.customer : null,
-        productCode: md.product ?? null,
-        offerKey: md.offer ?? null,
-        scope: md.scope ? md.scope : null,
-        amount: inv.amount_paid,
-        currency: inv.currency,
-        externalInvoiceId: inv.id,
-        externalPaymentId: typeof inv.payment_intent === 'string' ? inv.payment_intent : null,
-        periodEnd: inv.lines.data[0]?.period?.end
-          ? new Date(inv.lines.data[0].period.end * 1000).toISOString()
-          : null,
-      };
-    }
-    case 'charge.refunded': {
-      const ch = event.data.object as Stripe.Charge;
-      const md = (ch.metadata ?? {}) as Record<string, string>;
-      return {
-        ...base,
-        kind: 'refund',
-        customerEmail: ch.billing_details?.email ?? null,
-        productCode: md.product ?? null,
-        offerKey: md.offer ?? null,
-        scope: md.scope ? md.scope : null,
-        amount: ch.amount_refunded,
-        currency: ch.currency,
-        externalPaymentId: typeof ch.payment_intent === 'string' ? ch.payment_intent : null,
-      };
-    }
-    case 'charge.dispute.created': {
-      const d = event.data.object as Stripe.Dispute;
-      return {
-        ...base,
-        kind: 'dispute',
-        amount: d.amount,
-        currency: d.currency,
-        externalPaymentId: typeof d.payment_intent === 'string' ? d.payment_intent : null,
-      };
-    }
-    default:
-      return base; // 未扱いイベントは kind=null（記録だけして付与はしない）
-  }
-}

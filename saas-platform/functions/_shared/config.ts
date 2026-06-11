@@ -8,6 +8,8 @@ export function issuer(): string {
   return `${url}/functions/v1`;
 }
 
+import { originAllowed as originAllowedPure } from './checkout-rules.mjs';
+
 // 製品ごとの allowed origins。{ "demo-app": ["https://demo-app.example"] }
 function allowMap(): Record<string, string[]> {
   const raw = Deno.env.get('BILLING_ALLOWED_ORIGINS');
@@ -19,13 +21,7 @@ function allowMap(): Record<string, string[]> {
   }
 }
 
+// env から allowMap を読み、純粋ロジック（checkout-rules）で判定する。
 export function originAllowed(productCode: string, url: string): boolean {
-  let origin: string;
-  try {
-    origin = new URL(url).origin;
-  } catch {
-    return false;
-  }
-  const list = allowMap()[productCode] ?? [];
-  return list.includes(origin);
+  return originAllowedPure(allowMap(), productCode, url);
 }

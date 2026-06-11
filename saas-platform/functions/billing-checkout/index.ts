@@ -3,6 +3,7 @@
 import { json, preflight } from '../_shared/cors.ts';
 import { db } from '../_shared/db.ts';
 import { issuer, originAllowed } from '../_shared/config.ts';
+import { checkScopeOffer } from '../_shared/checkout-rules.mjs';
 import { stripeProvider } from '../_shared/stripe.ts';
 
 const provider = stripeProvider;
@@ -59,8 +60,8 @@ Deno.serve(async (req) => {
 
   const isSubscription = row.billing_interval != null;
   // ④ offer 種別と scope の整合（サブスクに scope 付き / 対象束縛に scope 欠落は拒否）
-  if (isSubscription && scope !== null) return json({ error: 'scope_not_allowed_for_subscription' }, 400);
-  if (!isSubscription && scope === null) return json({ error: 'scope_required_for_one_shot' }, 400);
+  const integrityError = checkScopeOffer(isSubscription, scope);
+  if (integrityError) return json({ error: integrityError }, 400);
 
   // billing-return を経由してレシートを発行し、最終 dest（製品の success_url）へ送る。
   const returnUrl = new URL(`${issuer()}/billing-return`);
