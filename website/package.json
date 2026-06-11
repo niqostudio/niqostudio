@@ -13,11 +13,11 @@
     "gen:icon": "node scripts/gen-icon.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.6.1",
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/sitemap": "^3.7.3",
     "@niqostudio/db-types": "workspace:*",
     "@niqostudio/ui": "workspace:*",
-    "@supabase/supabase-js": "^2.107.0",
+    "@supabase/supabase-js": "^2.108.1",
     "astro": "^6.4.2",
     "budoux": "^0.8.4",
     "marked": "^15.0.0"
@@ -29,7 +29,7 @@
     "satori": "^0.26.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
-    "wrangler": "^4.97.0"
+    "wrangler": "^4.99.0"
   },
   "engines": {
     "node": ">=24"
