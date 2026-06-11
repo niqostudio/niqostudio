@@ -29,20 +29,19 @@ resource "supabase_settings" "this" {
     disable_signup                   = false
     external_anonymous_users_enabled = false
     mailer_autoconfirm               = false
-    password_min_length              = 8
+    password_min_length              = local.saas.auth.password_min_length
 
     # SMTP（Resend）。smtp_pass のみダッシュボード（このブロックは partial 更新＝触れない）。
-    smtp_admin_email = local.mail.addresses.noreply
-    smtp_host        = "smtp.resend.com"
-    smtp_port        = "465"
-    smtp_user        = "resend"
-    smtp_sender_name = local.mail.sender_name
-    # 組み込み送信前提の既定値（2/h）から、自前 SMTP 前提の現実的な値へ。
-    rate_limit_email_sent = 30
+    smtp_admin_email      = local.mail.addresses.noreply
+    smtp_host             = local.saas.auth.email.smtp.host
+    smtp_port             = local.saas.auth.email.smtp.port
+    smtp_user             = local.saas.auth.email.smtp.user
+    smtp_sender_name      = local.mail.sender_name
+    rate_limit_email_sent = local.saas.auth.email.rate_limit_per_hour
 
-    mailer_subjects_confirmation          = "Confirm your email — NIQO STUDIO account"
-    mailer_subjects_magic_link            = "Your login link — NIQO STUDIO account"
-    mailer_subjects_recovery              = "Reset your password — NIQO STUDIO account"
+    mailer_subjects_confirmation          = local.saas.auth.email.subjects.confirmation
+    mailer_subjects_magic_link            = local.saas.auth.email.subjects.magic_link
+    mailer_subjects_recovery              = local.saas.auth.email.subjects.recovery
     mailer_templates_confirmation_content = file("${path.module}/templates/confirmation.html")
     mailer_templates_magic_link_content   = file("${path.module}/templates/magic_link.html")
     mailer_templates_recovery_content     = file("${path.module}/templates/recovery.html")

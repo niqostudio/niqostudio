@@ -3,7 +3,21 @@
   "saas": {
     "auth": {
       "site_url": "https://niqostudio.com/en",
-      "additional_redirect_urls": []
+      "additional_redirect_urls": [],
+      "password_min_length": 8,
+      "email": {
+        "smtp": {
+          "host": "smtp.resend.com",
+          "port": "465",
+          "user": "resend"
+        },
+        "rate_limit_per_hour": 30,
+        "subjects": {
+          "confirmation": "Confirm your email — NIQO STUDIO account",
+          "magic_link": "Your login link — NIQO STUDIO account",
+          "recovery": "Reset your password — NIQO STUDIO account"
+        }
+      }
     }
   },
   "domains": {

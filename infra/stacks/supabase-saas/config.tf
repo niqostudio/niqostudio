@@ -18,4 +18,8 @@ check "config_values" {
     condition     = alltrue([for u in local.saas.auth.additional_redirect_urls : startswith(u, "https://")])
     error_message = "config.${var.env}.json: saas.auth.additional_redirect_urls は https:// のみ。"
   }
+  assert {
+    condition     = local.saas.auth.email.rate_limit_per_hour > 0 && local.saas.auth.password_min_length >= 8
+    error_message = "config.${var.env}.json: saas.auth.email.rate_limit_per_hour は正の整数、password_min_length は 8 以上。"
+  }
 }

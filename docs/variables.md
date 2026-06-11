@@ -31,7 +31,7 @@ Environment 名は **`<module>-<env>`**（例 `infra-production`・`website-prod
 | `domains.<domain>.workers.<role>.*` | ✋ | infra, website | `name`（Worker 名＝CI が deploy 名に使用＆infra が service 束ね） / `subdomain`（role マップ） |
 | `domains.<domain>.rate_limit.contact.*` | ✋ | infra | `POST /api/contact` のエッジ流量しきい値 `period` / `requests_per_period` / `mitigation_timeout`（`ratelimit.tf` が読む。Free は timeout=period 固定） |
 | `domains.<domain>.{redirect_to,placeholder_ip}` | ✋ | infra | リダイレクト専用ドメイン |
-| `saas.auth.{site_url,additional_redirect_urls}` | ✋ | infra | niqostudio-saas の auth 設定（`stacks/supabase-saas` が読む）。`additional_redirect_urls` が**製品ドメインの正本**＝製品追加時にここへ足して apply |
+| `saas.auth.*` | ✋ | infra | niqostudio-saas の auth 設定（`stacks/supabase-saas` が読む）。`additional_redirect_urls` が**製品ドメインの正本**＝製品追加時にここへ足して apply。`email.{smtp,rate_limit_per_hour,subjects}` は auth メールの定数（SMTP パスワードのみダッシュボード）、`password_min_length` はパスワードポリシー |
 
 > `zone_id` / `account_id` は各ドメイン名から **data source で導出**（🤖）＝書かない。
 
