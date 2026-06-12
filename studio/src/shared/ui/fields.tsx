@@ -17,6 +17,24 @@ export function defaultFor(d: FieldDescriptor): unknown {
   return d.kind === 'list' ? [] : d.kind === 'boolean' ? false : null;
 }
 
+// --- 記述子のルール（相互排他・条件付き必須）を編集 UI に適用する判定群 ---
+export const isSet = (v: unknown): boolean => v != null && v !== '';
+
+const exclusiveOf = (d: FieldDescriptor): string[] =>
+  d.exclusiveWith ? (Array.isArray(d.exclusiveWith) ? d.exclusiveWith : [d.exclusiveWith]) : [];
+
+// 排他相手が値を持つ間は入力欄を出さない。
+export const fieldVisible = (d: FieldDescriptor, values: Record<string, unknown>): boolean =>
+  exclusiveOf(d).every((k) => !isSet(values[k]));
+
+// requiredWith：相方に値がある時だけ必須（表示）に昇格した記述子を返す。
+export const withRules = (d: FieldDescriptor, values: Record<string, unknown>): FieldDescriptor =>
+  !d.required && d.requiredWith && isSet(values[d.requiredWith]) ? { ...d, required: true } : d;
+
+// key に値が入った時に null へ戻すべき排他相手の一覧。
+export const exclusiveTargets = (fields: FieldDescriptor[], key: string): string[] =>
+  fields.filter((e) => exclusiveOf(e).includes(key)).map((e) => e.key);
+
 // 2カラム配置の行分割。背の高い項目（textarea/list）は全幅、それ以外は2つずつ対にする。
 // 日付は「日付同士」でのみ対にして、開始/終了のような対称データを必ず左右に並べる
 // （手前の全幅項目で auto-flow のパリティが崩れて対が割れるのを防ぐ）。
@@ -151,6 +169,7 @@ export function FieldInput({
         {d.required && <span className="text-error"> *</span>}
       </span>
       <FieldControl d={d} value={value} onChange={onChange} refOptions={refOptions} />
+      {d.description && <span className="text-xs text-faint">{d.description}</span>}
     </label>
   );
 }

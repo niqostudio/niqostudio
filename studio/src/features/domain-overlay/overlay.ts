@@ -33,8 +33,12 @@ export interface FieldSemantics {
   options?: string[];
   // 選択肢の表示ラベル（値→ラベル）。値の集合・制約は core、ラベルは overlay（schema config で編集）。
   optionLabels?: Record<string, string>;
-  // 相互排他の相手フィールド（core の CHECK を編集 UI に写す）。
-  exclusiveWith?: string;
+  // 表示上の必須（DB の NOT NULL とは独立。法令等の運用必須を UI に示す）。
+  required?: boolean;
+  // 条件付き必須：指定フィールドに値がある間だけ必須として表示。
+  requiredWith?: string;
+  // 相互排他の相手フィールド（複数可・core の制約や法令の択一を編集 UI に写す）。
+  exclusiveWith?: string | string[];
   hidden?: boolean;
   order?: number;
 }
@@ -72,10 +76,11 @@ function refine(
         key: f.name,
         label: s.label ?? f.name,
         kind: s.kind ?? (isRef ? 'reference' : f.baseKind),
-        ...(f.required ? { required: true } : {}),
+        ...(f.required || s.required ? { required: true } : {}),
         ...(s.description ? { description: s.description } : {}),
         ...(s.options ? { options: s.options } : {}),
         ...(s.optionLabels ? { optionLabels: s.optionLabels } : {}),
+        ...(s.requiredWith ? { requiredWith: s.requiredWith } : {}),
         ...(s.exclusiveWith ? { exclusiveWith: s.exclusiveWith } : {}),
         ...(isRef ? { refTable: f.refTable!, ...(f.refColumn ? { refColumn: f.refColumn } : {}) } : {}),
       };
