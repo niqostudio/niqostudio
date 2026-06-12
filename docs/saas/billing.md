@@ -33,7 +33,7 @@
 | `STRIPE_WEBHOOK_SECRET` | 〃 | 〃 | webhook 登録時の `whsec_`（本番=ダッシュボード / ローカル=`stripe listen`） |
 | `RECEIPT_SIGNING_KEY` | 〃 | 〃 | `node scripts/gen-receipt-key.mjs` の出力（Ed25519 秘密 JWK） |
 | `RECEIPT_PUBLIC_KEY` | 〃 | 〃 | 同上（公開 JWK・billing-keys が配る・非機密だが同じ経路で入れる） |
-| `BILLING_ALLOWED_ORIGINS` | 〃 | 〃 | `config.<env>.json` の `saas.billing.allowed_origins`（JSON）由来 |
+| `BILLING_ALLOWED_ORIGINS` | **`release` が config から自動投入** | 〃 | 正本＝`config.<env>.json` の `saas.billing.allowed_origins`。config を更新して release（apply）すれば反映＝手動の secrets set 不要 |
 | `BILLING_PUBLIC_URL` | **不要** | `.env.local` | 本番は `SUPABASE_URL` が公開 URL。ローカルだけ内部ホスト回避で明示 |
 
 本番の secret 投入（`--project-ref` は niqostudio-saas の ref）：
@@ -44,8 +44,8 @@ supabase secrets set --project-ref <saas-ref> \
   STRIPE_SECRET_KEY=sk_live_... \
   STRIPE_WEBHOOK_SECRET=whsec_... \
   RECEIPT_SIGNING_KEY='{"kty":"OKP",...}' \
-  RECEIPT_PUBLIC_KEY='{"kty":"OKP",...}' \
-  BILLING_ALLOWED_ORIGINS='{"<製品コード>":["https://<製品ドメイン>"]}'
+  RECEIPT_PUBLIC_KEY='{"kty":"OKP",...}'
+# BILLING_ALLOWED_ORIGINS は手動で入れない（release の saas job が config から毎 apply 投入する）
 # 確認: supabase secrets list --project-ref <saas-ref>（値は表示されない）
 ```
 
@@ -86,7 +86,8 @@ supabase secrets set --project-ref <saas-ref> \
    `https://<saas-ref>.supabase.co/functions/v1/billing-webhook` を登録 →
    `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` を購読 →
    署名シークレット `whsec_` を `supabase secrets set STRIPE_WEBHOOK_SECRET=...` で投入。
-4. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `BILLING_ALLOWED_ORIGINS` を更新。
+4. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `release`（apply）で反映
+   （saas job が config から `BILLING_ALLOWED_ORIGINS` を自動投入）。
    `BILLING_PUBLIC_URL` は本番不要（`SUPABASE_URL` が公開 URL）。
 
 > 可用性結合：billing 停止＝全製品で販売停止。free tier の一時停止が販売も塞ぐため、実ユーザーが付いたら
