@@ -94,7 +94,9 @@ export default defineConfig({
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data:",
+        // https: は Products の og サムネ等＝外部（自社製品サイト）画像のホットリンク用。
+        // 画像は実行されないため許可を広く取り、本丸の script/style の hash 制限は据え置く。
+        "img-src 'self' data: https:",
         "font-src 'self'",
         "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co https://cloudflareinsights.com",
         "frame-src https://challenges.cloudflare.com",
