@@ -55,7 +55,7 @@ jobs:
             printf '%s\n' "$files"
             while IFS= read -r f; do
               case "$f" in core/migrations/*|studio/migrations/*) core=true ;; esac
-              case "$f" in saas-platform/*|infra/supabase-saas/supabase/config.toml) saas=true ;; esac
+              case "$f" in saas-platform/*|infra/supabase-saas/supabase/config.toml|config.*.json) saas=true ;; esac
               case "$f" in infra/*|config.*.json) infra=true ;; esac
               case "$f" in docs/*|mkdocs.yml) docs=true ;; esac
             done <<< "$files"
@@ -138,6 +138,20 @@ jobs:
               --project-ref "${{ vars.SAAS_SUPABASE_PROJECT_REF }}"
           else
             echo "deploy 対象（dry-run）: $names"
+          fi
+      - name: BILLING_ALLOWED_ORIGINS を config から投入
+        # 正本は config.<env>.json の saas.billing.allowed_origins（公開 origin の允許リスト＝非機密）。
+        # 手動の secrets set を不要にする。投入は冪等（同値の再設定は無害・関数に再注入される）。
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          origins=$(jq -c '.saas.billing.allowed_origins' config.production.json)
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec supabase secrets set \
+              --project-ref "${{ vars.SAAS_SUPABASE_PROJECT_REF }}" \
+              BILLING_ALLOWED_ORIGINS="$origins"
+          else
+            echo "BILLING_ALLOWED_ORIGINS（dry-run）: $origins"
           fi
 
   # website の build / deploy（手順の正本は website.yml＝PR 検証と共用）。

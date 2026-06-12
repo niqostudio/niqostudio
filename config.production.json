@@ -21,7 +21,9 @@
       }
     },
     "billing": {
-      "allowed_origins": {}
+      "allowed_origins": {
+        "shipscan": ["https://shipscan.app"]
+      }
     }
   },
   "domains": {
