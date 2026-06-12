@@ -56,6 +56,7 @@ const MESSAGES = {
   current: '現在',
   restore: '戻す',
   discardDraft: '下書きを破棄',
+  discardDraftConfirm: '下書きを破棄しますか？公開済みの内容に戻ります（未公開の新規レコードは削除されます）。',
   close: '閉じる',
   add: '追加',
   none: '（なし）',
