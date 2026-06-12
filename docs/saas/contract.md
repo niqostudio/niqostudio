@@ -14,7 +14,7 @@
 | 製品コード | `core.products.slug`＝registry（`identity.products.code`）の値。niqostudio が発行 |
 | レシート検証公開鍵（後段） | 署名レシートのローカル検証用（課金提供開始時に配布） |
 
-事前に niqostudio 側で済んでいること：製品コードの registry 登録（`saas-products: sync`）と、
+事前に niqostudio 側で済んでいること：製品コードの registry 登録（`release` の商品マスタ同期）と、
 メールフローの戻り先 URL の允許リスト登録（必要な URL を伝えること）。
 
 ## アカウント

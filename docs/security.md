@@ -69,8 +69,8 @@ XSS・クリックジャッキング・MIME スニッフィング等のブラウ
 トークン過剰権限・本番への無断反映。
 
 - [x] CF/CI トークンは対象スコープ＋必要権限のみ（infra=Workers Scripts/DNS/Email、website=Workers Scripts） — 正本 [変数の配置](variables.md)
-- [x] PII（転送先・通知宛先）は Secret、公開 DNS は Variable に分離 — `infra-apply.yml` / `website.yml`
-- [x] 本番反映（terraform apply / dbmate up / deploy）は承認ゲート付き Environment — `infra-apply.yml` / `db-migrate.yml` / `website.yml`
+- [x] PII（転送先・通知宛先）は Secret、公開 DNS は Variable に分離 — `release.yml` / `website.yml`
+- [x] 本番反映（terraform apply / dbmate up / deploy）は承認ゲート付き Environment — `release.yml`（job ごとにモジュール別 Environment） / `website.yml`
 - [x] Environment はモジュール別（`<module>-<env>`）にスコープ＝ジョブが他モジュールの secret を読めない — [ADR 0003](adr/0003-environment-per-module.md)
 
 ## 攻撃面: メール認証（SPF / DKIM / DMARC）

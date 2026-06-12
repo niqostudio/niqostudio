@@ -17,12 +17,12 @@
 block のみ partial 更新し、未宣言の設定には触れない（delete は no-op）。auth / storage / network は据え置き（後日 additive）。
 
 - 必要な値：`SUPABASE_ACCESS_TOKEN`（Account → Access Tokens・発行名 `infra-supabase`・Secret）／`SUPABASE_PROJECT_REF`（Variable → `TF_VAR_project_ref`）／R2 state キー。配置は [変数の配置](../variables.md)。
-- **plan / apply は CI**：Actions の **`infra: supabase settings`** を dispatch する（対象 stack を選択・
-  既定は plan のみ）。**plan-first**＝まず plan のログで本番現行値との差分が意図したものだけか確認し、
+- **plan / apply は CI**：**`release` workflow（infra job）** が両 stack を扱う。**plan-first**＝
+  `release`（apply=false）の plan ログで本番現行値との差分が意図したものだけか確認し、
   apply=true で再 dispatch（無断の設定変更を避ける）。秘密（`SUPABASE_ACCESS_TOKEN`・R2 キー）は
   `infra-production` Environment に集約し、ローカルへ散らばらせない。
-- **順序**：露出スキーマは migration（`db: migrate` / `saas-platform: migrate`）適用後に apply する
-  （存在するスキーマだけを露出に足す）。
+- **順序**：露出スキーマは migration 適用後に apply する（存在するスキーマだけを露出に足す）。
+  この順序は `release` の needs（core_db / saas → infra）に焼き込み済み。
 
 ### niqostudio-saas の SMTP パスワード（唯一の秘密・API で投入）
 

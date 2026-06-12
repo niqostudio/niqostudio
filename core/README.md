@@ -26,7 +26,7 @@ pnpm db:reset             # クリーンスタック → dbmate up（core / stud
 ## ワークフロー（スキーマ変更）
 1. `core/migrations/` に dbmate 形式の SQL（先頭 `-- migrate:up`）を追加。
 2. ローカル検証: `pnpm db:reset`（root）。
-3. 本番反映: CI の `db: migrate`（dbmate up・[docs/database.md](../docs/database.md)）。
+3. 本番反映: CI の `release`（core_db job が dbmate up・[docs/database.md](../docs/database.md)）。
 4. 型再生成: `pnpm db:start` → `pnpm db:types`（root・local スキーマから生成）→ consumer（website 等）が `@niqostudio/db-types` を参照。
 
 ## 本番データ

@@ -29,7 +29,7 @@ flowchart TB
   end
 
   stripe["Stripe（PSP）<br/>Product / Price は Terraform 管理"]
-  sync["saas-products: sync（workflow）<br/>core から書き出し → 2 job で反映"]
+  sync["release（workflow）の商品同期 job<br/>core から書き出し → Stripe / identity へ反映"]
 
   app -->|"publishable key + JWT（RLS）"| identity
   app -->|signUp / signIn| auth
@@ -102,8 +102,8 @@ sequenceDiagram
 
 | マスタ | 正本 | 反映先 | 経路 |
 | --- | --- | --- | --- |
-| 製品（is_saas で SaaS を明示） | `core.products`（studio が管理） | `identity.products`（code/name/status の射影・is_saas の部分集合） | `saas-products: sync` workflow の identity job（upsert・消えた code は inactive 化） |
-| 商品（offer・価格・**現行価格1行**） | `core.product_offers`（studio が管理） | Stripe Product / Price | 同 workflow の stripe job（書き出し → `infra/stacks/stripe` apply・lookup key = `<製品>_<offer>`） |
+| 製品（is_saas で SaaS を明示） | `core.products`（studio が管理） | `identity.products`（code/name/status の射影・is_saas の部分集合） | `release` workflow の sync_identity job（upsert・消えた code は inactive 化） |
+| 商品（offer・価格・**現行価格1行**） | `core.product_offers`（studio が管理） | Stripe Product / Price | 同 workflow の sync_stripe job（書き出し → `infra/stacks/stripe` apply・lookup key = `<製品>_<offer>`） |
 | redirect 允許リスト | `config.<env>.json` の `saas.auth` | Supabase Auth 設定 | `infra/stacks/supabase-saas` |
 
 - core.products は SaaS 以外（受託成果物・屋号自身）も持つポートフォリオ台帳。saas 側レジストリは
