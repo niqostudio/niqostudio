@@ -807,6 +807,7 @@ export type Database = {
           created_at: string
           id: string
           internal_notes: string | null
+          is_public: boolean
           is_saas: boolean
           launched_on: string | null
           name: string
@@ -815,11 +816,13 @@ export type Database = {
           summary: string | null
           tech_stack: string[]
           updated_at: string
+          url: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          is_public?: boolean
           is_saas?: boolean
           launched_on?: string | null
           name: string
@@ -828,11 +831,13 @@ export type Database = {
           summary?: string | null
           tech_stack?: string[]
           updated_at?: string
+          url?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           internal_notes?: string | null
+          is_public?: boolean
           is_saas?: boolean
           launched_on?: string | null
           name?: string
@@ -841,6 +846,7 @@ export type Database = {
           summary?: string | null
           tech_stack?: string[]
           updated_at?: string
+          url?: string | null
         }
         Relationships: []
       }
@@ -1610,6 +1616,33 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      public_products: {
+        Row: {
+          launched_on: string | null
+          name: string | null
+          slug: string | null
+          summary: string | null
+          tech_stack: string[] | null
+          url: string | null
+        }
+        Insert: {
+          launched_on?: string | null
+          name?: string | null
+          slug?: string | null
+          summary?: string | null
+          tech_stack?: string[] | null
+          url?: string | null
+        }
+        Update: {
+          launched_on?: string | null
+          name?: string | null
+          slug?: string | null
+          summary?: string | null
+          tech_stack?: string[] | null
+          url?: string | null
+        }
+        Relationships: []
       }
       public_profile: {
         Row: {
