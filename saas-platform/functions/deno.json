@@ -2,6 +2,6 @@
   "imports": {
     "postgres": "https://deno.land/x/postgresjs@v3.4.5/mod.js",
     "stripe": "https://esm.sh/stripe@17.5.0?target=deno",
-    "djwt": "https://deno.land/x/djwt@v3.0.2/mod.ts"
+    "jose": "https://esm.sh/jose@6.2.3?target=deno"
   }
 }

@@ -2,9 +2,11 @@
 // deploy 時に env BILLING_ALLOWED_ORIGINS（JSON）として注入する（auth の redirect 允許リストと同じ作法）。
 
 export function issuer(): string {
-  // レシートの iss。SUPABASE_URL（プロジェクト URL）を基底にする。
-  const url = Deno.env.get('SUPABASE_URL');
-  if (!url) throw new Error('SUPABASE_URL is not set');
+  // ブラウザ/製品が到達する**公開**関数 URL を基底にする（レシートの iss・billing-return の
+  // success_url・JWKS の所在）。本番は SUPABASE_URL が公開 URL なのでそれで足りるが、ローカルは
+  // SUPABASE_URL が内部ホスト（http://kong:8000）になるため BILLING_PUBLIC_URL で明示上書きする。
+  const url = Deno.env.get('BILLING_PUBLIC_URL') ?? Deno.env.get('SUPABASE_URL');
+  if (!url) throw new Error('BILLING_PUBLIC_URL / SUPABASE_URL のいずれも未設定');
   return `${url}/functions/v1`;
 }
 

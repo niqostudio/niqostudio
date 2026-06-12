@@ -1,25 +1,24 @@
-// 署名レシート（一回課金の即解錠用・往復ゼロ）。非対称（Ed25519）で署名し、製品は公開鍵で検証する。
+// 署名レシート（一回課金の即解錠用・往復ゼロ）。非対称（Ed25519/EdDSA）で署名し、製品は公開鍵で検証する。
 // HMAC は製品に秘密を渡すことになるため不可（ADR 0008）。auth の JWKS とは別系統＝billing-keys が公開。
-import { create, getNumericDate, verify } from 'djwt';
+// 署名は jose（製品側の検証も jose 想定＝同一ライブラリで互換保証。djwt は EdDSA 非対応のため使わない）。
+import { SignJWT, jwtVerify, importJWK } from 'jose';
 
 const ALG = 'EdDSA';
 
 export interface ReceiptClaims {
-  iss: string; // billing の発行者 URL
-  product: string; // 製品コード
-  scope: string | null; // 対象（一回課金）
-  plan: string; // offer キー
+  iss: string;
+  product: string;
+  scope: string | null;
+  plan: string;
   jti: string;
   iat: number;
   exp: number;
 }
 
-// 秘密鍵（JWK）を env から読み、署名用 CryptoKey にする。
 async function privateKey(): Promise<CryptoKey> {
   const raw = Deno.env.get('RECEIPT_SIGNING_KEY');
   if (!raw) throw new Error('RECEIPT_SIGNING_KEY is not set');
-  const jwk = JSON.parse(raw) as JsonWebKey;
-  return await crypto.subtle.importKey('jwk', jwk, { name: 'Ed25519' }, false, ['sign']);
+  return (await importJWK(JSON.parse(raw), ALG)) as CryptoKey;
 }
 
 // 公開鍵（JWK・kid 付き）。billing-keys が JWKS として配る。
@@ -38,24 +37,18 @@ export async function issueReceipt(
 ): Promise<string> {
   const key = await privateKey();
   const kid = publicJwk().kid;
-  return await create(
-    { alg: ALG, typ: 'JWT', kid },
-    {
-      iss,
-      product,
-      plan,
-      scope,
-      jti: crypto.randomUUID(),
-      iat: getNumericDate(0),
-      exp: getNumericDate(ttlSeconds),
-    },
-    key,
-  );
+  return await new SignJWT({ product, plan, scope })
+    .setProtectedHeader({ alg: ALG, typ: 'JWT', kid })
+    .setIssuer(iss)
+    .setIssuedAt()
+    .setJti(crypto.randomUUID())
+    .setExpirationTime(`${ttlSeconds}s`)
+    .sign(key);
 }
 
-// 製品側の検証相当（テスト・自己検査用）。本番の検証は製品が JWKS でやる。
-export async function verifyReceipt(token: string): Promise<ReceiptClaims> {
-  const jwk = publicJwk();
-  const key = await crypto.subtle.importKey('jwk', jwk, { name: 'Ed25519' }, false, ['verify']);
-  return (await verify(token, key)) as unknown as ReceiptClaims;
+// 自己検査・テスト用（本番の検証は製品が JWKS で行う）。
+export async function verifyReceipt(token: string, iss: string): Promise<ReceiptClaims> {
+  const key = (await importJWK(publicJwk(), ALG)) as CryptoKey;
+  const { payload } = await jwtVerify(token, key, { issuer: iss });
+  return payload as unknown as ReceiptClaims;
 }
