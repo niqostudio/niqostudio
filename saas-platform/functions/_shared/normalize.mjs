@@ -22,11 +22,18 @@ function base(event) {
     externalPaymentId: null,
     externalInvoiceId: null,
     periodEnd: null,
+    orgId: null,
+    accessPeriodDays: null,
   };
 }
 
 const str = (v) => (typeof v === 'string' ? v : null);
 const nz = (v) => (v ? v : null); // 空文字 → null
+// metadata の日数（文字列）→ 正の整数のみ採用（不正値で grant の期限を壊さない）。
+const days = (v) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
 
 export function normalizeStripeEvent(event) {
   const b = base(event);
@@ -48,6 +55,8 @@ export function normalizeStripeEvent(event) {
         currency: o.currency ?? null,
         externalCheckoutId: o.id ?? null,
         externalPaymentId: str(o.payment_intent),
+        orgId: nz(md.org_id),
+        accessPeriodDays: days(md.access_period_days),
       };
     }
     case 'invoice.paid': {
@@ -72,6 +81,7 @@ export function normalizeStripeEvent(event) {
         externalInvoiceId: o.id ?? null,
         externalPaymentId: str(o.payment_intent),
         periodEnd: periodEnd > 0 ? new Date(periodEnd * 1000).toISOString() : null,
+        orgId: nz(md.org_id),
       };
     }
     case 'charge.refunded': {
@@ -86,6 +96,7 @@ export function normalizeStripeEvent(event) {
         amount: o.amount_refunded ?? null,
         currency: o.currency ?? null,
         externalPaymentId: str(o.payment_intent),
+        orgId: nz(md.org_id),
       };
     }
     case 'charge.dispute.created': {

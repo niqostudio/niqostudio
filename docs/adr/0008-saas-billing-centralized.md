@@ -48,7 +48,13 @@ Merchant of Record（Paddle / Lemon Squeezy 等）への adapter 交換を製品
   セッション復元時に grants で再検証する。
 - **冪等性**：PSP の event id で dedup／user は get-or-create by email／grant は upsert。
   既存ユーザーの匿名購入は**個人 org に着地**する（仕様）。
-- サブスクリプションは関係前提のため just-in-time ログインを要求してよい（org 文脈が要る）。
+- **identity 付き checkout（任意・2026-06 追加）**：ユーザーの JWT を `Authorization` に載せると、
+  checkout が org を確定して PSP metadata に焼き、webhook は email 解決をスキップする。
+  決済メールもアカウントのメールに固定（別メール決済で別 org に着地する事故を断つ）。
+  一回課金の付与窓（access_period_days）も同時に焼き込み、checkout と webhook の間の
+  offer 改定で期限がずれない（購入時点の販売条件で確定）。匿名経路は従来どおり併存。
+- サブスクリプションは関係前提のため just-in-time ログインを要求してよい（org 文脈が要る。
+  identity 付き checkout で org を渡す）。
 
 ### 4. 製品・商品マスタの正本は core（業務データ）。Stripe へは Terraform、identity へは射影で反映
 
@@ -85,3 +91,5 @@ Merchant of Record（Paddle / Lemon Squeezy 等）への adapter 交換を製品
   ④製品側は plan コード＋publishable key＋公開鍵（レシート検証）のみ。
 - 既知の許容リスク：匿名購入の email typo（即解錠は通る・復元アカウントが orphan 化）／
   webhook 前の `signInWithOtp` 空振り（リトライまたは `shouldCreateUser: true` で吸収）。
+  いずれも**匿名経路のみ**のリスク——ログイン済みなら identity 付き checkout（Authorization）で
+  org 確定・メール固定され、発生しない。

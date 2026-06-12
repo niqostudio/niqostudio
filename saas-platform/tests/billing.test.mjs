@@ -57,15 +57,17 @@ async function record(args) {
     p_external_invoice_id: null,
     p_period_end: null,
     p_parent_id: null,
+    p_access_period_days: null,
     ...args,
   };
   const { rows } = await c.query(
     `select billing.record_event(
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) as result`,
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) as result`,
     [
       d.p_provider, d.p_event_id, d.p_event_type, d.p_event_at, d.p_org_id, d.p_customer_email,
       d.p_product_code, d.p_offer_key, d.p_scope, d.p_kind, d.p_amount, d.p_currency,
       d.p_external_checkout_id, d.p_external_payment_id, d.p_external_invoice_id, d.p_period_end, d.p_parent_id,
+      d.p_access_period_days,
     ],
   );
   return rows[0].result;
@@ -199,6 +201,29 @@ test('chargeback / dispute: grant が suspended になる', async () => {
   await record({ p_event_id: 'evt_cp', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'purchase', p_external_checkout_id: 'cs_c' });
   await record({ p_event_id: 'evt_cb', p_event_at: '2026-06-13T05:00:00Z', p_org_id: orgId, p_event_type: 'dispute', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'chargeback', p_external_payment_id: 'pi_c' });
   assert.equal((await grant(orgId, 'proj-c')).status, 'suspended');
+});
+
+test('焼き込み日数: p_access_period_days がマスタ（30日）より優先される', async () => {
+  const { orgId } = await fixtures();
+  await record({
+    p_event_id: 'evt_burn', p_event_type: 'purchase', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId,
+    p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-b', p_kind: 'purchase',
+    p_external_checkout_id: 'cs_burn', p_access_period_days: 7,
+  });
+  // マスタは 30 日だが checkout 焼き込みの 7 日で期限が決まる（購入時点の販売条件で固定）。
+  assert.equal(new Date((await grant(orgId, 'proj-b')).expires_at).toISOString(), '2026-06-20T00:00:00.000Z');
+});
+
+test('焼き込み日数: NULL（旧イベント・匿名経路）は現行マスタ参照のまま', async () => {
+  const { orgId, productId } = await fixtures();
+  // checkout 後にマスタが 30→10 日へ改定されたケース：焼き込みが無ければ現行値（10）が効く。
+  await c.query(`update billing.product_offers set access_period_days=10 where product_id=$1 and key='launch_pass'`, [productId]);
+  await record({
+    p_event_id: 'evt_nofix', p_event_type: 'purchase', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId,
+    p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-n', p_kind: 'purchase',
+    p_external_checkout_id: 'cs_nofix',
+  });
+  assert.equal(new Date((await grant(orgId, 'proj-n')).expires_at).toISOString(), '2026-06-23T00:00:00.000Z');
 });
 
 test('無期限の一回課金: access_period_days NULL の offer は expires_at NULL', async () => {

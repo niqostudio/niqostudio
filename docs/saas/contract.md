@@ -223,6 +223,13 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
   ②success / cancel URL の origin を製品ごとの允許リストで縛る（未登録 origin は拒否）
   ③**IP / origin 単位のレート制限**（カードテスティング・session 量産・Stripe レート消費への防御）
   ④**offer 種別と scope の整合検証**（サブスク offer に scope 付き、対象束縛 offer に scope 欠落、は 400）。
+- **ログイン済み購入（任意・推奨）**：ユーザーの access token を `Authorization: Bearer` に載せて呼ぶと、
+  grant の着地先 org が checkout 時点で確定し、**決済メールもアカウントのメールに固定**される
+  （アカウントと別メールで決済して grant が別の個人 org に落ちる事故を断つ）。ヘッダ無し＝従来の
+  匿名 checkout（決済メールから org を解決）。**ヘッダがあるのに無効（期限切れ・偽造）は 401
+  `invalid_token`**——黙って匿名扱いにしない（「ログインして買ったのに別 org に着地」の無音事故を防ぐ）。
+  supabase-js が自動で載せる publishable / anon キーは「identity の主張なし」として匿名扱いになる。
+  サブスク購入はログイン前提（org 文脈が要る）のため、必ずこのヘッダを付けて呼ぶこと。
 - リクエスト（JSON）：
 
 ```jsonc

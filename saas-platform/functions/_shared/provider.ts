@@ -11,6 +11,12 @@ export interface CheckoutParams {
   successUrl: string; // billing-return の URL（最終 dest はクエリで運ぶ）
   cancelUrl: string;
   locale?: string;
+  // identity 付き checkout（任意）。orgId は metadata に焼かれ webhook の着地先を確定する。
+  // customerEmail は決済メールの固定（アカウントと別メールで決済→別 org 着地の事故を防ぐ）。
+  orgId?: string | null;
+  customerEmail?: string | null;
+  // 一回課金の付与窓（checkout 時点の販売条件を metadata に焼き込む）。null=無期限 or サブスク。
+  accessPeriodDays?: number | null;
 }
 
 // PSP 非依存の正規化済みイベント（webhook が record_event に渡せる形）。
@@ -32,6 +38,8 @@ export interface NormalizedEvent {
   externalPaymentId: string | null;
   externalInvoiceId: string | null;
   periodEnd: string | null; // サブスクの期末（ISO）
+  orgId: string | null; // metadata から（identity 付き checkout のみ）
+  accessPeriodDays: number | null; // metadata から（checkout 時点の付与窓スナップショット）
 }
 
 export interface CheckoutResult {

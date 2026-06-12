@@ -14,9 +14,9 @@
 | 関数 | 役割 |
 | --- | --- |
 | `billing-prices` | 公開。現行版 offer 一覧（製品の /pricing が読む） |
-| `billing-checkout` | 匿名。registry 突合・origin 允許・整合・レート制限 → PSP の checkout URL |
+| `billing-checkout` | 匿名＋任意 identity（user JWT で org 確定・決済メール固定。無効 JWT は 401）。registry 突合・origin 允許・整合・レート制限 → PSP の checkout URL |
 | `billing-return` | success_url の中継。session 検証 → レシート発行 → 製品へ `#receipt=` で 302 |
-| `billing-webhook` | PSP→billing。署名検証 → 正規化 →（匿名は get-or-create user）→ record_event |
+| `billing-webhook` | PSP→billing。署名検証 → 正規化 → org 確定（metadata 優先・匿名は get-or-create user）→ record_event |
 | `billing-keys` | レシート検証用 JWKS（Ed25519・kid 付き・auth の JWKS とは別系統） |
 
 ## 必要な secret / env（関数）
