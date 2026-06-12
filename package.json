@@ -16,6 +16,8 @@
     "saas:test": "node --test \"saas-platform/tests/**/*.test.mjs\"",
     "saas:functions:serve": "node scripts/saas-functions-serve.mjs",
     "db:types:saas": "pnpm --filter @niqostudio/infra run types:saas",
+    "release:dry": "node scripts/release.mjs",
+    "release": "node scripts/release.mjs --apply",
     "niqo:up": "node scripts/niqo-up.mjs",
     "niqo:dev": "node scripts/niqo-dev.mjs",
     "niqo:dev:down": "node scripts/niqo-dev-down.mjs",
