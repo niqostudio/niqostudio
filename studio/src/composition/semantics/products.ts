@@ -2,7 +2,7 @@ import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 
 // products（自社プロダクト＝継続実体）の意味。構造は core から live。
 // SaaS 製品は is_saas で明示し、課金の商品（offer・価格）を子 product_offers として編集する。
-// offer は (product, key) ごとに現行価格1行＝改定は行の直接編集（saas-products: sync が Stripe へ
+// offer は (product, key) ごとに現行価格1行＝改定は行の直接編集（release の商品同期が Stripe へ
 // 新 Price として反映し lookup key を引き継ぐ。改定履歴は Stripe 側に残る）。
 export const productsSemantics: CollectionSemantics = {
   titleField: 'name',

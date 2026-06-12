@@ -1,14 +1,18 @@
 name: "website: build & deploy"
 
-# website のビルド検証＋本番 deploy。@astrojs/cloudflare のネイティブ形式（Worker＝SSR＋静的アセット）を
-# wrangler deploy で配信する。カスタムドメインの束ねは infra が管理（workers.tf）。Worker は本 deploy で
-# 作られるため、初回のみ website deploy → terraform-apply の順（以後は順不同・冪等）。
-# 本番反映は dispatch 専用（core/infra と統一・承認ゲート）。PR は build 検証のみ。
+# website の build / deploy 手順の正本（入口ではない＝workflow_call 専用のサブルーチン）。
+# 検証（PR・deploy=false）は verify.yml が、本番反映（deploy=true）は release.yml が呼ぶ。
+# @astrojs/cloudflare のネイティブ形式（Worker＝SSR＋静的アセット）を wrangler deploy で配信する。
+# カスタムドメインの束ねは infra が管理（workers.tf）。Worker は本 deploy で作られるため、
+# 初回のみ website deploy → infra apply の順（以後は順不同・冪等＝release が needs で保証）。
 # canonical ドメインは root の config.<env>.json を website が直読する（DEPLOY_ENV で選択・既定 production）。
 on:
-  pull_request:
-    paths: ["website/**", "config.*.json", ".github/workflows/website.yml"]
-  workflow_dispatch: # 本番 build + deploy は明示の dispatch で回す
+  workflow_call:
+    inputs:
+      deploy:
+        description: "true で本番 deploy / false は build 検証のみ"
+        type: boolean
+        required: true
 
 permissions:
   contents: read
@@ -74,10 +78,10 @@ jobs:
           echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}" >> "$GITHUB_ENV"
       - run: pnpm --filter @niqostudio/website run build
       - run: pnpm --filter @niqostudio/website run check
-      # 本番 deploy 用に成果物を受け渡す（push / 手動 dispatch。PR ではアップロードしない）。
+      # 本番 deploy 用に成果物を受け渡す（deploy=true の呼び出しのみ。PR・build 検証ではアップロードしない）。
       # @astrojs/cloudflare は dist/client（静的）と dist/server（Worker＝entry.mjs + wrangler.json）に分割する。
       # Worker デプロイには両方要る（wrangler.json の assets.directory が ../client を指す）。
-      - if: github.event_name != 'pull_request'
+      - if: ${{ inputs.deploy }}
         uses: actions/upload-artifact@v7
         with:
           name: website-dist
@@ -85,10 +89,10 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
-  # push / 手動 dispatch で Cloudflare Workers へ deploy（PR は除く）。secret は website-production にスコープ。
+  # release からの呼び出し（deploy=true）で Cloudflare Workers へ deploy。secret は website-production にスコープ。
   deploy:
     needs: build
-    if: github.event_name != 'pull_request' && github.repository == 'niqostudio/niqostudio'
+    if: ${{ inputs.deploy && github.repository == 'niqostudio/niqostudio' }}
     runs-on: ubuntu-latest
     environment: website-production
     steps:

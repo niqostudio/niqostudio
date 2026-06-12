@@ -5,7 +5,7 @@ SaaS の**製品・商品（offer・価格）マスタ**を Stripe の Product /
 
 - 正本は **core DB**（`core.products`（is_saas）/ `core.product_offers`・studio が管理）。
   `scripts/saas-products-export.mjs` が `products.auto.tfvars.json`（gitignore）へ書き出し、
-  この stack は `var.products` として受ける（DB を直接読まない）。実行は `saas-products: sync` workflow。
+  この stack は `var.products` として受ける（DB を直接読まない）。実行は `release` workflow（sync_stripe job）。
 - price の lookup key は `<製品コード>_<offer キー>`。billing service は販売中 offer を
   このキーで解決し、price ID を焼き込まない。
 - **商品は (product, key) ごとに現行価格1行**。改定＝行の直接編集 → apply で price 作り直し

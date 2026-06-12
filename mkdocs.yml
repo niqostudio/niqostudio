@@ -61,3 +61,4 @@ nav:
       - 0006 公開 view の SECURITY DEFINER: adr/0006-public-views-security-definer.md
       - 0007 SaaS identity を別プロジェクトへ: adr/0007-saas-identity-project.md
       - 0008 SaaS 課金の横断集約: adr/0008-saas-billing-centralized.md
+      - 0009 verify / release の2本化: adr/0009-release-pipeline.md

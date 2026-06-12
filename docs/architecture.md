@@ -84,8 +84,13 @@ flowchart TB
 
 ワークフローは root `.github/workflows/` に集約し、**paths で対象モジュールだけ起動**する。
 
-- `website/**` → PR で build / check、本番は `website: build & deploy` を dispatch → `wrangler deploy`（Cloudflare Worker＝SSR+静的・承認ゲート）。
-- `core/migrations/**` ・ `studio/migrations/**` → `db: migrate`（dispatch で dry-run / apply・承認ゲート）。
-- `infra/**` → `infra: validate`（fmt / validate・PR）、`infra: apply`（dispatch・Environment `infra-production`・承認ゲート）。
-- `docs/**` / `mkdocs.yml` → `docs: mkdocs`（MkDocs build → GitHub Pages）。
-- 秘密値を使う本番反映は GitHub Environment（モジュール別 `<module>-production`・必須レビュー）でスコープする＝各ジョブは自分のモジュールの secret だけ読む（最小権限）。
+入口は**検証＝`verify` / 本番反映＝`release` の2本**＋横断（`website.yml`＝build/deploy 手順の共有サブルーチン・
+`secret-scan`・`keep-alive`）。どちらも変更モジュールを diff で検出し、該当 job だけ走らせる。
+
+- **`verify`**（PR / push(main) / dispatch・秘密ゼロ＝fork-safe）：migration の改竄防止＋型ドリフト
+  （core / saas）、studio の型・テスト、website build（PR は一時 Supabase で実適用検証）、
+  terraform fmt / validate / terraform-docs、docs build。
+- **`release`**（dispatch・apply boolean）：apply=false＝本番側 dry-run（migration status / terraform plan /
+  build）→ apply=true＝依存順（core/saas migration → functions / website / 商品同期 / docs → infra）で反映
+  （手順は [デプロイ手順](deploy.md)・[ADR 0009](adr/0009-release-pipeline.md)）。
+- 秘密値を使う本番反映は GitHub Environment（モジュール別 `<module>-production`・必須レビュー）でスコープする＝release の各ジョブは自分のモジュールの secret だけ読む（最小権限）。

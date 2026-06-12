@@ -53,9 +53,12 @@ export class GithubDeploy implements DeployTrigger {
     return ((await tokRes.json()) as { token: string }).token;
   }
 
-  async trigger(workflow: string, ref: string): Promise<void> {
+  async trigger(workflow: string, ref: string, inputs?: Record<string, string>): Promise<void> {
     const token = await this.token();
-    const res = await gh(`/repos/${repo()}/actions/workflows/${workflow}/dispatches`, token, 'POST', { ref });
+    const res = await gh(`/repos/${repo()}/actions/workflows/${workflow}/dispatches`, token, 'POST', {
+      ref,
+      ...(inputs ? { inputs } : {}),
+    });
     if (!res.ok) throw new Error(`deploy dispatch 失敗: ${res.status} ${await res.text()}`);
   }
 }

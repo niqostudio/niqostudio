@@ -6,5 +6,5 @@ import { DEPLOY_TARGETS, getDeploy } from './deploy';
 export async function deployAction(targetId: string): Promise<void> {
   const target = DEPLOY_TARGETS.find((t) => t.id === targetId);
   if (!target) throw new Error(`unknown deploy target: ${targetId}`);
-  await getDeploy().trigger(target.workflow, target.ref);
+  await getDeploy().trigger(target.workflow, target.ref, target.inputs);
 }

@@ -76,17 +76,17 @@ supabase secrets set --project-ref <saas-ref> \
 
 ## デプロイ（本番）
 
-1. **migration**：`saas-platform: migrate`（apply=true）で billing スキーマを本番 saas DB へ。
-2. **Stripe（本番）に Price**：core に products/offers 登録 → `saas-products: sync` を dispatch
-   （`stacks/stripe` が Price を作り、identity / billing.product_offers へ射影）。
-3. **関数 secret**：上記「必要な secret / env」の `supabase secrets set` を実行（`RECEIPT_*` は鍵生成して投入）。
-4. **デプロイ**：`supabase functions deploy billing-prices billing-checkout billing-return billing-webhook
-   billing-keys --project-ref <saas-ref>`。
-5. **webhook 登録（手動・whsec を state に残さない規約）**：Stripe ダッシュボードで endpoint
+1. **関数 secret（初回のみ・release より先）**：上記「必要な secret / env」の `supabase secrets set` を実行
+   （`RECEIPT_*` は鍵生成して投入）。
+2. **migration ＋ 関数 ＋ 商品同期**：`release`（apply=true）を dispatch。**同一コミットから
+   saas migration → Edge Functions deploy、続けて商品マスタの Stripe / identity 同期**まで依存順で行う
+   （schema と関数の取り合わせ・反映順序を手で組まない。[デプロイ手順](../deploy.md)）。
+   商品は事前に studio で core に登録（is_saas・offers）しておく。
+3. **webhook 登録（手動・whsec を state に残さない規約）**：Stripe ダッシュボードで endpoint
    `https://<saas-ref>.supabase.co/functions/v1/billing-webhook` を登録 →
    `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` を購読 →
    署名シークレット `whsec_` を `supabase secrets set STRIPE_WEBHOOK_SECRET=...` で投入。
-6. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `BILLING_ALLOWED_ORIGINS` を更新。
+4. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `BILLING_ALLOWED_ORIGINS` を更新。
    `BILLING_PUBLIC_URL` は本番不要（`SUPABASE_URL` が公開 URL）。
 
 > 可用性結合：billing 停止＝全製品で販売停止。free tier の一時停止が販売も塞ぐため、実ユーザーが付いたら

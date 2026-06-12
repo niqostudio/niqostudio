@@ -84,18 +84,19 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 ### `infra-production`
 | 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
 | --- | --- | --- | --- | --- |
-| `SUPABASE_DB_URL` | ✋ | core（`db: migrate`） | Session pooler 接続文字列。dbmate 適用（承認ゲート）。**CI は IPv4 のみ** | DB ロール（migration 適用） |
+| `SUPABASE_DB_URL` | ✋ | core（`release` core_db / sync_stripe） | Session pooler 接続文字列。dbmate 適用＋商品マスタ書き出し（承認ゲート）。**CI は IPv4 のみ** | DB ロール（migration 適用） |
 | `SUPABASE_ACCESS_TOKEN` | ✋ | infra | Supabase Management API トークン。`infra/stacks/supabase`（`supabase_settings`）の plan/apply 用。発行＝Account → Access Tokens・発行名 `infra-supabase` | Management API（対象プロジェクト） |
 | `SUPABASE_SECRET_KEY`（必要時のみ） | ✋ | core | `sb_secret_`・BYPASSRLS。migration には不要 | — |
 | `CF_TERRAFORM_TOKEN` | ✋ | infra | TF が CF 操作。最小権限。発行名 `infra-terraform`（→ `CLOUDFLARE_API_TOKEN`） | Account(NIQO STUDIO)<br>　Workers Scripts: Edit<br>　Email Routing Addresses: Edit<br>　Account Rulesets: Edit<br>Zone(niqostudio.com / niqo.studio)<br>　DNS: Edit<br>　Email Routing Rules: Edit<br>　Dynamic URL Redirects: Edit<br>　Zone: Read |
 | `R2_TFSTATE_KEY_ID` / `R2_TFSTATE_SECRET_KEY` | ✋ | infra | S3 鍵ペア（ID も機密）。発行名 `infra-tfstate` | バケット `niqostudio-tfstate`<br>　Object: Read & Write |
-| `STRIPE_API_KEY` | ✋ | infra（`saas-products: sync`） | `stacks/stripe`（Product / Price の IaC）用。restricted key で発行 | Products / Prices: Write のみ |
+| `STRIPE_API_KEY` | ✋ | infra（`release` sync_stripe） | `stacks/stripe`（Product / Price の IaC）用。restricted key で発行 | Products / Prices: Write のみ |
 | `EMAIL_FORWARD_TO` | ✋ | infra | 転送先メール（PII）→ `TF_VAR_forward_to` | — |
 
 ### `saas-platform-production`
 | 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
 | --- | --- | --- | --- | --- |
-| `SUPABASE_DB_URL` | ✋ | saas-platform（`saas-platform: migrate`） | **niqostudio-saas** の Session pooler 接続文字列。dbmate 適用（承認ゲート）。**CI は IPv4 のみ**。infra-production の同名 secret とは別プロジェクト | DB ロール（migration 適用） |
+| `SUPABASE_DB_URL` | ✋ | saas-platform（`release` saas / sync_identity） | **niqostudio-saas** の Session pooler 接続文字列。dbmate 適用＋identity 射影（承認ゲート）。**CI は IPv4 のみ**。infra-production の同名 secret とは別プロジェクト | DB ロール（migration 適用） |
+| `SUPABASE_ACCESS_TOKEN` | ✋ | saas-platform（`release` saas） | Edge Functions deploy（Management API）。infra-production の同名 secret と同値を env でスコープして出し分け | Management API（対象プロジェクト） |
 
 ### `website-production`
 | 値 | 配置 | 必要とするモジュール | 備考 | 権限（発行時） |
@@ -119,6 +120,11 @@ email レコードの混ぜ方の設計は [メール設計](infra/email.md) を
 | `SUPABASE_PROJECT_REF` | ✋ | infra | `supabase_settings` の対象プロジェクト参照 ID（→ `TF_VAR_project_ref`）。ダッシュボード URL の `<ref>`（半公開） |
 | `SAAS_SUPABASE_PROJECT_REF` | ✋ | infra | `stacks/supabase-saas` の対象プロジェクト参照 ID（→ `TF_VAR_project_ref`） |
 | `RESEND_DNS_RECORDS` | ✋ | infra | Resend 認証 DNS。**JSON 配列のみ**（`resend_dns_records =` の代入頭は付けない）。CI が `.auto.tfvars.json` に包んで渡す。ローカルは `terraform.tfvars`（HCL）側に書く |
+
+### `saas-platform-production`
+| 値 | 配置 | 必要とするモジュール | 備考 |
+| --- | --- | --- | --- |
+| `SAAS_SUPABASE_PROJECT_REF` | ✋ | saas-platform（`release` saas） | Edge Functions deploy の `--project-ref`。infra-production の同名 Variable と同値を env でスコープして出し分け |
 
 > website のメール送信元・宛先（noreply / hi@）は GitHub Variable ではなく config.json（`email.addresses`・astro.config が inline 注入）に集約。
 

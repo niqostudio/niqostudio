@@ -7,10 +7,13 @@ export interface DeployTarget {
   label: string;
   workflow: string;
   ref: string;
+  inputs?: Record<string, string>;
 }
 
 export const DEPLOY_TARGETS: DeployTarget[] = [
-  { id: 'website', label: '公開サイトを再ビルド＆デプロイ', workflow: 'website.yml', ref: 'main' },
+  // release＝本番反映の単一の入口。未反映の変更（migration / functions / website / infra / 商品マスタ）を
+  // 依存順で反映する。承認は CI 側の Environment ゲート。
+  { id: 'release', label: '未反映の変更を本番へ反映（release）', workflow: 'release.yml', ref: 'main', inputs: { apply: 'true' } },
 ];
 
 let _deploy: DeployTrigger | null = null;

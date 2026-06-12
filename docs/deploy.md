@@ -22,30 +22,31 @@
 5. **R2**：state バケット作成＋ tfstate トークン発行（infra apply の backend 前提）。→ [Cloudflare 手順](infra/cloudflare.md)
 6. CF API トークン（`infra-terraform` / `website-worker-deploy`）と Turnstile キーを発行。→ [Cloudflare 手順](infra/cloudflare.md)
 7. Supabase：プロジェクト作成 → 署名鍵を import→rotate。→ [Supabase 手順](infra/supabase.md)
-8. **GitHub Environments を作成**（`infra-production` / `website-production`・Required reviewers）→ 各 Environment に Secret / Variable を設定（一覧は [変数の配置](variables.md)。`RESEND_DNS_RECORDS` 含む）。`db: migrate` も `infra-production` を使う（[ADR 0005](adr/0005-supabase-into-infra-platform.md)）。
+8. **GitHub Environments を作成**（`infra-production` / `saas-platform-production` / `website-production`・Required reviewers）→ 各 Environment に Secret / Variable を設定（一覧は [変数の配置](variables.md)。`RESEND_DNS_RECORDS` 含む）。`release` の core_db job も `infra-production` を使う（[ADR 0005](adr/0005-supabase-into-infra-platform.md)）。
 
 ### B. 反映（CI・依存順）
-9. `db: migrate`（apply=true）：スキーマ＋ `inquiry_writer` ロールを作る。
+9. `release`（apply=true）1回目：core/studio スキーマ＋ `inquiry_writer` ロールを作る（website は `PUBLIC_*`・JWT 未設定のため、ここではまだ deploy しない）。
 10. **`profile` singleton を投入**（Studio）：website ビルドは実データ前提（profile 欠落で throw）。→ [core 運用](database.md)
 11. `inquiry_writer` JWT を発行 → `SUPABASE_INQUIRY_WRITER_JWT` を設定（ロール作成後）。→ [Supabase 手順](infra/supabase.md)
-12. `website: build & deploy` を dispatch：**Worker の箱を作る**（`wrangler deploy`）。JWT / Turnstile secret も投入。fail-closed のため 11・Turnstile・`PUBLIC_*` 値が前提。
-13. `infra: apply` を dispatch：DNS（SPF / DMARC / DKIM / `send.`）＋ **Worker カスタムドメイン束ね**。束ねは Worker 実体が要るので **12 の後**。
-14. 検証：Resend verify・`dig`・フォーム疎通（下の「apply 後の検証」）。
-15. `db: migrate`（apply=true）で **anon の INSERT 剥奪**（JWT 経路の疎通を確認した後・別 migration）。
-16. DMARC を `quarantine`→`reject` へ段階強化。→ [メール設計](infra/email.md)
+12. `release`（apply=true）2回目：website deploy（**Worker の箱を作る**・JWT / Turnstile secret 投入）→ infra apply（DNS ＋ **Worker カスタムドメイン束ね**）。**箱→束ねの順序は release の needs が保証**する。
+13. 検証：Resend verify・`dig`・フォーム疎通（下の「apply 後の検証」）。
+14. anon の INSERT 剥奪 migration を入れて `release`（JWT 経路の疎通を確認した後・別 migration）。
+15. DMARC を `quarantine`→`reject` へ段階強化。→ [メール設計](infra/email.md)
 
-> 肝の依存：ゾーン委譲 → 以降の DNS 操作すべて／ 受信 Email Routing 先行（→ 自動 SPF 削除）／ R2 は infra apply の前提／ ロール作成・JWT 発行・`profile` 投入 → website build/deploy（fail-closed・実データ前提）／ website が箱を作ってから infra がドメイン束ね／ JWT 経路の疎通確認後に anon 剥奪。
-> 以後の通常運用では 9 / 12 / 13 は順不同・冪等（初回のみ 12→13 の順序依存）。
+> 肝の依存：ゾーン委譲 → 以降の DNS 操作すべて／ 受信 Email Routing 先行（→ 自動 SPF 削除）／ R2 は infra apply の前提／ ロール作成・JWT 発行・`profile` 投入 → website build/deploy（fail-closed・実データ前提）／ website が箱を作ってから infra がドメイン束ね（release の needs に焼き込み済み）／ JWT 経路の疎通確認後に anon 剥奪。
 
 ## 通常の反映（繰り返し）
 
-| 対象 | トリガ | 実行内容 |
-| --- | --- | --- |
-| core スキーマ | `db: migrate` を dispatch（apply=true） | Session pooler 経由で `dbmate up` |
-| infra | `infra: apply` を dispatch | `terraform apply`（承認ゲート） |
-| website | `website: build & deploy` を dispatch | build → `wrangler deploy` → `wrangler secret bulk` |
+**入口は `release` workflow 1本**。未反映の変更（git の HEAD ＋ core の商品マスタ）を変更検出し、
+依存順（core/saas migration → functions / website / 商品同期 → infra）で本番に収束させる。
 
-- 本番反映はすべて**承認ゲート付き Environment**（`<module>-production`）で実行する。secret はローカルに置かない。
+1. `release`（apply=false）を dispatch → 全ジョブの **dry-run**（migration status / terraform plan / build / deploy 対象）を1つの run で読む。
+2. 差分が意図どおりなら `release`（apply=true）→ Environment の承認を行い、依存順に反映。
+   承認は **job が実行可能になった時点で要求される**ため、依存の段ごとに数回に分かれる
+   （同時に待機中の分は1ダイアログでまとめて承認できる）。
+
+- 各 job は従来どおり**モジュール別 Environment**（`<module>-production`・承認ゲート）を張る＝secret の置き場・信頼境界は不変。secret はローカルに置かない。
+- 商品マスタ（core.products / product_offers）の Stripe / identity への同期は **apply のたびに収束**する（データが正本＝diff 検出外。無変更なら no-op・冪等）。
 - PR では検証のみ（下表）。
 
 ## どの失敗がどの段で出るか
@@ -53,20 +54,19 @@
 
 | 段 | ワークフロー | 落とすもの |
 | --- | --- | --- |
-| PR（秘密なし） | `website: build & deploy`（build） | 型・ビルド（`pnpm build` / `pnpm check`） |
-| PR | `db: check` | migration 適用可否（local Supabase 起動で実適用）・型ドリフト |
-| PR | `infra: validate` | `terraform fmt` / `validate` |
-| deploy（承認後） | `website: build & deploy`（deploy） | Turnstile / JWT の構成整合（fail-closed）・deploy 失敗 |
-| apply（承認後） | `infra: apply` | `terraform apply`（plan 段の取りこぼしはここで顕在化） |
-| migrate（承認後） | `db: migrate` | 本番 `db push` |
+| PR / push（秘密なし） | `verify`（website_check） | 型・ビルド（`pnpm build` / `pnpm check`・PR は一時 Supabase で実適用検証） |
+| PR / push | `verify`（db_check / saas_check） | migration の改竄・適用可否（local Supabase で実適用）・型ドリフト |
+| PR / push | `verify`（studio_check / infra_check / docs_check） | studio 型・テスト／`terraform fmt` / `validate` / terraform-docs／mkdocs build |
+| dry-run（承認後） | `release`（apply=false） | migration の pending・terraform plan の差分・website build |
+| apply（承認後） | `release`（apply=true） | deploy / apply の実失敗（Turnstile / JWT の構成整合は website deploy job が fail-closed で検査） |
 
-- infra は PR で `plan` を走らせない（state / secret が要・fork-safe 優先）＝ plan 段の差分は apply で出る。
+- infra は verify で `plan` を走らせない（state / secret が要・fork-safe 優先）＝ plan 段の差分は release の dry-run で出る。
 - secret は該当モジュールの Environment にしか無いため、secret 整合（Turnstile / JWT）は deploy job で検査する。
 
 ## apply 後の検証（突合せ）
 DNS / 設定の値は Terraform が正本なので、**ここでは再掲せず検証で突合せる**：
 
-1. `infra: apply` 後にもう一度 `terraform plan` ＝ **no-drift**（望ましい状態と一致）。
+1. `release`（apply）後にもう一度 `release`（apply=false）＝ 全 plan / status が **no-drift**（望ましい状態と一致）。
 2. TF 管理外の交点だけ `dig` で確認：
    ```sh
    dig +short MX  niqostudio.com                     # 受信 MX が *.mx.cloudflare.net で入っているか
