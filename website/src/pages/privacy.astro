@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { PAGES, SITE } from '../config/site';
 import { getProfile } from '../lib/content';
 import { PageHeader, SectionLabel, Wordmark } from '../components';
+import CopyEmail from '../components/ui/CopyEmail.astro';
 
 const profile = await getProfile();
 const email = profile?.contactEmail ?? SITE.email;
@@ -79,7 +80,7 @@ const list = 'bullet-list space-y-1.5';
     <div class={row}>
       <SectionLabel as="dt">お問い合わせ窓口</SectionLabel>
       <dd class="mt-2 sm:mt-0">
-        <a href={`mailto:${email}`} class="text-accent hover:underline">{email}</a>
+        <CopyEmail email={email} />
       </dd>
     </div>
 

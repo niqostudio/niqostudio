@@ -9,3 +9,6 @@ signing_keys.json
 .env.keys
 .env.local
 .env.*.local
+
+# billing 関数の正本は saas-platform/functions（ここへは serve 時にリンクを張る）。追跡しない。
+functions/

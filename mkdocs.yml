@@ -44,6 +44,7 @@ nav:
   - SaaS 基盤:
       - アーキテクチャ: saas/architecture.md
       - 製品統合契約: saas/contract.md
+      - 課金（billing）: saas/billing.md
   - infra:
       - Cloudflare 手順: infra/cloudflare.md
       - Resend 手順: infra/resend.md

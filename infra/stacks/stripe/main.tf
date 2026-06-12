@@ -19,6 +19,8 @@ resource "stripe_price" "this" {
     for_each = each.value.interval == null ? [] : [each.value.interval]
     content {
       interval = recurring.value
+      # Stripe は interval_count >= 1 を要求する（未指定は 0 扱いで弾かれる）。
+      interval_count = 1
     }
   }
 }
