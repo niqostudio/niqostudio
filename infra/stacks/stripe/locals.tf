@@ -1,13 +1,13 @@
 locals {
   products = { for p in var.products : p.code => p }
 
-  # offer はフラットにして lookup key（<製品コード>_<offer キー>_v<version>）で引けるようにする。
-  # billing service は「key の現行版」をこのキーで解決する＝price ID をどこにも焼き込まない。
-  # 改定で旧 version が書き出しから消えると、provider の destroy は Stripe 上の price の
-  # アーカイブ（無効化）になる＝既存サブスクは旧 price のまま継続する。
+  # offer はフラットにして lookup key（<製品コード>_<offer キー>）で引けるようにする。
+  # billing service は現行価格をこのキーで解決する＝price ID をどこにも焼き込まない。
+  # 価格改定は price の作り直し（Stripe の price は不変）。lookup key は transfer_lookup_key が
+  # 新 price へ引き継ぎ、旧 price はアーカイブで Stripe に残る＝既存サブスクは旧 price のまま継続する。
   offers = merge([
     for p in var.products : {
-      for o in p.offers : "${p.code}_${o.key}_v${o.version}" => {
+      for o in p.offers : "${p.code}_${o.key}" => {
         product_code = p.code
         currency     = o.currency
         unit_amount  = o.unit_amount

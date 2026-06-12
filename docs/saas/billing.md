@@ -59,7 +59,7 @@ supabase secrets set --project-ref <saas-ref> \
 2. **製品・offer を Stripe test に反映**：core（内部スタック）に products(is_saas)＋product_offers を投入
    （seed・`seeds/*.sql` は gitignore）→ `node scripts/saas-products-export.mjs` →
    `STRIPE_API_KEY=sk_test_... terraform -chdir=stacks/stripe init -reconfigure && apply`
-   （ローカル state は backend override で local・lookup key `<code>_<key>_v<version>` の Price ができる）→
+   （ローカル state は backend override で local・lookup key `<code>_<key>` の Price ができる）→
    `node scripts/saas-products-identity-sync.mjs`（saas DB の identity.products / billing.product_offers 射影）。
 3. `.env.local` を作成：`STRIPE_SECRET_KEY`（test）・`RECEIPT_*`（`node scripts/gen-receipt-key.mjs`）・
    `BILLING_ALLOWED_ORIGINS={"demo-app":["http://localhost:3000"]}`・`BILLING_PUBLIC_URL=http://127.0.0.1:55321`。

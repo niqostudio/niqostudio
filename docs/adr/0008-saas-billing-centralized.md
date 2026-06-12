@@ -55,15 +55,17 @@ Merchant of Record（Paddle / Lemon Squeezy 等）への adapter 交換を製品
 - **正本は core DB**：製品＝既存の `core.products`（ポートフォリオ台帳。SaaS・受託成果物・屋号自身が混在
   するため、顧客がサインアップ・課金できる SaaS 製品を `is_saas` で明示）、商品＝`core.product_offers`
   （offer キー・通貨・金額・billing_interval の有無でサブスク / 一回課金）。**管理は studio**（業務データ）。
-- **商品は version を持ち、売値の定義は version 単位で不変**（DB トリガで UPDATE を拒否）。
-  改定＝新 version 行の追加＋旧 is_active off（販売中の版は offer キーごとに1つ＝partial unique）。
-  理由：反映先の Stripe price は immutable、販売済み entitlement の意味も事後に変えないため。
-  マスタと反映先の不変性を揃えることで、宣言適用（差分）が安全になる。
+- **商品は (product, key) ごとに現行価格1行**。改定＝行の直接 UPDATE → sync で Stripe へ
+  新 price として反映（Stripe の price は immutable）。改定履歴は Stripe のアーカイブ済み price、
+  販売の事実は台帳（billing.purchases）の金額スナップショットが持つ。
+  ※当初は version 付き不変行（改定＝新 version 行）としたが、grants / 台帳 / 契約のどこからも
+  version を参照しておらず、core に履歴を持つ実益がないため現行価格1行に改定した（2026-06）。
 - **Stripe への反映は Terraform**：`saas-products: sync` workflow が core から
   `products.auto.tfvars.json`（gitignore）を書き出し、`infra/stacks/stripe` を apply する。
-  price の lookup key は `<製品コード>_<offer キー>_v<version>`。billing service は「key の現行版」を
-  このキーで解決し、price ID をどこにも焼き込まない。旧 version の price は書き出しから消え、
-  destroy＝Stripe 上のアーカイブになる（既存サブスクは旧 price のまま継続）。
+  price の lookup key は `<製品コード>_<offer キー>`。billing service は販売中 offer を
+  このキーで解決し、price ID をどこにも焼き込まない。改定時の lookup key は
+  `transfer_lookup_key` が新 price へ引き継ぎ、旧 price はアーカイブになる
+  （既存サブスクは旧 price のまま継続）。
 - **`identity.products` は core の射影**（code=slug / name / status のみ・対象は is_saas の部分集合）。
   「コピー」ではなく core→website の公開 view と同じ truth→射影で、別信頼ドメインのため view でなく
   同 workflow の別 job（`saas-platform-production`）が upsert する。書き出しから消えた code は

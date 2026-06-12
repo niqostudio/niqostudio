@@ -146,22 +146,22 @@ erDiagram
 
 ### product_offers（truth・SaaS の商品＝販売単位）
 
-SaaS 製品（`is_saas`）の offer・価格マスタ。Stripe 反映（lookup key = `<slug>_<key>_v<version>`）と
-billing の plan 解決の正本。**売値の定義（currency / unit_amount / billing_interval）は version 単位で不変**
-（トリガで UPDATE 拒否）。改定＝新 version 行の追加＋旧 `is_active` off。販売中の版は (product, key) ごとに
-1つ（partial unique）。設計は [ADR 0008](../adr/0008-saas-billing-centralized.md)、saas 側全体像は
+SaaS 製品（`is_saas`）の offer・価格マスタ。Stripe 反映（lookup key = `<slug>_<key>`）と
+billing の plan 解決の正本。**(product, key) ごとに現行価格1行**＝改定は行の直接 UPDATE
+（sync が Stripe へ新 Price として反映し lookup key を引き継ぐ。改定履歴は Stripe のアーカイブ済み Price、
+販売の事実は saas 側台帳 billing.purchases の金額スナップショットが持つ）。
+設計は [ADR 0008](../adr/0008-saas-billing-centralized.md)、saas 側全体像は
 [SaaS 基盤アーキテクチャ](../saas/architecture.md)。
 
 | 列 | 型 | 備考 |
 |---|---|---|
 | `product_id` | uuid FK→products NOT NULL | ON DELETE CASCADE |
-| `key` | text NOT NULL | offer キー（例 launch_pass / pro_monthly）。(product_id, key, version) UNIQUE |
-| `version` | integer NOT NULL | 1 始まり。改定ごとに増える |
+| `key` | text NOT NULL | offer キー（例 launch_pass / pro_monthly）。(product_id, key) UNIQUE |
 | `currency` | text NOT NULL | ISO 小文字3字（既定 usd） |
 | `unit_amount` | integer NOT NULL | 最小通貨単位（usd ならセント）・正 |
 | `billing_interval` | text | day / week / month / year。NULL＝一回課金 |
 | `access_period_days` | integer | 一回課金の付与窓（日数・NULL=無期限）。表示（billing-prices）と grant.expires_at の単一正本。billing_interval と相互排他（CHECK） |
-| `is_active` | boolean NOT NULL | 販売中の版か（既定 true） |
+| `is_active` | boolean NOT NULL | 販売中か（既定 true・false＝販売停止） |
 
 ### project_statuses / project_status_transitions / project_status_events（状態機械）
 案件ライフサイクルを「状態マスタ × 許容遷移 × 履歴」でデータ層に持つ。`projects.status` は `project_statuses.code` への FK。

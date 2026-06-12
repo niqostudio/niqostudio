@@ -14,6 +14,8 @@ resource "stripe_price" "this" {
   currency    = each.value.currency
   unit_amount = each.value.unit_amount
   lookup_key  = each.key
+  # 改定（price 作り直し）時に同じ lookup key を旧 price から新 price へ引き継ぐ。
+  transfer_lookup_key = true
 
   dynamic "recurring" {
     for_each = each.value.interval == null ? [] : [each.value.interval]

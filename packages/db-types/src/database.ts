@@ -767,7 +767,6 @@ export type Database = {
           product_id: string
           unit_amount: number
           updated_at: string
-          version: number
         }
         Insert: {
           access_period_days?: number | null
@@ -780,7 +779,6 @@ export type Database = {
           product_id: string
           unit_amount: number
           updated_at?: string
-          version?: number
         }
         Update: {
           access_period_days?: number | null
@@ -793,7 +791,6 @@ export type Database = {
           product_id?: string
           unit_amount?: number
           updated_at?: string
-          version?: number
         }
         Relationships: [
           {

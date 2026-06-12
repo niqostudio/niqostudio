@@ -48,9 +48,9 @@ Deno.serve(async (req) => {
   }
 
   const sql = db();
-  // ① registry 突合＋現行版 offer 解決
+  // ① registry 突合＋販売中 offer 解決
   const offers = await sql`
-    select o.key, o.version, o.billing_interval
+    select o.key, o.billing_interval
     from billing.product_offers o
     join identity.products p on p.id = o.product_id
     where p.code = ${product} and p.status = 'active' and o.key = ${offer} and o.is_active
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       productCode: product,
       offerKey: offer,
       scope,
-      priceLookupKey: `${product}_${offer}_v${row.version}`,
+      priceLookupKey: `${product}_${offer}`,
       isSubscription,
       // Stripe は success_url の {CHECKOUT_SESSION_ID} を展開する。encode せず生で渡す必要があるため手組み。
       successUrl: returnUrl.toString().replace('%7BCHECKOUT_SESSION_ID%7D', '{CHECKOUT_SESSION_ID}'),

@@ -1,8 +1,8 @@
 // 書き出し済みマスタ（products.auto.tfvars.json）を saas 側へ射影する。
 // - identity.products：レジストリ（code/name/status）。upsert ＋ 書き出しに無い code は inactive 化
 //   （grants から参照されるため行は消さない）。
-// - billing.product_offers：価格射影（billing が実行時に core を読まないための現行版解決先）。
-//   書き出しの版を upsert し、書き出しに無い (product,key,version) は inactive 化。
+// - billing.product_offers：価格射影（billing が実行時に core を読まないための現行価格の解決先）。
+//   (product, key) ごとに upsert し、書き出しに無い key は inactive 化。
 import { readFileSync } from 'node:fs';
 import { Client } from 'pg';
 
@@ -30,9 +30,9 @@ try {
     [products.map((p) => p.code)],
   );
 
-  // 2) billing.product_offers 射影（offer の現行版を upsert）
-  // partial unique (product,key) WHERE is_active のため、先に全版を inactive 化してから
-  // live のみ active で upsert する（同一 (product,key) に active が2件並ぶ瞬間を作らない）。
+  // 2) billing.product_offers 射影（現行価格を upsert）
+  // 書き出しに無くなった key を販売停止にするため、先に全行を inactive 化してから
+  // live のみ active で upsert する。
   const { rowCount: offersInactive } = await client.query(
     `update billing.product_offers set is_active = false where is_active`,
   );
@@ -43,13 +43,13 @@ try {
     for (const o of p.offers ?? []) {
       await client.query(
         `insert into billing.product_offers
-           (product_id, key, version, currency, unit_amount, billing_interval, access_period_days, is_active, synced_at)
-         values ($1, $2, $3, $4, $5, $6, $7, true, now())
-         on conflict (product_id, key, version) do update set
+           (product_id, key, currency, unit_amount, billing_interval, access_period_days, is_active, synced_at)
+         values ($1, $2, $3, $4, $5, $6, true, now())
+         on conflict (product_id, key) do update set
            currency = excluded.currency, unit_amount = excluded.unit_amount,
            billing_interval = excluded.billing_interval, access_period_days = excluded.access_period_days,
            is_active = true, synced_at = now()`,
-        [productId, o.key, o.version, o.currency, o.unit_amount, o.interval ?? null, o.access_period_days ?? null],
+        [productId, o.key, o.currency, o.unit_amount, o.interval ?? null, o.access_period_days ?? null],
       );
       offerCount++;
     }

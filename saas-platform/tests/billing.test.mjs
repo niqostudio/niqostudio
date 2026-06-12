@@ -30,13 +30,13 @@ async function fixtures() {
     rows: [p],
   } = await c.query(`insert into identity.products (code, name) values ('demo','Demo') returning id`);
   await c.query(
-    `insert into billing.product_offers (product_id, key, version, currency, unit_amount, access_period_days)
-     values ($1,'launch_pass',1,'usd',900,30)`,
+    `insert into billing.product_offers (product_id, key, currency, unit_amount, access_period_days)
+     values ($1,'launch_pass','usd',900,30)`,
     [p.id],
   );
   await c.query(
-    `insert into billing.product_offers (product_id, key, version, currency, unit_amount, billing_interval)
-     values ($1,'pro_monthly',1,'usd',1900,'month')`,
+    `insert into billing.product_offers (product_id, key, currency, unit_amount, billing_interval)
+     values ($1,'pro_monthly','usd',1900,'month')`,
     [p.id],
   );
   return { orgId: m.organization_id, productId: p.id };
@@ -49,7 +49,6 @@ async function record(args) {
     p_event_at: new Date('2026-06-13T00:00:00Z').toISOString(),
     p_org_id: null,
     p_customer_email: 'buyer@example.com',
-    p_offer_version: 1,
     p_scope: null,
     p_amount: 900,
     p_currency: 'usd',
@@ -62,10 +61,10 @@ async function record(args) {
   };
   const { rows } = await c.query(
     `select billing.record_event(
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) as result`,
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) as result`,
     [
       d.p_provider, d.p_event_id, d.p_event_type, d.p_event_at, d.p_org_id, d.p_customer_email,
-      d.p_product_code, d.p_offer_key, d.p_offer_version, d.p_scope, d.p_kind, d.p_amount, d.p_currency,
+      d.p_product_code, d.p_offer_key, d.p_scope, d.p_kind, d.p_amount, d.p_currency,
       d.p_external_checkout_id, d.p_external_payment_id, d.p_external_invoice_id, d.p_period_end, d.p_parent_id,
     ],
   );
@@ -204,7 +203,7 @@ test('chargeback / dispute: grant が suspended になる', async () => {
 
 test('無期限の一回課金: access_period_days NULL の offer は expires_at NULL', async () => {
   const { orgId, productId } = await fixtures();
-  await c.query(`insert into billing.product_offers (product_id, key, version, currency, unit_amount) values ($1,'lifetime',1,'usd',5000)`, [productId]);
+  await c.query(`insert into billing.product_offers (product_id, key, currency, unit_amount) values ($1,'lifetime','usd',5000)`, [productId]);
   await record({ p_event_id: 'evt_life', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'lifetime', p_scope: 'proj-l', p_kind: 'purchase', p_amount: 5000, p_external_checkout_id: 'cs_l' });
   const g = await grant(orgId, 'proj-l');
   assert.equal(g.status, 'active');
