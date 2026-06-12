@@ -53,28 +53,24 @@ enabled = true
 [functions]
 # 関数の正本は saas-platform/functions（infra の supabase ディレクトリ外）。
 # 各関数を明示登録する（verify_jwt=false＝billing は匿名/webhook を受けるため自前で検証する）。
-# import_map は deploy のバンドラに明示しないと bare specifier（postgres 等）が解決されない
-# （serve は functions/deno.json を自動で拾うが deploy は拾わない）。
+# import map（functions/deno.json）はここに宣言しない：宣言すると supabase start が起動時に
+# ファイルの存在を要求し、symlink を張っていない環境（CI の check・素の clone）で起動が落ちる。
+# serve は自動で拾い、deploy は release が --import-map で明示する。
 [functions.billing-prices]
 enabled = true
 verify_jwt = false
-import_map = "./functions/deno.json"
 [functions.billing-checkout]
 enabled = true
 verify_jwt = false
-import_map = "./functions/deno.json"
 [functions.billing-return]
 enabled = true
 verify_jwt = false
-import_map = "./functions/deno.json"
 [functions.billing-webhook]
 enabled = true
 verify_jwt = false
-import_map = "./functions/deno.json"
 [functions.billing-keys]
 enabled = true
 verify_jwt = false
-import_map = "./functions/deno.json"
 
 [analytics]
 enabled = false

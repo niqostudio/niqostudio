@@ -129,6 +129,7 @@ jobs:
       - name: Edge Functions deploy（migration と同一コミットから）
         # 関数の正本は saas-platform/functions（CLI は <workdir>/supabase/functions を見るため symlink で繋ぐ）。
         # 対象と verify_jwt は infra/supabase-saas/supabase/config.toml の [functions.*] が正本。
+        # import map はバンドラが自動で拾わないため明示する（config 宣言は start を壊すためフラグで渡す）。
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
@@ -136,7 +137,8 @@ jobs:
           names=$(grep -oP '^\[functions\.\K[^]]+' infra/supabase-saas/supabase/config.toml | xargs)
           if [ "${{ inputs.apply }}" = "true" ]; then
             pnpm --filter @niqostudio/infra exec supabase --workdir supabase-saas functions deploy $names \
-              --use-api --project-ref "${{ vars.SAAS_SUPABASE_PROJECT_REF }}"
+              --use-api --import-map supabase-saas/supabase/functions/deno.json \
+              --project-ref "${{ vars.SAAS_SUPABASE_PROJECT_REF }}"
           else
             echo "deploy 対象（dry-run）: $names"
           fi
