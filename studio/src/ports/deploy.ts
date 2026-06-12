@@ -3,5 +3,5 @@ export interface DeployTrigger {
   // 連携 creds が設定済みか（未設定なら UI はボタンを出さない）。
   available(): boolean;
   // workflow を ref で dispatch する。本番反映は CI 側の承認ゲート（Environment）が二重に効く。
-  trigger(workflow: string, ref: string): Promise<void>;
+  trigger(workflow: string, ref: string, inputs?: Record<string, string>): Promise<void>;
 }
