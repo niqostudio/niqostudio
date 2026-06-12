@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { Service, Profile, Case, Database } from '../types/database';
+import type { Service, Profile, Case, Database, PublicProduct } from '../types/database';
 
 // 公開ケーススタディは DB の単一 view `showcases`（showcase_entries を投影。client 解決・deliverables/metrics 集約済み）。
 // website 側では Case と呼ぶ（projection 境界での翻訳）。
@@ -33,6 +33,16 @@ export async function fetchServices(): Promise<Service[]> {
   if (error) throw error;
   // public_services view は全列 nullable 型だが実体は非 null（services 由来）＝Service へキャスト。
   return (data ?? []) as unknown as Service[];
+}
+
+export async function fetchProducts(): Promise<PublicProduct[]> {
+  const { data, error } = await supabase
+    .from('public_products')
+    .select('slug, name, summary, url, tech_stack, launched_on')
+    .order('launched_on', { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  // view は全列 nullable 型のため部分集合型へキャスト（実体の非 null は products 由来）。
+  return (data ?? []) as unknown as PublicProduct[];
 }
 
 export type InquiryInput = {

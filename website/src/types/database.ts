@@ -12,6 +12,11 @@ type CoreViews = Database['core']['Views'];
 
 export type Service = CoreTables['services']['Row'];
 export type Profile = CoreTables['profile']['Row'];
+// 公開 view `public_products` が選択する列（products の部分集合＝is_public な行の anon 可視分）。
+export type PublicProduct = Pick<
+  CoreTables['products']['Row'],
+  'slug' | 'name' | 'summary' | 'url' | 'tech_stack' | 'launched_on'
+>;
 // 公開 view `public_showcases`（内部 showcase_entries の投影）を website では Case として扱う（projection 境界での翻訳）。
 // client は同意解決済み、deliverables / metrics は選択分の集約（Json）。
 export type Case = CoreViews['public_showcases']['Row'];

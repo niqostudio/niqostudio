@@ -1,4 +1,4 @@
-import type { Service, Profile, SocialLink } from '../types/database';
+import type { Service, Profile, SocialLink, PublicProduct } from '../types/database';
 import type { CaseRow } from './core';
 import { ENTRY_SERVICE_SLUG } from '../config/site';
 import type {
@@ -6,6 +6,7 @@ import type {
   SubjectKind,
   ServiceView,
   ProfileView,
+  ProductView,
   ClientRef,
   Metric,
   Problem,
@@ -14,6 +15,16 @@ import type {
   ContentLink,
   Pricing,
 } from '../types/views';
+
+export function toProductView(row: PublicProduct): ProductView {
+  return {
+    slug: row.slug,
+    name: row.name,
+    summary: row.summary,
+    url: row.url,
+    techStack: row.tech_stack ?? [],
+  };
+}
 
 // 公開 view 行 → ケースビューモデル。client は view が同意解決済み（name は匿名時 null・hidden 時は両方 null）。
 // problems / deliverables / metrics は NDA カテゴリ許可 ∩ 選択分の集約（view で解決済み）。

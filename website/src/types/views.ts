@@ -32,6 +32,15 @@ export type CaseView = {
   related: ContentLink[];
 };
 
+// 公開プロダクト（is_public な自社プロダクトの棚）。core の public_products view 由来。
+export type ProductView = {
+  slug: string;
+  name: string;
+  summary: string | null;
+  url: string | null;
+  techStack: string[];
+};
+
 export type PricingTier = { name: string; price: string; scope?: string };
 export type PricingFactor = { name: string; price: string };
 export type Pricing = {

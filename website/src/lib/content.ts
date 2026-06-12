@@ -1,6 +1,6 @@
 import * as core from './core';
-import { toCaseView, toServiceView, toProfileView } from './projection';
-import type { CaseView, ServiceView, ProfileView, ContentLink } from '../types/views';
+import { toCaseView, toServiceView, toProfileView, toProductView } from './projection';
+import type { CaseView, ServiceView, ProfileView, ProductView, ContentLink } from '../types/views';
 
 // 一覧・profile はビルド中にページ/コンポーネント横断で何度も呼ばれるため Promise をメモ化する。
 // ただし dev は長命プロセスでメモが残り、接続先（core）の変更がリロードで反映されない。
@@ -24,6 +24,12 @@ export function getServices(): Promise<ServiceView[]> {
       ];
     });
   return memo ? (servicesP ??= load()) : load();
+}
+
+let productsP: Promise<ProductView[]> | undefined;
+export function getProducts(): Promise<ProductView[]> {
+  const load = () => core.fetchProducts().then((rows) => rows.map(toProductView));
+  return memo ? (productsP ??= load()) : load();
 }
 
 let profileP: Promise<ProfileView> | undefined;

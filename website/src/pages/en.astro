@@ -6,7 +6,8 @@
 import '../styles/global.css';
 import { Font } from 'astro:assets';
 import { SITE, THEME, EN } from '../config/site';
-import { getProfile } from '../lib/content';
+import { getProfile, getProducts } from '../lib/content';
+import ProductCard from '../components/cards/ProductCard.astro';
 import LogoMark from '../components/ui/LogoMark.astro';
 import Wordmark from '../components/ui/Wordmark.astro';
 import SectionLabel from '../components/ui/SectionLabel.astro';
@@ -16,6 +17,7 @@ import CopyEmail from '../components/ui/CopyEmail.astro';
 import SocialLinks from '../components/layout/SocialLinks.astro';
 
 const profile = await getProfile();
+const products = await getProducts();
 const canonical = new URL('/en', Astro.site);
 // OG 画像はトップ用を流用（生成対象は日本語の固定ページのみ）。
 const ogImage = new URL('/og/index.png', Astro.site);
@@ -102,6 +104,20 @@ const contactEmail = profile.contactEmail ?? SITE.email;
           }
         </div>
       </section>
+
+      {
+        products.length > 0 && (
+          <section class="py-12 border-t border-border">
+            <SectionLabel as="h2">Products</SectionLabel>
+            <p class="text-sm text-muted mt-6 max-w-xl">Products we build and operate.</p>
+            <div class="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard product={product} />
+              ))}
+            </div>
+          </section>
+        )
+      }
 
       <section id="contact" class="py-12 border-t border-border scroll-mt-8">
         <SectionLabel as="h2">Contact</SectionLabel>
