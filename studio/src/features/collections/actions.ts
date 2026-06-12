@@ -116,7 +116,12 @@ export async function saveDraftJson(collectionId: string, recordId: string, fiel
 }
 
 export async function discardDraftAction(collectionId: string, recordId: string): Promise<void> {
-  await need(collectionId).drafts.remove(recordId);
+  const binding = need(collectionId);
+  await binding.drafts.remove(recordId);
+  revalidatePath(path(collectionId));
+  // 公開済みの正本が無い（未公開の新規）なら record ごと消えるため一覧へ戻す。
+  const published = await binding.store.get(recordId).catch(() => null);
+  if (!published) redirect(path(collectionId));
   revalidatePath(path(collectionId, recordId));
 }
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@niqostudio/db-types';
 import type { SourceRegistry, SourceInput } from '@/ports/domain-store';
+import { throwQueryError } from '@/shared/utils/db-error';
 import type { Source } from '@/ports/domain-store';
 import { createCoreClient, resolveSupabaseConfig, type SupabaseConfig } from './client';
 
@@ -21,7 +22,7 @@ export class CoreProjectSourceRegistry implements SourceRegistry {
       .select('id, url, role, visibility')
       .eq('project_id', recordId)
       .order('created_at', { ascending: true });
-    if (error) throw error;
+    if (error) throwQueryError('リポジトリ一覧の取得（core.project_repositories）', error);
     return (data ?? []).map((r) => ({
       id: r.id,
       kind: 'git',
@@ -40,7 +41,7 @@ export class CoreProjectSourceRegistry implements SourceRegistry {
         role: input.role,
         visibility: input.visibility,
       });
-    if (error) throw error;
+    if (error) throwQueryError('リポジトリの追加（core.project_repositories）', error);
   }
 
   async remove(sourceId: string): Promise<void> {
@@ -48,6 +49,6 @@ export class CoreProjectSourceRegistry implements SourceRegistry {
       .from('project_repositories')
       .delete()
       .eq('id', sourceId);
-    if (error) throw error;
+    if (error) throwQueryError('リポジトリの削除（core.project_repositories）', error);
   }
 }

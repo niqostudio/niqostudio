@@ -206,7 +206,16 @@ export default function RecordPaneEditor(props: {
             )}
 
             {props.isDraft && (
-              <button className="self-start text-sm text-muted hover:text-accent" disabled={busy} onClick={() => run(() => discardDraftAction(collectionId, recordId))}>{t('discardDraft')}</button>
+              <button
+                className="self-start text-sm text-muted hover:text-error"
+                disabled={busy}
+                onClick={() => {
+                  if (!window.confirm(t('discardDraftConfirm'))) return;
+                  run(() => discardDraftAction(collectionId, recordId));
+                }}
+              >
+                {t('discardDraft')}
+              </button>
             )}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { ActivityFeed, ActivityEntry } from '@/ports/studio-store';
+import { throwQueryError } from '@/shared/utils/db-error';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,
@@ -29,7 +30,7 @@ export class StudioActivityFeed implements ActivityFeed {
       .eq('tenant_id', this.tenantId)
       .order('created_at', { ascending: false })
       .limit(limit);
-    if (error) throw error;
+    if (error) throwQueryError('最近の活動の取得（studio.record_versions）', error);
     return (data ?? []).map((r) => {
       const row = r as Row;
       return { collection: row.collection, recordId: row.record_id, origin: row.origin, at: row.created_at };

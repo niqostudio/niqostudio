@@ -6,7 +6,7 @@ import { Pencil, X, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react
 import { Action } from '@/shared/ui/primitives';
 import { FieldControl, FieldInput, asText, defaultFor, packFieldRows, type RefOption } from '@/shared/ui/fields';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
-import { publishAction, saveDraftJson } from '../actions';
+import { discardDraftAction, publishAction, saveDraftJson } from '../actions';
 import { toast } from '@/features/feedback/toast';
 import { useUnsavedGuard } from '@/shared/unsaved';
 import { t } from '@/shared/i18n';
@@ -100,11 +100,30 @@ export function DetailActions({
   editHref: string;
 }) {
   const { dirty, busy, save } = useRecordEdit();
+  const [discarding, setDiscarding] = useState(false);
   return (
     <div className="flex shrink-0 items-center gap-2">
       {dirty && (
         <Action variant="primary" onClick={save} disabled={busy}>
           {t('save')}
+        </Action>
+      )}
+      {hasDraft && (
+        <Action
+          variant="secondary"
+          disabled={busy || discarding}
+          onClick={async () => {
+            if (!window.confirm(t('discardDraftConfirm'))) return;
+            setDiscarding(true);
+            try {
+              await discardDraftAction(collectionId, recordId);
+            } finally {
+              setDiscarding(false);
+            }
+          }}
+        >
+          <Trash2 className="size-4" />
+          {t('discardDraft')}
         </Action>
       )}
       {hasDraft && (

@@ -88,10 +88,20 @@ export function FieldControl({
 }) {
   if (d.kind === 'textarea')
     return <Textarea value={asText(value)} rows={2} className="w-full" onChange={(e) => onChange(e.target.value || null)} />;
+  if (d.kind === 'number')
+    return (
+      <Input
+        type="number"
+        value={asText(value)}
+        className="w-full"
+        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+      />
+    );
   if (d.kind === 'select')
     return (
       <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
-        {!d.required && <option value="">{t('none')}</option>}
+        {/* 空値の表示は optionLabels[''] で上書き可（例: billing_interval の空＝買い切り）。 */}
+        {!d.required && <option value="">{d.optionLabels?.[''] ?? t('none')}</option>}
         {(d.options ?? []).map((o) => (
           <option key={o} value={o}>
             {d.optionLabels?.[o] ?? o}

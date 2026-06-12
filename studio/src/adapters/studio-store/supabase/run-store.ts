@@ -1,3 +1,4 @@
+import { throwQueryError } from '@/shared/utils/db-error';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,
@@ -45,7 +46,7 @@ export class StudioRunStore {
       .insert({ tenant_id: this.tenantId, command, status: 'running' })
       .select('id')
       .single();
-    if (error) throw error;
+    if (error) throwQueryError('実行の開始記録（studio.command_runs）', error);
     return (data as { id: string }).id;
   }
 
@@ -54,7 +55,7 @@ export class StudioRunStore {
       .from('command_runs')
       .update({ status, output, finished_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) throw error;
+    if (error) throwQueryError('実行の完了記録（studio.command_runs）', error);
   }
 
   async list(limit = 50): Promise<CommandRun[]> {
@@ -64,7 +65,7 @@ export class StudioRunStore {
       .eq('tenant_id', this.tenantId)
       .order('created_at', { ascending: false })
       .limit(limit);
-    if (error) throw error;
+    if (error) throwQueryError('実行履歴の取得（studio.command_runs）', error);
     return (data ?? []).map((r) => {
       const row = r as RunRow;
       return {

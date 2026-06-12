@@ -20,6 +20,7 @@ import { profileSemantics } from '@/composition/semantics/profile';
 import { meetingsSemantics } from '@/composition/semantics/meetings';
 import { workLogsSemantics } from '@/composition/semantics/work-logs';
 import { contactsSemantics } from '@/composition/semantics/contacts';
+import { productsSemantics } from '@/composition/semantics/products';
 import { metricDefinitionsSemantics } from '@/composition/semantics/metric-definitions';
 import { invoicesSemantics } from '@/composition/semantics/invoices';
 import { convertInquiryToContact } from './conversions';
@@ -122,8 +123,9 @@ const contacts: CollectionBinding<Fields> = {
 };
 
 // プロダクトは web アプリ中心で metrics 入力導線は出さない（core の polymorphic な metrics 対応は温存）。
+// SaaS 製品は is_saas で明示し、課金の商品（offer・価格）を子 product_offers として編集する。
 const products: CollectionBinding<Fields> = {
-  ...coreCollection('products', 'プロダクト'),
+  ...coreCollection('products', 'プロダクト', productsSemantics),
 };
 
 // ndas は NDA 専用の読み合わせ詳細を持ち、案件から作る。

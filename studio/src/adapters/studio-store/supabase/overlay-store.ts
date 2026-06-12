@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
+import { throwQueryError } from '@/shared/utils/db-error';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,
@@ -42,7 +43,7 @@ export class StudioOverlayStore {
       .select('fields')
       .eq('id', this.rowId(collection))
       .maybeSingle();
-    if (error) throw error;
+    if (error) throwQueryError('overlay の取得（studio.records）', error);
     return data ? ((data as { fields: unknown }).fields as CollectionSemantics) : null;
   }
 
@@ -57,6 +58,6 @@ export class StudioOverlayStore {
         fields: semantics as unknown as RecordRow['fields'],
         draft_state: 'published',
       });
-    if (error) throw error;
+    if (error) throwQueryError('overlay の保存（studio.records）', error);
   }
 }

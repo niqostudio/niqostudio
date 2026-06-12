@@ -1,4 +1,5 @@
 import type { VersionStore, RecordVersion } from '@/ports/studio-store';
+import { throwQueryError } from '@/shared/utils/db-error';
 import {
   createStudioStoreClient,
   resolveStudioStoreConfig,
@@ -42,7 +43,7 @@ export class StudioVersionStore<F> implements VersionStore<F> {
         fields: fields as unknown,
         origin,
       });
-    if (error) throw error;
+    if (error) throwQueryError('版の追記（studio.record_versions）', error);
   }
 
   async listForRecord(recordId: string): Promise<RecordVersion<F>[]> {
@@ -54,7 +55,7 @@ export class StudioVersionStore<F> implements VersionStore<F> {
       .eq('record_id', recordId)
       .order('created_at', { ascending: false })
       .limit(20);
-    if (error) throw error;
+    if (error) throwQueryError('版一覧の取得（studio.record_versions）', error);
     return (data ?? []).map((r) => this.toVersion(r as VersionRow));
   }
 
@@ -64,7 +65,7 @@ export class StudioVersionStore<F> implements VersionStore<F> {
       .select('id, fields, origin, created_at')
       .eq('id', versionId)
       .maybeSingle();
-    if (error) throw error;
+    if (error) throwQueryError('版の取得（studio.record_versions）', error);
     return data ? this.toVersion(data as VersionRow) : null;
   }
 }
