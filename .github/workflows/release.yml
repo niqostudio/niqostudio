@@ -152,33 +152,51 @@ jobs:
 
   # 商品マスタの収束（core の正本データ → Stripe / identity 射影）。git diff では検出できない
   # （正本が DB のデータ）ため毎回走らせて収束させる＝無変更なら terraform no-op・射影は冪等 upsert。
+  # STRIPE_API_KEY 未投入（Stripe 導入前）の間は no-op で成功させ、release を赤くしない。
   sync_stripe:
     needs: [detect, core_db, saas]
     if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' && needs.saas.result != 'failure' }}
     runs-on: ubuntu-latest
     environment: infra-production # core DB 読み出し＋Stripe/state 鍵（プラットフォーム反映）
+    outputs:
+      synced: ${{ steps.gate.outputs.enabled }}
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_TFSTATE_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_TFSTATE_SECRET_KEY }}
       STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - id: gate
+        run: |
+          if [ -n "$STRIPE_API_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::STRIPE_API_KEY 未投入のため商品同期を skip（Stripe 導入時に infra-production へ投入する）"
+          fi
+      - if: ${{ steps.gate.outputs.enabled == 'true' }}
+        uses: actions/checkout@v6
+      - if: ${{ steps.gate.outputs.enabled == 'true' }}
+        uses: pnpm/action-setup@v6
+      - if: ${{ steps.gate.outputs.enabled == 'true' }}
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - if: ${{ steps.gate.outputs.enabled == 'true' }}
+        run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
       - name: core からマスタを書き出し
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: node scripts/saas-products-export.mjs
-      - uses: actions/upload-artifact@v4
+      - if: ${{ steps.gate.outputs.enabled == 'true' }}
+        uses: actions/upload-artifact@v4
         with:
           name: products
           path: infra/stacks/stripe/products.auto.tfvars.json
       - name: terraform（Stripe Product / Price）
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         env:
           R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
           CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
@@ -198,7 +216,7 @@ jobs:
 
   sync_identity:
     needs: sync_stripe
-    if: ${{ !cancelled() && needs.sync_stripe.result == 'success' && inputs.apply }}
+    if: ${{ !cancelled() && needs.sync_stripe.result == 'success' && needs.sync_stripe.outputs.synced == 'true' && inputs.apply }}
     runs-on: ubuntu-latest
     environment: saas-platform-production # saas DB への射影は顧客側 Environment にスコープ
     steps:
