@@ -2,8 +2,8 @@ import type { CollectionSemantics } from '@/features/domain-overlay/overlay';
 
 // products（自社プロダクト＝継続実体）の意味。構造は core から live。
 // SaaS 製品は is_saas で明示し、課金の商品（offer・価格）を子 product_offers として編集する。
-// 価格（currency / unit_amount / billing_interval）は version 単位で不変（core のトリガが UPDATE を拒否）＝
-// 改定は「新しい version の offer 行を追加」して旧の is_active を外す（saas-products: sync が現行版を反映）。
+// offer は (product, key) ごとに現行価格1行＝改定は行の直接編集（saas-products: sync が Stripe へ
+// 新 Price として反映し lookup key を引き継ぐ。改定履歴は Stripe 側に残る）。
 export const productsSemantics: CollectionSemantics = {
   titleField: 'name',
   fields: {
@@ -32,7 +32,6 @@ export const productsSemantics: CollectionSemantics = {
       description: 'SaaS の販売単位。billing_interval 有=サブスク / 無=一回課金（access_period_days で付与日数）',
       fields: {
         key: { label: 'offer キー', description: '例: launch_pass / pro_monthly' },
-        version: { label: 'バージョン', kind: 'number', description: '価格改定ごとに +1（旧版は不変・is_active を外す）' },
         currency: {
           label: '通貨',
           kind: 'select',
