@@ -46,7 +46,7 @@
    （同時に待機中の分は1ダイアログでまとめて承認できる）。
 
 - 各 job は従来どおり**モジュール別 Environment**（`<module>-production`・承認ゲート）を張る＝secret の置き場・信頼境界は不変。secret はローカルに置かない。
-- 商品マスタ（core.products / product_offers）の Stripe / identity への同期は **apply のたびに収束**する（データが正本＝diff 検出外。無変更なら no-op・冪等）。
+- 商品マスタ（core.products / product_offers）の Stripe / identity への同期と **website のビルド・デプロイは apply のたびに収束**する（どちらもデータが正本に含まれ git diff で検出できない。無変更なら no-op / 同一出力の再デプロイ＝冪等）。**studio で publish したデータ変更の反映も `release` を回すだけ**。
 - PR では検証のみ（下表）。
 
 ## どの失敗がどの段で出るか
