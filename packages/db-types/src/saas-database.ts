@@ -83,6 +83,7 @@ export type Database = {
           organization_id: string
           plan: string
           product_id: string
+          provider_synced_at: string | null
           scope: string | null
           status: string
           updated_at: string
@@ -94,6 +95,7 @@ export type Database = {
           organization_id: string
           plan?: string
           product_id: string
+          provider_synced_at?: string | null
           scope?: string | null
           status?: string
           updated_at?: string
@@ -105,6 +107,7 @@ export type Database = {
           organization_id?: string
           plan?: string
           product_id?: string
+          provider_synced_at?: string | null
           scope?: string | null
           status?: string
           updated_at?: string
