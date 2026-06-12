@@ -21,46 +21,73 @@
 
 ## 必要な secret / env（関数）
 
-| 名前 | 種別 | 用途 |
-| --- | --- | --- |
-| `SUPABASE_DB_URL` | 自動注入 | DB 直結（billing/identity） |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | 自動注入 | webhook の Admin API（匿名 provisioning） |
-| `STRIPE_SECRET_KEY` | ✋ secret | Stripe adapter |
-| `STRIPE_WEBHOOK_SECRET` | ✋ secret | webhook 署名検証（`stripe listen` / dashboard が発行） |
-| `RECEIPT_SIGNING_KEY` | ✋ secret | レシート署名（Ed25519 秘密 JWK・`pnpm exec node scripts/gen-receipt-key.mjs`） |
-| `RECEIPT_PUBLIC_KEY` | ✋ secret(非機密) | billing-keys が配る公開 JWK |
-| `BILLING_ALLOWED_ORIGINS` | ✋ | `config.<env>.json` の `saas.billing.allowed_origins`（JSON）由来 |
+**置き場の原則**：関数の secret は **niqostudio-saas プロジェクトに `supabase secrets set` で入れる**
+（関数が動くプラットフォームに置く＝website の `wrangler secret` と同じ発想）。GitHub Environment ではない
+（Environment に置くのは migration 用の `SUPABASE_DB_URL` だけ・[ADR 0007](../adr/0007-saas-identity-project.md)）。
+ローカルは `saas-platform/functions/.env.local`（gitignore）。
 
-鍵生成：`node scripts/gen-receipt-key.mjs` → 出力2行を関数 secret に設定（鍵はコミットしない）。
+| 名前 | 本番の置き場 | ローカルの置き場 | 用途・取得元 |
+| --- | --- | --- | --- |
+| `SUPABASE_DB_URL` / `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | 自動注入 | 自動注入 | DB 直結・webhook の Admin API。設定不要 |
+| `STRIPE_SECRET_KEY` | `supabase secrets set`（saas） | `.env.local` | Stripe（本番）→ Developers → API keys |
+| `STRIPE_WEBHOOK_SECRET` | 〃 | 〃 | webhook 登録時の `whsec_`（本番=ダッシュボード / ローカル=`stripe listen`） |
+| `RECEIPT_SIGNING_KEY` | 〃 | 〃 | `node scripts/gen-receipt-key.mjs` の出力（Ed25519 秘密 JWK） |
+| `RECEIPT_PUBLIC_KEY` | 〃 | 〃 | 同上（公開 JWK・billing-keys が配る・非機密だが同じ経路で入れる） |
+| `BILLING_ALLOWED_ORIGINS` | 〃 | 〃 | `config.<env>.json` の `saas.billing.allowed_origins`（JSON）由来 |
+| `BILLING_PUBLIC_URL` | **不要** | `.env.local` | 本番は `SUPABASE_URL` が公開 URL。ローカルだけ内部ホスト回避で明示 |
+
+本番の secret 投入（`--project-ref` は niqostudio-saas の ref）：
+
+```sh
+node scripts/gen-receipt-key.mjs   # → RECEIPT_SIGNING_KEY / RECEIPT_PUBLIC_KEY の2行を控える
+supabase secrets set --project-ref <saas-ref> \
+  STRIPE_SECRET_KEY=sk_live_... \
+  STRIPE_WEBHOOK_SECRET=whsec_... \
+  RECEIPT_SIGNING_KEY='{"kty":"OKP",...}' \
+  RECEIPT_PUBLIC_KEY='{"kty":"OKP",...}' \
+  BILLING_ALLOWED_ORIGINS='{"<製品コード>":["https://<製品ドメイン>"]}'
+# 確認: supabase secrets list --project-ref <saas-ref>（値は表示されない）
+```
+
+鍵はコミットしない。`supabase secrets set` で入れた値は Supabase 側に暗号化保存され、関数に注入される。
 
 ## ローカル E2E（Stripe test mode）
 
-要 Docker・Stripe test アカウント。
+要 Docker・Stripe test アカウント。env は `saas-platform/functions/.env.local`（`.env.local.example` を雛形に）。
 
 1. saas スタック起動＋スキーマ：`pnpm saas:start` → `pnpm saas:reset`。
-2. 製品・offer を投入：`scripts/saas-products-identity-sync.mjs` に test 用 products JSON を食わせる
-   （`PRODUCTS_JSON=… node scripts/saas-products-identity-sync.mjs`）。Stripe ダッシュボード（test）に
-   同じ lookup key（`<code>_<key>_v<version>`）の Price を作る。
-3. 関数 env を用意（`infra/supabase-saas/supabase/functions/.env` 等・gitignore）：上表の secret。
-   `BILLING_ALLOWED_ORIGINS={"demo-app":["http://localhost:3000"]}`。
-4. 関数を serve：`supabase --workdir supabase-saas functions serve`（CLI 同梱 Deno）。
-5. webhook を中継：`stripe listen --forward-to localhost:5432X/functions/v1/billing-webhook`
-   → 表示される `whsec_…` を `STRIPE_WEBHOOK_SECRET` に。
-6. checkout を作成：`curl -XPOST .../functions/v1/billing-checkout -d '{product,offer,scope,success_url,cancel_url}'`
-   → 返った URL をブラウザで開き、Stripe の test カード（4242…）で決済。
-7. 確認：`billing.purchases` に行・`identity.product_grants` が active・成功 URL に `#receipt=` が付く。
+2. **製品・offer を Stripe test に反映**：core（内部スタック）に products(is_saas)＋product_offers を投入
+   （seed・`seeds/*.sql` は gitignore）→ `node scripts/saas-products-export.mjs` →
+   `STRIPE_API_KEY=sk_test_... terraform -chdir=stacks/stripe init -reconfigure && apply`
+   （ローカル state は backend override で local・lookup key `<code>_<key>_v<version>` の Price ができる）→
+   `node scripts/saas-products-identity-sync.mjs`（saas DB の identity.products / billing.product_offers 射影）。
+3. `.env.local` を作成：`STRIPE_SECRET_KEY`（test）・`RECEIPT_*`（`node scripts/gen-receipt-key.mjs`）・
+   `BILLING_ALLOWED_ORIGINS={"demo-app":["http://localhost:3000"]}`・`BILLING_PUBLIC_URL=http://127.0.0.1:55321`。
+4. 関数を serve：`pnpm saas:functions:serve`（junction で saas-platform/functions を CLI パスへ繋いで起動）。
+5. checkout を作成：`curl -XPOST http://127.0.0.1:55321/functions/v1/billing-checkout
+   -d '{"product":"demo-app","offer":"launch_pass","scope":"proj-x","success_url":"http://localhost:3000/success","cancel_url":"http://localhost:3000/cancel"}'`。
+6. **webhook の検証は2通り**：
+   - Stripe CLI 無し：`WEBHOOK_SECRET=<.env.local の値> node scripts/stripe-webhook-sim.mjs [checkout|invoice|refund]`
+     （署名付き合成イベントを投げる）。
+   - 実決済：`stripe listen --forward-to http://127.0.0.1:55321/functions/v1/billing-webhook` で `whsec_` を
+     `.env.local` に入れ serve 再起動 → checkout URL をブラウザで test カード `4242 4242 4242 4242` 決済。
+7. 確認：`billing.purchases` に行・匿名 provisioning で個人 org 生成・`identity.product_grants` が active・
+   成功 URL に `#receipt=` が付く。
 
 ## デプロイ（本番）
 
-1. `node scripts/gen-receipt-key.mjs` で鍵を生成し、関数 secret に設定。
-2. Stripe（本番）に Price を作る（`saas-products: sync` の `stacks/stripe` が lookup key を管理）。
-   `STRIPE_SECRET_KEY` を関数 secret に。
-3. `supabase functions deploy billing-prices billing-checkout billing-return billing-webhook billing-keys
-   --project-ref <saas-ref>`。
-4. Stripe ダッシュボードで webhook endpoint（`.../functions/v1/billing-webhook`）を登録し、
-   `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` を購読、
-   署名シークレットを `STRIPE_WEBHOOK_SECRET` に。
-5. `config.<env>.json` の `saas.billing.allowed_origins` に製品 origin を足し、`BILLING_ALLOWED_ORIGINS` を更新。
+1. **migration**：`saas-platform: migrate`（apply=true）で billing スキーマを本番 saas DB へ。
+2. **Stripe（本番）に Price**：core に products/offers 登録 → `saas-products: sync` を dispatch
+   （`stacks/stripe` が Price を作り、identity / billing.product_offers へ射影）。
+3. **関数 secret**：上記「必要な secret / env」の `supabase secrets set` を実行（`RECEIPT_*` は鍵生成して投入）。
+4. **デプロイ**：`supabase functions deploy billing-prices billing-checkout billing-return billing-webhook
+   billing-keys --project-ref <saas-ref>`。
+5. **webhook 登録（手動・whsec を state に残さない規約）**：Stripe ダッシュボードで endpoint
+   `https://<saas-ref>.supabase.co/functions/v1/billing-webhook` を登録 →
+   `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` を購読 →
+   署名シークレット `whsec_` を `supabase secrets set STRIPE_WEBHOOK_SECRET=...` で投入。
+6. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `BILLING_ALLOWED_ORIGINS` を更新。
+   `BILLING_PUBLIC_URL` は本番不要（`SUPABASE_URL` が公開 URL）。
 
 > 可用性結合：billing 停止＝全製品で販売停止。free tier の一時停止が販売も塞ぐため、実ユーザーが付いたら
 > 有料化を前倒し（[ADR 0008](../adr/0008-saas-billing-centralized.md)）。
