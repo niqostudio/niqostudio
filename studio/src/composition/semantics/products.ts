@@ -22,6 +22,12 @@ export const productsSemantics: CollectionSemantics = {
       kind: 'boolean',
       description: '顧客がサインアップ・課金できる製品（identity / Stripe 反映の対象）',
     },
+    is_public: {
+      label: 'サイトに公開',
+      kind: 'boolean',
+      description: 'niqostudio.com の Products に載せる（既定 off＝未公開プロダクトを出さない）',
+    },
+    url: { label: '公開URL', description: '製品の公開サイト（Products からのリンク先）' },
     tech_stack: { label: '技術スタック' },
     launched_on: { label: '公開日', kind: 'date' },
     internal_notes: { label: '内部メモ', kind: 'textarea' },
@@ -49,7 +55,9 @@ export const productsSemantics: CollectionSemantics = {
         access_period_days: {
           label: '付与日数',
           kind: 'number',
-          description: '買い切りの有効日数（空=無期限）。サブスクでは設定しない',
+          description: '買い切りの有効日数（空=無期限）',
+          // サブスクは期限を課金周期が表現する（core の排他 CHECK を UI に写す）。
+          exclusiveWith: 'billing_interval',
         },
         is_active: { label: '販売中', kind: 'boolean' },
       },
