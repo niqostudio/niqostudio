@@ -1,4 +1,5 @@
 import type { DraftStore } from '@/ports/studio-store';
+import { throwQueryError } from '@/shared/utils/db-error';
 import type { CollectionRecord } from '@/shared/model/record';
 import {
   createStudioStoreClient,
@@ -41,7 +42,7 @@ export class StudioDraftStore<F> implements DraftStore<F> {
       .eq('tenant_id', this.tenantId)
       .eq('collection', this.collection)
       .order('updated_at', { ascending: false });
-    if (error) throw error;
+    if (error) throwQueryError('下書き一覧の取得（studio.records）', error);
     return (data ?? []).map((r) => this.toRecord(r));
   }
 
@@ -53,7 +54,7 @@ export class StudioDraftStore<F> implements DraftStore<F> {
       .eq('collection', this.collection)
       .eq('id', id)
       .maybeSingle();
-    if (error) throw error;
+    if (error) throwQueryError('下書きの取得（studio.records）', error);
     return data ? this.toRecord(data as RecordRow) : null;
   }
 
@@ -68,7 +69,7 @@ export class StudioDraftStore<F> implements DraftStore<F> {
         fields: record.fields as unknown as RecordRow['fields'],
         draft_state: record.draftState,
       });
-    if (error) throw error;
+    if (error) throwQueryError('下書きの保存（studio.records）', error);
   }
 
   async remove(id: string): Promise<void> {
@@ -78,6 +79,6 @@ export class StudioDraftStore<F> implements DraftStore<F> {
       .eq('tenant_id', this.tenantId)
       .eq('collection', this.collection)
       .eq('id', id);
-    if (error) throw error;
+    if (error) throwQueryError('下書きの削除（studio.records）', error);
   }
 }
