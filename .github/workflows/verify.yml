@@ -90,7 +90,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - run: pnpm install --frozen-lockfile --filter niqostudio --filter @niqostudio/infra
       - name: local supabase 起動（DB のみ・PostgREST は不要）
         # このジョブは DB＋dbmate＋gen types(--local=pg 直接) だけ。PostgREST は起動時に
         # 露出スキーマ（core/studio）の存在を要求するが、それらは後段の dbmate で作るため除外する。
@@ -136,7 +136,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - run: pnpm install --frozen-lockfile --filter niqostudio --filter @niqostudio/infra
       - name: local supabase 起動（saas スタック・PostgREST は不要）
         run: pnpm --filter @niqostudio/infra exec supabase --workdir supabase-saas start -x postgrest
       - name: dbmate で identity スキーマを適用

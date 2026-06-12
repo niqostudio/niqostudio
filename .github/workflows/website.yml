@@ -36,7 +36,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       # website（＋workspace 依存）。PR は一時 Supabase 用に infra（supabase CLI）と root（dbmate / seed）も入れる。
-      - run: pnpm install --frozen-lockfile --filter @niqostudio/website... --filter @niqostudio/infra --filter niqostudio-mono
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/website... --filter @niqostudio/infra --filter niqostudio
       # PR は本番に触れず、この PR の migration＋seed を当てた一時 Supabase で検証する（本番は読みも書きもしない）。
       - name: "PR: 一時 Supabase に migration＋seed を当て公開値を向ける"
         if: github.event_name == 'pull_request'
