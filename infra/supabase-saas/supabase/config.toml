@@ -45,8 +45,29 @@ port = 55324
 [storage]
 enabled = false
 
+# billing service（saas-platform/functions）をローカルで動かすため有効化。
+# 関数は別ディレクトリ（saas-platform/functions）にあるため functions パスを指す。
 [edge_runtime]
-enabled = false
+enabled = true
+
+[functions]
+# 関数の正本は saas-platform/functions（infra の supabase ディレクトリ外）。
+# 各関数を明示登録する（verify_jwt=false＝billing は匿名/webhook を受けるため自前で検証する）。
+[functions.billing-prices]
+enabled = true
+verify_jwt = false
+[functions.billing-checkout]
+enabled = true
+verify_jwt = false
+[functions.billing-return]
+enabled = true
+verify_jwt = false
+[functions.billing-webhook]
+enabled = true
+verify_jwt = false
+[functions.billing-keys]
+enabled = true
+verify_jwt = false
 
 [analytics]
 enabled = false

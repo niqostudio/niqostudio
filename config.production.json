@@ -19,6 +19,9 @@
           "email_change": "Confirm your new email address"
         }
       }
+    },
+    "billing": {
+      "allowed_origins": {}
     }
   },
   "domains": {
