@@ -60,6 +60,7 @@ const MESSAGES = {
   close: '閉じる',
   add: '追加',
   none: '（なし）',
+  unset: '（未設定）',
   yes: 'はい',
   no: 'いいえ',
   tagPlaceholder: '入力して Enter',
