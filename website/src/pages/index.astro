@@ -1,11 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getCases, getProfile, getServices } from '../lib/content';
+import { getCases, getProfile, getProducts, getServices } from '../lib/content';
 import { SITE, HOME } from '../config/site';
-import { CaseCard, ServiceCard, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
+import { CaseCard, ProductCard, ServiceCard, Button, LogoMark, SectionLabel, ArrowLink, Jp } from '../components';
 
 const cases = (await getCases()).slice(0, 3);
 const services = await getServices();
+const products = await getProducts();
 const profile = await getProfile();
 
 const steps = [
@@ -92,6 +93,20 @@ const steps = [
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
           {cases.map((caseItem) => (
             <CaseCard caseItem={caseItem} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    products.length > 0 && (
+      <section class="py-12 border-t border-border">
+        <SectionLabel as="h2">Products</SectionLabel>
+        <p class="text-sm text-muted mt-3">自社で開発・運営しているプロダクト。</p>
+        <div class="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((product) => (
+            <ProductCard product={product} />
           ))}
         </div>
       </section>

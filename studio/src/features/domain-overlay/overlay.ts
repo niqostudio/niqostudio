@@ -33,6 +33,8 @@ export interface FieldSemantics {
   options?: string[];
   // 選択肢の表示ラベル（値→ラベル）。値の集合・制約は core、ラベルは overlay（schema config で編集）。
   optionLabels?: Record<string, string>;
+  // 相互排他の相手フィールド（core の CHECK を編集 UI に写す）。
+  exclusiveWith?: string;
   hidden?: boolean;
   order?: number;
 }
@@ -74,6 +76,7 @@ function refine(
         ...(s.description ? { description: s.description } : {}),
         ...(s.options ? { options: s.options } : {}),
         ...(s.optionLabels ? { optionLabels: s.optionLabels } : {}),
+        ...(s.exclusiveWith ? { exclusiveWith: s.exclusiveWith } : {}),
         ...(isRef ? { refTable: f.refTable!, ...(f.refColumn ? { refColumn: f.refColumn } : {}) } : {}),
       };
     });

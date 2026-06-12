@@ -1,0 +1,45 @@
+---
+import type { ProductView } from '../../types/views';
+import Card from '../ui/Card.astro';
+import Chip from '../ui/Chip.astro';
+import Jp from '../ui/Jp.astro';
+
+interface Props {
+  product: ProductView;
+}
+
+const { product } = Astro.props;
+---
+
+<Card href={product.url ?? undefined} class="flex flex-col h-full p-5">
+  {
+    product.ogImage && (
+      <img
+        src={product.ogImage}
+        alt={product.name}
+        loading="lazy"
+        class="w-full aspect-video object-cover rounded-sm mb-5"
+      />
+    )
+  }
+  <h3 class="font-medium flex items-baseline gap-1.5">
+    {product.name}
+    {product.url && <span class="text-accent text-sm" aria-hidden="true">↗</span>}
+  </h3>
+  {
+    product.summary && (
+      <p class="text-sm text-muted leading-relaxed mt-3">
+        <Jp text={product.summary} />
+      </p>
+    )
+  }
+  {
+    product.techStack.length > 0 && (
+      <ul class="flex flex-wrap gap-2 mt-4">
+        {product.techStack.map((tech) => (
+          <Chip variant="soft">{tech}</Chip>
+        ))}
+      </ul>
+    )
+  }
+</Card>

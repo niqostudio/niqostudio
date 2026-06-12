@@ -254,15 +254,23 @@ export default function RecordPaneEditor(props: {
             <button className="text-xs text-muted hover:text-accent" onClick={() => { removeChild(open!.childKey, open!.id as string); setOpen({ childKey: open!.childKey, id: null }); }}>{t('remove')}</button>
           </div>
           <div className="mt-4 flex flex-col gap-4">
-            {childDesc(open.childKey).fields.map((d) => (
-              <FieldInput
-                key={d.key}
-                d={d}
-                value={openChild[d.key]}
-                refOptions={refOptionsFor(d)}
-                onChange={(v) => setChildField(open!.childKey, open!.id as string, d.key, v)}
-              />
-            ))}
+            {childDesc(open.childKey)
+              .fields.filter((d) => !d.exclusiveWith || openChild[d.exclusiveWith] == null || openChild[d.exclusiveWith] === '')
+              .map((d) => (
+                <FieldInput
+                  key={d.key}
+                  d={d}
+                  value={openChild[d.key]}
+                  refOptions={refOptionsFor(d)}
+                  onChange={(v) => {
+                    setChildField(open!.childKey, open!.id as string, d.key, v);
+                    // 排他相手に値が入ったら自分側を null に戻す（CHECK 違反の温床を残さない）。
+                    if (v != null && v !== '')
+                      for (const e of childDesc(open!.childKey).fields)
+                        if (e.exclusiveWith === d.key) setChildField(open!.childKey, open!.id as string, e.key, null);
+                  }}
+                />
+              ))}
           </div>
         </div>
       )}

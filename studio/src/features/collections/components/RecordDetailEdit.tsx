@@ -14,6 +14,9 @@ import { t } from '@/shared/i18n';
 type Fields = Record<string, unknown>;
 const eq = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const childRows = (w: Fields, key: string) => (Array.isArray(w[key]) ? (w[key] as Fields[]) : []);
+const isSet = (v: unknown) => v != null && v !== '';
+// 相互排他：相手フィールドが値を持つ間は入力欄を出さない（値の掃除は onChange 側で行う）。
+const visibleIn = (d: FieldDescriptor, row: Fields) => !d.exclusiveWith || !isSet(row[d.exclusiveWith]);
 
 // 詳細ペインの編集状態（親フィールド＋子コレクション）を持ち上げる context。
 // ヘッダの DetailActions（保存）と本文の DetailFields / DetailChildren が共有し、保存は1つに集約する。
@@ -284,13 +287,18 @@ export function DetailChildren({ items }: { items: ChildDescriptor[] }) {
                     </button>
                     {expanded && (
                       <div className="flex flex-col gap-3 border-t border-border-subtle p-3">
-                        {c.fields.map((d) => (
+                        {c.fields.filter((d) => visibleIn(d, row)).map((d) => (
                           <FieldInput
                             key={d.key}
                             d={d}
                             value={row[d.key]}
                             refOptions={refFor(d)}
-                            onChange={(v) => setChildField(c.key, rid, d.key, v)}
+                            onChange={(v) => {
+                              setChildField(c.key, rid, d.key, v);
+                              // 排他相手に値が入ったら自分側を null に戻す（CHECK 違反の温床を残さない）。
+                              if (isSet(v))
+                                for (const e of c.fields) if (e.exclusiveWith === d.key) setChildField(c.key, rid, e.key, null);
+                            }}
                           />
                         ))}
                         <button

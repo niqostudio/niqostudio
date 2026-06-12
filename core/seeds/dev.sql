@@ -150,10 +150,10 @@ insert into core.contacts (id, client_id, name, email, phone, role, notes) value
   ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', null, '架空 見込', 'midumi@example.com', null, null, '会社未割当の見込み担当者（無料相談前）。');
 
 -- 自社プロダクト（active / maintained / sunset の3状態）
-insert into core.products (id, slug, name, summary, status, tech_stack, launched_on, internal_notes) values
-  ('77777777-7777-4777-8777-777777777701', 'reserve-hub', '予約ハブ', '店舗向け予約管理 SaaS（ダミー）。', 'active', array['Next.js','Supabase','Cloudflare Workers'], '2026-02-01', '開発用ダミー製品。'),
-  ('77777777-7777-4777-8777-777777777702', 'invoice-mini', '請求ミニ', '個人事業向け請求書 SaaS（ダミー）。', 'maintained', array['Astro','Supabase'], '2025-09-15', '開発用ダミー製品。'),
-  ('77777777-7777-4777-8777-777777777703', 'old-analytics', '旧アナリティクス', '提供終了したダミー製品。', 'sunset', array['Remix'], '2024-04-01', 'sunset 例。');
+insert into core.products (id, slug, name, summary, status, tech_stack, launched_on, internal_notes, is_public, url) values
+  ('77777777-7777-4777-8777-777777777701', 'reserve-hub', '予約ハブ', '店舗向け予約管理 SaaS（ダミー）。', 'active', array['Next.js','Supabase','Cloudflare Workers'], '2026-02-01', '開発用ダミー製品。', true, 'https://reserve-hub.example.com'),
+  ('77777777-7777-4777-8777-777777777702', 'invoice-mini', '請求ミニ', '個人事業向け請求書 SaaS（ダミー）。', 'maintained', array['Astro','Supabase'], '2025-09-15', '開発用ダミー製品。url なし＝リンク無しカードの例。', true, null),
+  ('77777777-7777-4777-8777-777777777703', 'old-analytics', '旧アナリティクス', '提供終了したダミー製品。', 'sunset', array['Remix'], '2024-04-01', 'sunset 例（is_public でも view から外れる）。', true, null);
 
 -- プロダクト紐付けの課題/成果物/数値（product_id・project とは xor）
 insert into core.problems (id, product_id, problem, solution, outcome) values
