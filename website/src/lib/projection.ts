@@ -16,13 +16,14 @@ import type {
   Pricing,
 } from '../types/views';
 
-export function toProductView(row: PublicProduct): ProductView {
+export function toProductView(row: PublicProduct, ogImage: string | null = null): ProductView {
   return {
     slug: row.slug,
     name: row.name,
     summary: row.summary,
     url: row.url,
     techStack: row.tech_stack ?? [],
+    ogImage,
   };
 }
 

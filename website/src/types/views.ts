@@ -39,6 +39,8 @@ export type ProductView = {
   summary: string | null;
   url: string | null;
   techStack: string[];
+  // 製品サイトの og:image（ビルド時取得・取れなければ null）。
+  ogImage: string | null;
 };
 
 export type PricingTier = { name: string; price: string; scope?: string };

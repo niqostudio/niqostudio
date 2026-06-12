@@ -1,4 +1,5 @@
 import * as core from './core';
+import { fetchOgImage } from './og';
 import { toCaseView, toServiceView, toProfileView, toProductView } from './projection';
 import type { CaseView, ServiceView, ProfileView, ProductView, ContentLink } from '../types/views';
 
@@ -28,7 +29,12 @@ export function getServices(): Promise<ServiceView[]> {
 
 let productsP: Promise<ProductView[]> | undefined;
 export function getProducts(): Promise<ProductView[]> {
-  const load = () => core.fetchProducts().then((rows) => rows.map(toProductView));
+  const load = () =>
+    core
+      .fetchProducts()
+      .then((rows) =>
+        Promise.all(rows.map(async (row) => toProductView(row, row.url ? await fetchOgImage(row.url) : null))),
+      );
   return memo ? (productsP ??= load()) : load();
 }
 
