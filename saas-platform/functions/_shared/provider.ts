@@ -5,7 +5,7 @@ export interface CheckoutParams {
   productCode: string;
   offerKey: string;
   scope: string | null;
-  // PSP に渡す価格の lookup key（<code>_<key>_v<version>）。billing が現行版から解決して渡す。
+  // PSP に渡す価格の lookup key（<code>_<key>）。billing が販売中 offer から解決して渡す。
   priceLookupKey: string;
   isSubscription: boolean;
   successUrl: string; // billing-return の URL（最終 dest はクエリで運ぶ）

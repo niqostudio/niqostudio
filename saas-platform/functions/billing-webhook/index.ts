@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     const [{ record_event: result }] = await sql`
       select billing.record_event(
         ${ev.provider}, ${ev.eventId}, ${ev.type}, ${ev.eventAt},
-        ${orgId}, ${ev.customerEmail}, ${ev.productCode}, ${ev.offerKey}, null, ${ev.scope},
+        ${orgId}, ${ev.customerEmail}, ${ev.productCode}, ${ev.offerKey}, ${ev.scope},
         ${ev.kind}, ${ev.amount}, ${ev.currency},
         ${ev.externalCheckoutId}, ${ev.externalPaymentId}, ${ev.externalInvoiceId}, ${ev.periodEnd}, null)`;
     // customer link（サブスク用）を保存。

@@ -18,7 +18,6 @@ try {
            coalesce(
              json_agg(json_build_object(
                'key', o.key,
-               'version', o.version,
                'currency', o.currency,
                'unit_amount', o.unit_amount,
                'interval', o.billing_interval,
