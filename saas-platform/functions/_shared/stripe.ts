@@ -37,6 +37,10 @@ export const stripeProvider: PaymentProvider = {
       success_url: p.successUrl,
       cancel_url: p.cancelUrl,
       locale: (p.locale as Stripe.Checkout.SessionCreateParams.Locale) ?? 'auto',
+      // 価格マスタは usd 一本、購入者の地域通貨は Stripe が自動換算（Adaptive Pricing）。
+      // ダッシュボード設定でなくセッション単位で宣言する＝コードが正本。
+      // 決済は購入者の現地通貨になり、webhook / 台帳の amount・currency は実際の決済通貨が入る。
+      adaptive_pricing: { enabled: true },
       metadata,
       // 一回課金でも email を必須にして匿名 provisioning の anchor にする。
       customer_creation: p.isSubscription ? undefined : 'always',

@@ -284,6 +284,8 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
 
 - **匿名 checkout（一回課金）**：email のみで決済 → webhook が裏でアカウント・個人 org・grant を自動生成。
   ログインは任意（`signInWithOtp({ shouldCreateUser: true })` で webhook との順序競合も吸収できる）。
+- **通貨**：価格マスタは usd 一本。checkout は Adaptive Pricing（セッション単位で有効化）が
+  購入者の地域通貨へ自動換算する＝製品側の表示（billing-prices）は usd のままでよい。
 - webhook（Stripe→billing）は製品非関与。grant は webhook で恒久化され、レシートの即時解錠とは独立。
 - offer キーの正準リストは製品登録時に確定して通知する（製品が参照するのは **offer キーのみ**。
   Stripe の lookup key `<code>_<key>` は billing 内部表現で、製品からは見えない）。
