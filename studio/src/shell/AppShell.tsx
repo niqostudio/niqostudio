@@ -8,13 +8,20 @@ import { getOperator } from '@/adapters/session/supabase/session';
 import { UnsavedProvider } from '@/shared/unsaved';
 import { NavLinks } from './NavLinks';
 import { SignOutButton } from './SignOutButton';
+import { EnvBanner } from './EnvBanner';
 
 // shell：左のグローバルサイドバー（nav）＋ メイン列（コンテンツ＋下から伸びる terminal パネル）。
 // terminal はサイドバーに被らず、メイン列の中で in-flow に開閉し、上のコンテンツがその分縮む。
 // 未認証（ログイン画面等）は shell の枠を出さず children だけ描く（認証ゲートは middleware）。
 export async function AppShell({ children }: { children: ReactNode }) {
   const operator = await getOperator();
-  if (!operator) return <>{children}</>;
+  if (!operator)
+    return (
+      <>
+        <EnvBanner />
+        {children}
+      </>
+    );
   const counts = await loadNavCounts();
   // ラベル/件数は server で解決して client の NavLinks へ渡す（active 判定だけ client）。
   const navGroups = NAV_GROUPS.map((g) => ({
@@ -32,8 +39,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <UnsavedProvider>
-      <div className="md:grid md:h-dvh md:grid-cols-[15rem_1fr] md:overflow-hidden print:block">
-      <aside className="bg-surface border-b border-border md:flex md:h-dvh md:flex-col md:overflow-y-auto md:border-b-0 md:border-r print:hidden">
+      <div className="flex flex-col md:h-dvh print:block">
+      <EnvBanner />
+      <div className="md:grid md:min-h-0 md:flex-1 md:grid-cols-[15rem_1fr] md:overflow-hidden print:block">
+      <aside className="bg-surface border-b border-border md:flex md:h-full md:flex-col md:overflow-y-auto md:border-b-0 md:border-r print:hidden">
         <div className="px-5 py-4 border-b border-border-subtle">
           <Link href="/" className="font-semibold tracking-tight">
             {APP_NAME}
@@ -49,11 +58,12 @@ export async function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex flex-col md:h-dvh md:overflow-hidden print:h-auto print:overflow-visible">
+      <div className="flex flex-col md:h-full md:overflow-hidden print:h-auto print:overflow-visible">
         <main className="flex-1 md:min-h-0 md:overflow-auto print:overflow-visible">{children}</main>
         <div className="print:hidden">
           <TerminalPanel />
         </div>
+      </div>
       </div>
       </div>
     </UnsavedProvider>
