@@ -129,6 +129,24 @@ test('charge.dispute.created: kind=dispute', () => {
   assert.equal(n.amount, 900);
 });
 
+test('customer.subscription.deleted: kind=cancellation・metadata と customer を拾う（金額は持たない）', () => {
+  const n = normalizeStripeEvent({
+    id: 'evt_del', type: 'customer.subscription.deleted', created: at,
+    data: { object: {
+      id: 'sub_1', customer: 'cus_9',
+      metadata: { product: 'demo-app', offer: 'pro_monthly', scope: '', org_id: 'org-uuid-3' },
+    } },
+  });
+  assert.equal(n.kind, 'cancellation');
+  assert.equal(n.externalCustomerId, 'cus_9');
+  assert.equal(n.productCode, 'demo-app');
+  assert.equal(n.offerKey, 'pro_monthly');
+  assert.equal(n.scope, null);
+  assert.equal(n.orgId, 'org-uuid-3');
+  assert.equal(n.amount, null, '解約は金銭の事実を持たない');
+  assert.equal(n.customerEmail, null, 'subscription オブジェクトに email は無い（org は metadata/customer link で解決）');
+});
+
 test('未扱いイベント: kind=null（記録のみ）', () => {
   const n = normalizeStripeEvent({ id: 'evt_7', type: 'customer.updated', created: at, data: { object: {} } });
   assert.equal(n.kind, null);

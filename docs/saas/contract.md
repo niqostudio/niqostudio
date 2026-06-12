@@ -287,6 +287,27 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
   製品は「30日」をハードコードせず必ずこの値を表示に使う（サブスクは null＝期間は `interval` が表現）。
   価格は checkout 作成時点の現行値で確定する（表示後の改定は次の checkout から反映）。
 
+### 4. 支払い管理・解約 — `POST /functions/v1/billing-portal`
+
+- **ログイン必須**（checkout と違い匿名は通さない）：ユーザーの access token を `Authorization: Bearer` に
+  載せる。無しは 401 `login_required`・無効は 401 `invalid_token`。
+- リクエスト（JSON）：
+
+```jsonc
+{
+  "product": "exampleapp",            // 製品コード（return_url の允許リスト判定に使う）
+  "return_url": "https://…/account"   // portal から戻る先（允許リスト登録済み origin のみ）
+}
+```
+
+- レスポンス：`{ "url": "<PSP の Billing Portal の URL>" }` — 製品はリダイレクトするだけ。
+  **解約・支払い方法の変更・請求書の閲覧はすべて portal 側で完結**する（製品が解約 API を持たない）。
+- 購入歴の無い org は 404 `no_customer`。**製品側の責務：「Manage billing」等の導線を
+  有料 org の設定画面に出す**（特商法ページの「解約方法」にもこの導線を記載する）。
+- **解約の反映**：サブスク終了時に grant が `status='cancelled'` になる（covers() は false に落ちる）。
+  期間途中の解約予約中は期末まで `active` のまま＝期末までの利用は契約どおり。再購読は新しい checkout で行う
+  （grant は同じ行が active に戻る）。
+
 ### 補足
 
 - **匿名 checkout（一回課金）**：email のみで決済 → webhook が裏でアカウント・個人 org・grant を自動生成。

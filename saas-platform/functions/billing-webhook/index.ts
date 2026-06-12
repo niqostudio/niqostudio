@@ -15,6 +15,18 @@ async function orgFromMetadata(orgId: string | null): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
+// PSP customer → org（購入時に保存した link）。subscription 系イベント（customer.subscription.deleted 等）は
+// email を持たないため、metadata に org が無い旧サブスクはこの経路で解決する。
+async function orgFromCustomerLink(provider_: string, externalCustomerId: string | null): Promise<string | null> {
+  if (!externalCustomerId) return null;
+  const sql = db();
+  const rows = await sql`
+    select organization_id from billing.customer_links
+    where provider = ${provider_} and external_customer_id = ${externalCustomerId} and is_active
+    limit 1`;
+  return rows[0]?.organization_id ?? null;
+}
+
 // email から既存ユーザーの org を引く。無ければ Supabase Admin API で user を作る
 // （サインアップトリガが個人 org/grant を生成）→ その org を返す。匿名 checkout の provisioning。
 async function resolveOrgId(email: string | null, productCode: string | null): Promise<string | null> {
@@ -74,7 +86,10 @@ Deno.serve(async (req) => {
   // 扱わないイベント（kind=null）は 200 で受けて終わり（Stripe の再送を止める）。
   if (!ev.kind) return new Response('ignored', { status: 200 });
 
-  const orgId = (await orgFromMetadata(ev.orgId)) ?? (await resolveOrgId(ev.customerEmail, ev.productCode));
+  const orgId =
+    (await orgFromMetadata(ev.orgId)) ??
+    (await orgFromCustomerLink(ev.provider, ev.externalCustomerId)) ??
+    (await resolveOrgId(ev.customerEmail, ev.productCode));
   const sql = db();
   try {
     const [{ record_event: result }] = await sql`

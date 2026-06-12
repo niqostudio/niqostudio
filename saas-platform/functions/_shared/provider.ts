@@ -26,7 +26,7 @@ export interface NormalizedEvent {
   type: string;
   eventAt: string; // ISO
   // 以下は決済 reducer 用（イベント種別で埋まる範囲が違う）
-  kind: 'purchase' | 'renewal' | 'refund' | 'chargeback' | 'dispute' | null;
+  kind: 'purchase' | 'renewal' | 'refund' | 'chargeback' | 'dispute' | 'cancellation' | null;
   customerEmail: string | null;
   externalCustomerId: string | null;
   productCode: string | null; // metadata から
@@ -59,4 +59,6 @@ export interface PaymentProvider {
   retrieveCheckout(checkoutId: string): Promise<CheckoutStatus>;
   // webhook の署名検証＋正規化。
   parseWebhook(rawBody: string, signature: string): Promise<NormalizedEvent>;
+  // 支払い管理・解約のセルフサービス画面（billing-portal が customer 単位で発行する）。
+  createPortalSession(externalCustomerId: string, returnUrl: string): Promise<{ url: string }>;
 }

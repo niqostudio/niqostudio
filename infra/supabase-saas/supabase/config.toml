@@ -71,6 +71,9 @@ verify_jwt = false
 [functions.billing-keys]
 enabled = true
 verify_jwt = false
+[functions.billing-portal]
+enabled = true
+verify_jwt = false
 
 [analytics]
 enabled = false

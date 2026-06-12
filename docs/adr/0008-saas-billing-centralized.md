@@ -55,6 +55,10 @@ Merchant of Record（Paddle / Lemon Squeezy 等）への adapter 交換を製品
   offer 改定で期限がずれない（購入時点の販売条件で確定）。匿名経路は従来どおり併存。
 - サブスクリプションは関係前提のため just-in-time ログインを要求してよい（org 文脈が要る。
   identity 付き checkout で org を渡す）。
+- **解約はセルフサービス（2026-06 追加）**：billing-portal（ログイン必須）が PSP の Billing Portal へ
+  誘導し、解約・支払い方法・請求書はそこで完結（製品は解約 API を持たない）。サブスク終了イベント
+  （subscription deleted）は kind=cancellation として grant を `cancelled` に落とす——金銭の事実が無いため
+  台帳（purchases）には書かない。org は metadata → customer link → email の順で解決する。
 
 ### 4. 製品・商品マスタの正本は core（業務データ）。Stripe へは Terraform、identity へは射影で反映
 

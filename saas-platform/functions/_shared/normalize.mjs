@@ -108,6 +108,21 @@ export function normalizeStripeEvent(event) {
         externalPaymentId: str(o.payment_intent),
       };
     }
+    // サブスクの終了（portal 解約・滞納による自動解約とも最終的にこれが届く）。
+    // object は subscription＝email を持たないため、org は metadata.org_id か customer link で解決する。
+    // 金銭の事実が無いので amount/currency は持たない（record_event は台帳に書かない）。
+    case 'customer.subscription.deleted': {
+      const md = o.metadata ?? {};
+      return {
+        ...b,
+        kind: 'cancellation',
+        externalCustomerId: str(o.customer),
+        productCode: nz(md.product),
+        offerKey: nz(md.offer),
+        scope: nz(md.scope),
+        orgId: nz(md.org_id),
+      };
+    }
     default:
       return b; // 未扱いは kind=null（記録のみ・付与しない）
   }

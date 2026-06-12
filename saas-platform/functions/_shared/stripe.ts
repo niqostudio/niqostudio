@@ -67,6 +67,17 @@ export const stripeProvider: PaymentProvider = {
     };
   },
 
+  async createPortalSession(externalCustomerId: string, returnUrl: string): Promise<{ url: string }> {
+    const stripe = client();
+    // Billing Portal（解約・支払い方法・請求書のセルフサービス）。表示構成はダッシュボードの
+    // Portal 設定が正本（コードは customer と戻り先だけ渡す）。
+    const session = await stripe.billingPortal.sessions.create({
+      customer: externalCustomerId,
+      return_url: returnUrl,
+    });
+    return { url: session.url };
+  },
+
   async parseWebhook(rawBody: string, signature: string): Promise<NormalizedEvent> {
     const stripe = client();
     const secret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
