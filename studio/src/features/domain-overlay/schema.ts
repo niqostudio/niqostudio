@@ -2,7 +2,7 @@
 // 各 collection はこの記述子を1つ宣言するだけで list/detail/edit を得る。projects 固有の形は
 // 記述子（と adapter の写像）に閉じ、汎用 UI は collection を知らない。
 
-export type FieldKind = 'text' | 'textarea' | 'select' | 'date' | 'list' | 'boolean' | 'reference';
+export type FieldKind = 'text' | 'textarea' | 'select' | 'number' | 'date' | 'list' | 'boolean' | 'reference';
 
 export interface FieldDescriptor {
   key: string;
