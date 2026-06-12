@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BackLink, Input } from '@/shared/ui/primitives';
-import { FieldInput, asText, defaultFor, packFieldRows } from '@/shared/ui/fields';
+import { FieldInput, asText, defaultFor, exclusiveTargets, fieldVisible, isSet, packFieldRows, withRules } from '@/shared/ui/fields';
 import type { CollectionSchema, FieldDescriptor } from '@/features/domain-overlay/schema';
 import { t, type MessageKey } from '@/shared/i18n';
 import { toast } from '@/features/feedback/toast';
@@ -79,7 +79,11 @@ export default function RecordPaneEditor(props: {
     }
   }
 
-  const setField = (key: string, v: unknown) => setFields((f) => ({ ...f, [key]: v }));
+  const setField = (key: string, v: unknown) => {
+    setFields((f) => ({ ...f, [key]: v }));
+    // 排他相手に値が入ったら自分側を null に戻す（排他制約違反の温床を残さない）。
+    if (isSet(v)) for (const k of exclusiveTargets(schema.fields, key)) setFields((f) => ({ ...f, [k]: null }));
+  };
   const setChildField = (childKey: string, id: string, fk: string, v: unknown) =>
     setFields((f) => ({ ...f, [childKey]: rows(f, childKey).map((r) => (r.id === id ? { ...r, [fk]: v } : r)) }));
   function addChild(childKey: string) {
@@ -129,9 +133,12 @@ export default function RecordPaneEditor(props: {
         <div className="flex flex-col gap-4 p-5">
           {/* 対称な情報（開始/終了 等）が左右に並ぶよう2カラム。背の高い項目は全幅。 */}
           <div className="flex flex-col gap-4">
-            {packFieldRows(schema.fields.filter((d) => d.key !== props.workflowField)).map((row, ri) => (
+            {packFieldRows(
+              schema.fields.filter((d) => d.key !== props.workflowField && fieldVisible(d, fields)),
+            ).map((row, ri) => (
               <div key={ri} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {row.map((d) => {
+                {row.map((d0) => {
+                  const d = withRules(d0, fields);
                   const wide = d.kind === 'textarea' || d.kind === 'list';
                   return (
                     <div key={d.key} className={wide ? 'sm:col-span-2' : undefined}>
@@ -255,19 +262,19 @@ export default function RecordPaneEditor(props: {
           </div>
           <div className="mt-4 flex flex-col gap-4">
             {childDesc(open.childKey)
-              .fields.filter((d) => !d.exclusiveWith || openChild[d.exclusiveWith] == null || openChild[d.exclusiveWith] === '')
+              .fields.filter((d) => fieldVisible(d, openChild))
               .map((d) => (
                 <FieldInput
                   key={d.key}
-                  d={d}
+                  d={withRules(d, openChild)}
                   value={openChild[d.key]}
                   refOptions={refOptionsFor(d)}
                   onChange={(v) => {
                     setChildField(open!.childKey, open!.id as string, d.key, v);
-                    // 排他相手に値が入ったら自分側を null に戻す（CHECK 違反の温床を残さない）。
-                    if (v != null && v !== '')
-                      for (const e of childDesc(open!.childKey).fields)
-                        if (e.exclusiveWith === d.key) setChildField(open!.childKey, open!.id as string, e.key, null);
+                    // 排他相手に値が入ったら自分側を null に戻す（排他制約違反の温床を残さない）。
+                    if (isSet(v))
+                      for (const k of exclusiveTargets(childDesc(open!.childKey).fields, d.key))
+                        setChildField(open!.childKey, open!.id as string, k, null);
                   }}
                 />
               ))}

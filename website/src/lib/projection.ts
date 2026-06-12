@@ -69,6 +69,22 @@ export function toServiceView(s: Service): ServiceView {
   };
 }
 
+// 特商法ブロックの組み立て。事業者名＋（住所・電話のセット or 開示方式の文言）が揃って
+// 初めて配る（不完全な表記を製品に出さない fail-closed）。出力キーは contract.md の
+// legal_jp_tokushoho が正本。
+function toLegalJp(p: Profile): Record<string, unknown> | null {
+  const complete = p.legal_seller_name && (p.legal_disclosure_policy || (p.legal_address && p.legal_phone));
+  if (!complete) return null;
+  return {
+    seller_name: p.legal_seller_name,
+    ...(p.legal_responsible_person ? { responsible_person: p.legal_responsible_person } : {}),
+    ...(p.legal_disclosure_policy
+      ? { disclosure_policy: p.legal_disclosure_policy }
+      : { address: p.legal_address, phone: p.legal_phone }),
+    ...(p.legal_contact_email ? { contact_email: p.legal_contact_email } : {}),
+  };
+}
+
 export function toProfileView(p: Profile): ProfileView {
   return {
     name: p.display_name,
@@ -80,6 +96,6 @@ export function toProfileView(p: Profile): ProfileView {
     operationPolicy: p.operation_policy,
     contactEmail: p.contact_email,
     socialLinks: (p.social_links as unknown as SocialLink[] | null) ?? [],
-    legalJp: (p.legal_jp as Record<string, unknown> | null) ?? null,
+    legalJp: toLegalJp(p),
   };
 }

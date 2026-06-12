@@ -4,7 +4,18 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, X, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Action } from '@/shared/ui/primitives';
-import { FieldControl, FieldInput, asText, defaultFor, packFieldRows, type RefOption } from '@/shared/ui/fields';
+import {
+  FieldControl,
+  FieldInput,
+  asText,
+  defaultFor,
+  exclusiveTargets,
+  fieldVisible,
+  isSet,
+  packFieldRows,
+  withRules,
+  type RefOption,
+} from '@/shared/ui/fields';
 import type { FieldDescriptor } from '@/features/domain-overlay/schema';
 import { discardDraftAction, publishAction, saveDraftJson } from '../actions';
 import { toast } from '@/features/feedback/toast';
@@ -14,9 +25,6 @@ import { t } from '@/shared/i18n';
 type Fields = Record<string, unknown>;
 const eq = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const childRows = (w: Fields, key: string) => (Array.isArray(w[key]) ? (w[key] as Fields[]) : []);
-const isSet = (v: unknown) => v != null && v !== '';
-// 相互排他：相手フィールドが値を持つ間は入力欄を出さない（値の掃除は onChange 側で行う）。
-const visibleIn = (d: FieldDescriptor, row: Fields) => !d.exclusiveWith || !isSet(row[d.exclusiveWith]);
 
 // 詳細ペインの編集状態（親フィールド＋子コレクション）を持ち上げる context。
 // ヘッダの DetailActions（保存）と本文の DetailFields / DetailChildren が共有し、保存は1つに集約する。
@@ -162,11 +170,18 @@ export function DetailFields({
     return asText(v);
   }
 
+  // 値の変更＋排他相手の掃除（相手に値が入ったら自分は null に戻る）。
+  const setField = (key: string, nv: unknown) => {
+    set(key, nv);
+    if (isSet(nv)) for (const k of exclusiveTargets(fields, key)) set(k, null);
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      {packFieldRows(fields).map((row, ri) => (
+      {packFieldRows(fields.filter((d) => fieldVisible(d, work))).map((row, ri) => (
         <div key={ri} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {row.map((f) => {
+          {row.map((f0) => {
+            const f = withRules(f0, work);
             const v = work[f.key];
             const changed = !eq(v, values[f.key]);
             const wide = f.kind === 'textarea' || f.kind === 'list';
@@ -181,7 +196,7 @@ export function DetailFields({
                   <div className="mt-0.5 flex min-h-9 items-center">
                     <button
                       type="button"
-                      onClick={() => set(f.key, !(v === true))}
+                      onClick={() => setField(f.key, !(v === true))}
                       className="flex items-center gap-2 text-sm transition-colors hover:text-accent"
                     >
                       <span
@@ -195,22 +210,26 @@ export function DetailFields({
                 ) : wide ? (
                   // 背の高い項目（list/textarea）は常に入力欄＝読↔編の切替が無く高さがずれない。
                   <div className="mt-0.5">
-                    <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
+                    <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => setField(f.key, nv)} />
+                    {f.description && <p className="text-xs text-faint mt-1">{f.description}</p>}
                   </div>
                 ) : editing === f.key ? (
-                  <div className="mt-0.5 flex min-h-9 items-center gap-1">
-                    <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => set(f.key, nv)} />
-                    <button
-                      type="button"
-                      title={t('close')}
-                      onClick={() => {
-                        set(f.key, values[f.key]);
-                        setEditing(null);
-                      }}
-                      className="shrink-0 text-muted transition-colors hover:text-error"
-                    >
-                      <X className="size-4" />
-                    </button>
+                  <div className="mt-0.5">
+                    <div className="flex min-h-9 items-center gap-1">
+                      <FieldControl d={f} value={v} refOptions={refOptions[f.key]} onChange={(nv) => setField(f.key, nv)} />
+                      <button
+                        type="button"
+                        title={t('close')}
+                        onClick={() => {
+                          setField(f.key, values[f.key]);
+                          setEditing(null);
+                        }}
+                        className="shrink-0 text-muted transition-colors hover:text-error"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                    {f.description && <p className="text-xs text-faint mt-1">{f.description}</p>}
                   </div>
                 ) : (
                   <button
@@ -287,17 +306,16 @@ export function DetailChildren({ items }: { items: ChildDescriptor[] }) {
                     </button>
                     {expanded && (
                       <div className="flex flex-col gap-3 border-t border-border-subtle p-3">
-                        {c.fields.filter((d) => visibleIn(d, row)).map((d) => (
+                        {c.fields.filter((d) => fieldVisible(d, row)).map((d) => (
                           <FieldInput
                             key={d.key}
-                            d={d}
+                            d={withRules(d, row)}
                             value={row[d.key]}
                             refOptions={refFor(d)}
                             onChange={(v) => {
                               setChildField(c.key, rid, d.key, v);
-                              // 排他相手に値が入ったら自分側を null に戻す（CHECK 違反の温床を残さない）。
-                              if (isSet(v))
-                                for (const e of c.fields) if (e.exclusiveWith === d.key) setChildField(c.key, rid, e.key, null);
+                              // 排他相手に値が入ったら自分側を null に戻す（排他制約違反の温床を残さない）。
+                              if (isSet(v)) for (const k of exclusiveTargets(c.fields, d.key)) setChildField(c.key, rid, k, null);
                             }}
                           />
                         ))}

@@ -350,7 +350,7 @@ PK は (`showcase_id`, `problem_id`) / (`showcase_id`, `deliverable_id`) / (`sho
 | `skills` | text[] NOT NULL | |
 | `social_links` | jsonb NOT NULL | `[{label, url}]` |
 | `logo_svg` | text | SVG 本体（website でインライン・`currentColor` 配色・信頼済み前提） |
-| `legal_jp` | jsonb | 特商法表記の事業者ブロック（運営者法務情報）。website が `operator.json` に投影し、SaaS 製品が各自の特商法ページに描画する。氏名・住所を git に置かないため値はコンソール / studio から投入。キー: `seller_name` / `responsible_person` / `address`（または `disclosure_policy`＝請求があり次第遅滞なく開示の文言） / `phone` / `contact_email` |
+| `legal_*`（text 6列） | text | 特商法表記の事業者ブロック（運営者法務情報・項目別の列）。website が `operator.json` の `legal_jp_tokushoho` に組み立てて投影し、SaaS 製品が各自の特商法ページに描画する。値はコンソール / studio から投入（git に置かない）。`legal_seller_name`（必須）/ `legal_responsible_person`（任意）/ `legal_address`＋`legal_phone`（表示する場合はセットで必須）または `legal_disclosure_policy`（請求があり次第遅滞なく開示の文言＝住所・電話と排他）/ `legal_contact_email`（任意）。事業者名＋（住所・電話 or 開示文言）が揃うまで manifest にキー自体を出さない（fail-closed） |
 
 ※ profile は `updated_at` のみ（`created_at` なし）。
 

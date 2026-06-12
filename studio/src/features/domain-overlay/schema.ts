@@ -15,9 +15,11 @@ export interface FieldDescriptor {
   // 選択肢の表示ラベル（値→ラベル・overlay 由来）。reference/select の表示に上書き適用する。
   optionLabels?: Record<string, string>;
   required?: boolean;
-  // 相互排他：指定フィールドが値を持つ間は入力欄を出さない（子エディタで適用。指定フィールドに
-  // 値が入った時点で自身は null に戻る＝排他 CHECK 違反の温床を残さない）。
-  exclusiveWith?: string;
+  // 条件付き必須：指定フィールドに値がある間だけ必須として表示する（例: 住所を出すなら電話番号も必須）。
+  requiredWith?: string;
+  // 相互排他：指定フィールド（複数可）が値を持つ間は入力欄を出さない。指定フィールドに
+  // 値が入った時点で自身は null に戻る＝排他制約違反の温床を残さない。
+  exclusiveWith?: string | string[];
   // reference：同じ record 内のどの子コレクション（key）を参照するか・選択肢ラベルに使う子の項目。
   refChild?: string;
   refLabelField?: string;
