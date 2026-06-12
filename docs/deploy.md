@@ -41,7 +41,9 @@
 依存順（core/saas migration → functions / website / 商品同期 → infra）で本番に収束させる。
 
 1. `release`（apply=false）を dispatch → 全ジョブの **dry-run**（migration status / terraform plan / build / deploy 対象）を1つの run で読む。
-2. 差分が意図どおりなら `release`（apply=true）→ 各 Environment の承認をまとめて行い、依存順に反映。
+2. 差分が意図どおりなら `release`（apply=true）→ Environment の承認を行い、依存順に反映。
+   承認は **job が実行可能になった時点で要求される**ため、依存の段ごとに数回に分かれる
+   （同時に待機中の分は1ダイアログでまとめて承認できる）。
 
 - 各 job は従来どおり**モジュール別 Environment**（`<module>-production`・承認ゲート）を張る＝secret の置き場・信頼境界は不変。secret はローカルに置かない。
 - 商品マスタ（core.products / product_offers）の Stripe / identity への同期は **apply のたびに収束**する（データが正本＝diff 検出外。無変更なら no-op・冪等）。

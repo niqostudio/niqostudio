@@ -72,10 +72,10 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
             range="origin/${{ github.base_ref }}...HEAD"
-          elif [ "${{ github.event_name }}" = "push" ]; then
+          elif [ "${{ github.event_name }}" = "push" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
             range="${{ github.event.before }}..HEAD"
           else
-            echo "dispatch は差分基準が無いため skip"; exit 0
+            echo "差分基準が無いため skip（dispatch / force push 直後）"; exit 0
           fi
           changed=$(git diff --diff-filter=MD --name-only $range -- 'core/migrations/*.sql' 'studio/migrations/*.sql')
           if [ -n "$changed" ]; then
@@ -118,10 +118,10 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
             range="origin/${{ github.base_ref }}...HEAD"
-          elif [ "${{ github.event_name }}" = "push" ]; then
+          elif [ "${{ github.event_name }}" = "push" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
             range="${{ github.event.before }}..HEAD"
           else
-            echo "dispatch は差分基準が無いため skip"; exit 0
+            echo "差分基準が無いため skip（dispatch / force push 直後）"; exit 0
           fi
           changed=$(git diff --diff-filter=MD --name-only $range -- 'saas-platform/migrations/*.sql')
           if [ -n "$changed" ]; then
