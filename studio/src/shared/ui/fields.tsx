@@ -120,6 +120,12 @@ export function FieldControl({
       <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
         {/* 空値の表示は optionLabels[''] で上書き可（例: billing_interval の空＝買い切り）。 */}
         {!d.required && <option value="">{d.optionLabels?.[''] ?? t('none')}</option>}
+        {/* 必須なのに未設定＝先頭選択肢が選ばれて見える罠を防ぐ（値が入るまで「未設定」を明示・選択は不可）。 */}
+        {d.required && !isSet(value) && (
+          <option value="" disabled>
+            {t('unset')}
+          </option>
+        )}
         {(d.options ?? []).map((o) => (
           <option key={o} value={o}>
             {d.optionLabels?.[o] ?? o}
@@ -131,6 +137,11 @@ export function FieldControl({
     return (
       <Select value={asText(value)} className="w-full" onChange={(e) => onChange(e.target.value || null)}>
         {!d.required && <option value="">{t('none')}</option>}
+        {d.required && !isSet(value) && (
+          <option value="" disabled>
+            {t('unset')}
+          </option>
+        )}
         {(refOptions ?? []).map((o) => (
           <option key={o.value} value={o.value}>
             {o.label || t('untitled')}
