@@ -45,6 +45,10 @@
    承認は **job が実行可能になった時点で要求される**ため、依存の段ごとに数回に分かれる
    （同時に待機中の分は1ダイアログでまとめて承認できる）。
 
+dispatch の導線は3つ（どれも同じ workflow を起動する）: ①GitHub → Actions → release → Run workflow、
+②ローカルから **`pnpm release:dry` / `pnpm release`**（gh CLI の認証を使う＝PAT の配備不要・run の URL を表示）、
+③studio のデプロイボタン（任意・GITHUB_TOKEN か GitHub App の配備が必要）。
+
 - 各 job は従来どおり**モジュール別 Environment**（`<module>-production`・承認ゲート）を張る＝secret の置き場・信頼境界は不変。secret はローカルに置かない。
 - 商品マスタ（core.products / product_offers）の Stripe / identity への同期と **website のビルド・デプロイは apply のたびに収束**する（どちらもデータが正本に含まれ git diff で検出できない。無変更なら no-op / 同一出力の再デプロイ＝冪等）。**studio で publish したデータ変更の反映も `release` を回すだけ**。
 - PR では検証のみ（下表）。
