@@ -103,7 +103,7 @@ sequenceDiagram
 | マスタ | 正本 | 反映先 | 経路 |
 | --- | --- | --- | --- |
 | 製品（is_saas で SaaS を明示） | `core.products`（studio が管理） | `identity.products`（code/name/status の射影・is_saas の部分集合） | `saas-products: sync` workflow の identity job（upsert・消えた code は inactive 化） |
-| 商品（offer・価格・**version 付き不変**） | `core.product_offers`（studio が管理） | Stripe Product / Price | 同 workflow の stripe job（書き出し → `infra/stacks/stripe` apply・lookup key = `<製品>_<offer>_v<version>`） |
+| 商品（offer・価格・**現行価格1行**） | `core.product_offers`（studio が管理） | Stripe Product / Price | 同 workflow の stripe job（書き出し → `infra/stacks/stripe` apply・lookup key = `<製品>_<offer>`） |
 | redirect 允許リスト | `config.<env>.json` の `saas.auth` | Supabase Auth 設定 | `infra/stacks/supabase-saas` |
 
 - core.products は SaaS 以外（受託成果物・屋号自身）も持つポートフォリオ台帳。saas 側レジストリは

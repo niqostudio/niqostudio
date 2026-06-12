@@ -278,7 +278,7 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
 - `access_period_days` は**一回課金の付与窓（日数・null=無期限）**。webhook が grant に書く
   `expires_at`（購入時刻＋この値）と同じマスタから出る＝**表示と enforcement の単一の正本**。
   製品は「30日」をハードコードせず必ずこの値を表示に使う（サブスクは null＝期間は `interval` が表現）。
-  値は商品マスタの不変フィールド（変更＝新 version）なので、表示中に黙って変わることはない。
+  価格は checkout 作成時点の現行値で確定する（表示後の改定は次の checkout から反映）。
 
 ### 補足
 
@@ -286,7 +286,7 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
   ログインは任意（`signInWithOtp({ shouldCreateUser: true })` で webhook との順序競合も吸収できる）。
 - webhook（Stripe→billing）は製品非関与。grant は webhook で恒久化され、レシートの即時解錠とは独立。
 - offer キーの正準リストは製品登録時に確定して通知する（製品が参照するのは **offer キーのみ**。
-  Stripe の lookup key `<code>_<key>_v<version>` は billing 内部表現で、製品からは見えない）。
+  Stripe の lookup key `<code>_<key>` は billing 内部表現で、製品からは見えない）。
 
 ## 変更管理
 
