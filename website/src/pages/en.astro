@@ -1,23 +1,21 @@
 ---
-// 英語圏向けの単一ページ。SaaS 製品からの「by NIQO STUDIO」導線の着地先。
+// 英語圏向けの単一ページ。SaaS 製品からの「by NIQO STUDIO」導線の着地先＝運営者ページに徹する
+// （Products の棚は日本語トップのみ。日本語ラベル運用のチップも出さない。決定: 2026-06）。
 // サイト本体（日本語・受託向け）の Shell は日本語ナビ/CTA/パンくず前提のため使わず、
-// トークン・部品（LogoMark / Wordmark / SectionLabel / Button / Chip / SocialLinks）だけ共有する
-// self-contained 構成。英語コピーは config の EN、ブランド要素（ロゴ・skills・SNS・tagline）は profile 駆動。
+// トークン・部品（LogoMark / Wordmark / SectionLabel / Button / SocialLinks）だけ共有する
+// self-contained 構成。英語コピーは config の EN、ブランド要素（ロゴ・SNS・tagline）は profile 駆動。
 import '../styles/global.css';
 import { Font } from 'astro:assets';
 import { SITE, THEME, EN } from '../config/site';
-import { getProfile, getProducts } from '../lib/content';
-import ProductCard from '../components/cards/ProductCard.astro';
+import { getProfile } from '../lib/content';
 import LogoMark from '../components/ui/LogoMark.astro';
 import Wordmark from '../components/ui/Wordmark.astro';
 import SectionLabel from '../components/ui/SectionLabel.astro';
 import Button from '../components/ui/Button.astro';
-import Chip from '../components/ui/Chip.astro';
 import CopyEmail from '../components/ui/CopyEmail.astro';
 import SocialLinks from '../components/layout/SocialLinks.astro';
 
 const profile = await getProfile();
-const products = await getProducts();
 const canonical = new URL('/en', Astro.site);
 // OG 画像はトップ用を流用（生成対象は日本語の固定ページのみ）。
 const ogImage = new URL('/og/index.png', Astro.site);
@@ -71,21 +69,13 @@ const contactEmail = profile.contactEmail ?? SITE.email;
           <span class="block font-mono text-sm text-muted uppercase tracking-wide">{EN.eyebrow}</span>
           <span class="block text-4xl sm:text-5xl font-semibold tracking-tight mt-3">{EN.headline}</span>
         </h1>
-        <p class="text-xl sm:text-2xl font-medium tracking-tight text-accent mt-2">{EN.tagline}</p>
+        {/* ブランドのタグラインは profile（DB・英語）が正本。config の EN.tagline は未設定時の保険。 */}
+        <p class="text-xl sm:text-2xl font-medium tracking-tight text-accent mt-2">{profile.tagline ?? EN.tagline}</p>
         <p class="text-base text-muted mt-3 max-w-xl">{EN.lead}</p>
         <div class="flex gap-4 mt-8">
           <Button href="#contact">Get in touch</Button>
           <Button href="/" variant="secondary">日本語サイト</Button>
         </div>
-        {
-          profile.skills.length > 0 && (
-            <ul class="flex flex-wrap gap-2 mt-8">
-              {profile.skills.map((skill) => (
-                <Chip>{skill}</Chip>
-              ))}
-            </ul>
-          )
-        }
       </section>
 
       <section class="py-12 border-t border-border mt-8">
@@ -105,20 +95,6 @@ const contactEmail = profile.contactEmail ?? SITE.email;
         </div>
       </section>
 
-      {
-        products.length > 0 && (
-          <section class="py-12 border-t border-border">
-            <SectionLabel as="h2">Products</SectionLabel>
-            <p class="text-sm text-muted mt-6 max-w-xl">Products we build and operate.</p>
-            <div class="grid gap-4 mt-6 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard product={product} />
-              ))}
-            </div>
-          </section>
-        )
-      }
-
       <section id="contact" class="py-12 border-t border-border scroll-mt-8">
         <SectionLabel as="h2">Contact</SectionLabel>
         <p class="text-sm text-muted mt-6 max-w-xl">{EN.contactLead}</p>
@@ -136,9 +112,7 @@ const contactEmail = profile.contactEmail ?? SITE.email;
             <LogoMark class="w-12 h-12 [--logo-accent:var(--color-gold)]" />
             <Wordmark class="text-base" />
           </a>
-          <p class="text-sm text-on-dark-muted mt-4 max-w-xs">{EN.tagline}</p>
-          {/* ブランドの日本語タグライン（原語の署名）。a studio in Japan のバイリンガルな手触り。 */}
-          {profile.tagline && <p class="font-mono text-xs text-on-dark-muted mt-3 tracking-wide">{profile.tagline}</p>}
+          <p class="text-sm text-on-dark-muted mt-4 max-w-xs">{profile.tagline ?? EN.tagline}</p>
         </div>
 
         <nav>
