@@ -857,7 +857,12 @@ export type Database = {
           display_name: string
           handle: string
           id: string
-          legal_jp: Json | null
+          legal_address: string | null
+          legal_contact_email: string | null
+          legal_disclosure_policy: string | null
+          legal_phone: string | null
+          legal_responsible_person: string | null
+          legal_seller_name: string | null
           logo_svg: string | null
           operation_policy: string | null
           skills: string[]
@@ -871,7 +876,12 @@ export type Database = {
           display_name: string
           handle: string
           id?: string
-          legal_jp?: Json | null
+          legal_address?: string | null
+          legal_contact_email?: string | null
+          legal_disclosure_policy?: string | null
+          legal_phone?: string | null
+          legal_responsible_person?: string | null
+          legal_seller_name?: string | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[]
@@ -885,7 +895,12 @@ export type Database = {
           display_name?: string
           handle?: string
           id?: string
-          legal_jp?: Json | null
+          legal_address?: string | null
+          legal_contact_email?: string | null
+          legal_disclosure_policy?: string | null
+          legal_phone?: string | null
+          legal_responsible_person?: string | null
+          legal_seller_name?: string | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[]
@@ -1651,7 +1666,12 @@ export type Database = {
           display_name: string | null
           handle: string | null
           id: string | null
-          legal_jp: Json | null
+          legal_address: string | null
+          legal_contact_email: string | null
+          legal_disclosure_policy: string | null
+          legal_phone: string | null
+          legal_responsible_person: string | null
+          legal_seller_name: string | null
           logo_svg: string | null
           operation_policy: string | null
           skills: string[] | null
@@ -1664,7 +1684,12 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string | null
-          legal_jp?: Json | null
+          legal_address?: string | null
+          legal_contact_email?: string | null
+          legal_disclosure_policy?: string | null
+          legal_phone?: string | null
+          legal_responsible_person?: string | null
+          legal_seller_name?: string | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[] | null
@@ -1677,7 +1702,12 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string | null
-          legal_jp?: Json | null
+          legal_address?: string | null
+          legal_contact_email?: string | null
+          legal_disclosure_policy?: string | null
+          legal_phone?: string | null
+          legal_responsible_person?: string | null
+          legal_seller_name?: string | null
           logo_svg?: string | null
           operation_policy?: string | null
           skills?: string[] | null
