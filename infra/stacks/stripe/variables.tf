@@ -8,7 +8,6 @@ variable "products" {
     status = optional(string)
     offers = list(object({
       key                = string
-      version            = number
       currency           = string
       unit_amount        = number
       interval           = optional(string)

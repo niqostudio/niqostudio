@@ -39,7 +39,7 @@ SaaS の**製品・商品（offer・価格）マスタ**を Stripe の Product /
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| products | SaaS 製品・商品（offer・価格）マスタ（core からの書き出し） | <pre>list(object({<br/>    code   = string<br/>    name   = string<br/>    status = optional(string)<br/>    offers = list(object({<br/>      key                = string<br/>      version            = number<br/>      currency           = string<br/>      unit_amount        = number<br/>      interval           = optional(string)<br/>      access_period_days = optional(number) # identity 射影・billing 用（この stack では使わない）<br/>    }))<br/>  }))</pre> | `[]` | no |
+| products | SaaS 製品・商品（offer・価格）マスタ（core からの書き出し） | <pre>list(object({<br/>    code   = string<br/>    name   = string<br/>    status = optional(string)<br/>    offers = list(object({<br/>      key                = string<br/>      currency           = string<br/>      unit_amount        = number<br/>      interval           = optional(string)<br/>      access_period_days = optional(number) # identity 射影・billing 用（この stack では使わない）<br/>    }))<br/>  }))</pre> | `[]` | no |
 
 ## Outputs
 
