@@ -81,7 +81,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - run: pnpm install --frozen-lockfile --filter niqostudio
       - name: dbmate（core / studio を本番へ）
         # 接続は Session pooler（IPv4）。GitHub runner は IPv6 直結に届かないため。
         env:
@@ -113,7 +113,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       # dbmate は root devDep、supabase CLI は infra が所有。
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - run: pnpm install --frozen-lockfile --filter niqostudio --filter @niqostudio/infra
       - name: dbmate（identity / billing スキーマを本番へ）
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -186,7 +186,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - if: ${{ steps.gate.outputs.enabled == 'true' }}
-        run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+        run: pnpm install --frozen-lockfile --filter niqostudio --filter @niqostudio/infra
       - name: core からマスタを書き出し
         if: ${{ steps.gate.outputs.enabled == 'true' }}
         env:
@@ -229,7 +229,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - run: pnpm install --frozen-lockfile --filter niqostudio
       - uses: actions/download-artifact@v4
         with:
           name: products
