@@ -32,7 +32,6 @@ jobs:
     outputs:
       core: ${{ steps.diff.outputs.core }}
       saas: ${{ steps.diff.outputs.saas }}
-      website: ${{ steps.diff.outputs.website }}
       infra: ${{ steps.diff.outputs.infra }}
       docs: ${{ steps.diff.outputs.docs }}
     steps:
@@ -46,10 +45,10 @@ jobs:
           base=$(gh run list --workflow=release.yml --status=success --limit=50 \
             --json headSha,displayTitle \
             --jq '[.[] | select(.displayTitle == "release: apply")][0].headSha // empty')
-          core=false; saas=false; website=false; infra=false; docs=false
+          core=false; saas=false; infra=false; docs=false
           if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then
             echo "前回 apply が特定できないため全モジュールを対象にします"
-            core=true; saas=true; website=true; infra=true; docs=true
+            core=true; saas=true; infra=true; docs=true
           else
             echo "base=$base"
             files=$(git diff --name-only "$base"..HEAD)
@@ -57,13 +56,11 @@ jobs:
             while IFS= read -r f; do
               case "$f" in core/migrations/*|studio/migrations/*) core=true ;; esac
               case "$f" in saas-platform/*|infra/supabase-saas/supabase/config.toml) saas=true ;; esac
-              # core の公開 view は website（SSG）が読むため core 変更も website 再ビルド対象。
-              case "$f" in website/*|packages/*|config.*.json|core/*) website=true ;; esac
               case "$f" in infra/*|config.*.json) infra=true ;; esac
               case "$f" in docs/*|mkdocs.yml) docs=true ;; esac
             done <<< "$files"
           fi
-          for k in core saas website infra docs; do
+          for k in core saas infra docs; do
             eval "echo $k=\$$k" >> "$GITHUB_OUTPUT"
           done
 
@@ -144,9 +141,11 @@ jobs:
           fi
 
   # website の build / deploy（手順の正本は website.yml＝PR 検証と共用）。
+  # SSG の出力はコード×DB データの射影で、データ変更（studio の publish）は git diff に出ない。
+  # 商品マスタ同期と同じ理屈で diff 検出せず毎回収束させる（無変更なら同一出力の再デプロイ＝無害）。
   website:
     needs: [detect, core_db]
-    if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' && needs.detect.outputs.website == 'true' }}
+    if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' }}
     uses: ./.github/workflows/website.yml
     with:
       deploy: ${{ inputs.apply }}
