@@ -1,0 +1,342 @@
+name: release
+run-name: "release: ${{ inputs.apply == true && 'apply' || 'dry-run' }}"
+
+# 本番反映の単一の入口。未反映の変更（git の HEAD ＋ core の商品マスタ）を依存順で本番に収束させる。
+# 運用は二段：apply=false（全ジョブ dry-run＝migration status / terraform plan / build のみ）で差分を読み、
+# apply=true で反映する。モジュール間の順序（core→website、core/saas→sync、スキーマ→settings 等）は
+# needs に焼き込み、人手の順序組みをなくす。秘密ゼロの検証（型・テスト・fmt 等）は verify.yml。
+# 各 job は従来どおりモジュール別 Environment（承認ゲート・secret スコープ）を張る＝信頼境界は不変。
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "true で本番反映 / false は dry-run（status・plan・build のみ）"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read # detect が前回 apply の SHA を引く
+
+# state への同時書き込みを防ぐ（terraform 系の直列化グループ）。
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+jobs:
+  # 前回成功した apply との diff で「どのモジュールに未反映の変更があるか」を判定する。
+  # 判定不能（初回・force push 等）は全モジュール対象に倒す（安全側＝各ジョブは冪等）。
+  detect:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.diff.outputs.core }}
+      saas: ${{ steps.diff.outputs.saas }}
+      website: ${{ steps.diff.outputs.website }}
+      infra: ${{ steps.diff.outputs.infra }}
+      docs: ${{ steps.diff.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base=$(gh run list --workflow=release.yml --status=success --limit=50 \
+            --json headSha,displayTitle \
+            --jq '[.[] | select(.displayTitle == "release: apply")][0].headSha // empty')
+          core=false; saas=false; website=false; infra=false; docs=false
+          if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then
+            echo "前回 apply が特定できないため全モジュールを対象にします"
+            core=true; saas=true; website=true; infra=true; docs=true
+          else
+            echo "base=$base"
+            files=$(git diff --name-only "$base"..HEAD)
+            printf '%s\n' "$files"
+            while IFS= read -r f; do
+              case "$f" in core/migrations/*|studio/migrations/*) core=true ;; esac
+              case "$f" in saas-platform/*|infra/supabase-saas/supabase/config.toml) saas=true ;; esac
+              # core の公開 view は website（SSG）が読むため core 変更も website 再ビルド対象。
+              case "$f" in website/*|packages/*|config.*.json|core/*) website=true ;; esac
+              case "$f" in infra/*|config.*.json) infra=true ;; esac
+              case "$f" in docs/*|mkdocs.yml) docs=true ;; esac
+            done <<< "$files"
+          fi
+          for k in core saas website infra docs; do
+            eval "echo $k=\$$k" >> "$GITHUB_OUTPUT"
+          done
+
+  # 内部プロジェクト（core / studio スキーマ）の migration。
+  core_db:
+    needs: detect
+    if: ${{ needs.detect.outputs.core == 'true' }}
+    runs-on: ubuntu-latest
+    environment: infra-production # supabase は infra 所有のため infra-production を借りる
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - name: dbmate（core / studio を本番へ）
+        # 接続は Session pooler（IPv4）。GitHub runner は IPv6 直結に届かないため。
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          for ns in core studio; do
+            if [ "${{ inputs.apply }}" = "true" ]; then
+              echo "::group::$ns 適用"
+              pnpm exec dbmate --migrations-dir "$ns/migrations" --migrations-table "${ns}_migrations" --no-dump-schema up
+            else
+              echo "::group::$ns status（dry-run）"
+              pnpm exec dbmate --migrations-dir "$ns/migrations" --migrations-table "${ns}_migrations" status
+            fi
+            echo "::endgroup::"
+          done
+
+  # niqostudio-saas の migration ＋ Edge Functions deploy（同一コミットから＝schema と関数の取り合わせを保証）。
+  saas:
+    needs: detect
+    if: ${{ needs.detect.outputs.saas == 'true' }}
+    runs-on: ubuntu-latest
+    environment: saas-platform-production # 顧客向け信頼ドメインのため infra-production と分離
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # dbmate は root devDep、supabase CLI は infra が所有。
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: dbmate（identity / billing スキーマを本番へ）
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            echo "::group::migration 適用"
+            pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations --no-dump-schema up
+          else
+            echo "::group::migration status（dry-run）"
+            pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations status
+          fi
+          echo "::endgroup::"
+      - name: Edge Functions deploy（migration と同一コミットから）
+        # 関数の正本は saas-platform/functions（CLI は <workdir>/supabase/functions を見るため symlink で繋ぐ）。
+        # 対象と verify_jwt は infra/supabase-saas/supabase/config.toml の [functions.*] が正本。
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          ln -s "$PWD/saas-platform/functions" infra/supabase-saas/supabase/functions
+          names=$(grep -oP '^\[functions\.\K[^]]+' infra/supabase-saas/supabase/config.toml | xargs)
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec supabase --workdir supabase-saas functions deploy $names \
+              --use-api --project-ref "${{ vars.SAAS_SUPABASE_PROJECT_REF }}"
+          else
+            echo "deploy 対象（dry-run）: $names"
+          fi
+
+  # website の build / deploy（手順の正本は website.yml＝PR 検証と共用）。
+  website:
+    needs: [detect, core_db]
+    if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' && needs.detect.outputs.website == 'true' }}
+    uses: ./.github/workflows/website.yml
+    with:
+      deploy: ${{ inputs.apply }}
+    secrets: inherit
+
+  # 商品マスタの収束（core の正本データ → Stripe / identity 射影）。git diff では検出できない
+  # （正本が DB のデータ）ため毎回走らせて収束させる＝無変更なら terraform no-op・射影は冪等 upsert。
+  sync_stripe:
+    needs: [detect, core_db, saas]
+    if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' && needs.saas.result != 'failure' }}
+    runs-on: ubuntu-latest
+    environment: infra-production # core DB 読み出し＋Stripe/state 鍵（プラットフォーム反映）
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_TFSTATE_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_TFSTATE_SECRET_KEY }}
+      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: core からマスタを書き出し
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/saas-products-export.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: products
+          path: infra/stacks/stripe/products.auto.tfvars.json
+      - name: terraform（Stripe Product / Price）
+        env:
+          R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+        working-directory: infra
+        run: |
+          cat > stacks/stripe/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "stripe/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/stripe init -backend-config=backend.tfbackend -input=false
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/stripe apply -auto-approve -input=false
+          else
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/stripe plan -input=false
+          fi
+
+  sync_identity:
+    needs: sync_stripe
+    if: ${{ !cancelled() && needs.sync_stripe.result == 'success' && inputs.apply }}
+    runs-on: ubuntu-latest
+    environment: saas-platform-production # saas DB への射影は顧客側 Environment にスコープ
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono
+      - uses: actions/download-artifact@v4
+        with:
+          name: products
+          path: infra/stacks/stripe
+      - name: identity.products へ射影
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/saas-products-identity-sync.mjs
+
+  # 公開 docs（MkDocs → GitHub Pages）。build 検証は verify.yml、ここは反映（apply 時のみ deploy）。
+  docs:
+    needs: detect
+    if: ${{ needs.detect.outputs.docs == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - run: pip install mkdocs-material
+      - run: mkdocs build --strict
+      - if: ${{ inputs.apply }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - if: ${{ inputs.apply }}
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  # プラットフォーム（DNS / メール / Worker ドメイン束ね / Supabase 設定）。
+  # needs: スキーマ露出（settings）はスキーマの存在が前提＝core_db / saas の後。
+  # Worker のカスタムドメイン束ねは Worker の存在が前提＝website の後（初回のみ・以後は冪等）。
+  infra:
+    needs: [detect, core_db, saas, website]
+    if: ${{ !cancelled() && needs.detect.result == 'success' && needs.core_db.result != 'failure' && needs.saas.result != 'failure' && needs.website.result != 'failure' && needs.detect.outputs.infra == 'true' }}
+    runs-on: ubuntu-latest
+    environment: infra-production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_TERRAFORM_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_TFSTATE_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_TFSTATE_SECRET_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      R2_TFSTATE_BUCKET: ${{ vars.R2_TFSTATE_BUCKET }}
+      CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # terraform バイナリは @jahed/terraform が初回実行時に取得（HashiCorp 署名＋checksum 検証）。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/infra
+      - name: niqostudio-com（DNS / メール / Worker 束ね）
+        # 機微(PII)は Secret、公開DNS(Resend)は Variable に分離して env 経由で渡す。
+        env:
+          TF_VAR_forward_to: ${{ secrets.EMAIL_FORWARD_TO }}
+          RESEND_DNS_RECORDS: ${{ vars.RESEND_DNS_RECORDS }}
+        run: |
+          # 公開DNS(Resend)は JSON 配列の Variable。TF_VAR は HCL 解釈で JSON object を受けないため、
+          # terraform が native JSON で読む .auto.tfvars.json に包んで渡す（未設定は空リスト）。
+          printf '{"resend_dns_records": %s}' "${RESEND_DNS_RECORDS:-[]}" > stacks/niqostudio-com/resend.auto.tfvars.json
+          cat > stacks/niqostudio-com/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "niqostudio-com/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqostudio-com init -backend-config=backend.tfbackend -input=false
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqostudio-com apply -auto-approve -input=false
+          else
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqostudio-com plan -input=false
+          fi
+      - name: niqo-studio（リダイレクト専用ドメイン）
+        run: |
+          cat > stacks/niqo-studio/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "niqo-studio/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqo-studio init -backend-config=backend.tfbackend -input=false
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqo-studio apply -auto-approve -input=false
+          else
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/niqo-studio plan -input=false
+          fi
+      - name: supabase settings（内部プロジェクト）
+        env:
+          TF_VAR_project_ref: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: |
+          cat > stacks/supabase/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "supabase/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase init -backend-config=backend.tfbackend -input=false
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase apply -auto-approve -input=false
+          else
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase plan -input=false
+          fi
+      - name: supabase settings（SaaS 基盤プロジェクト）
+        env:
+          TF_VAR_project_ref: ${{ vars.SAAS_SUPABASE_PROJECT_REF }}
+        run: |
+          cat > stacks/supabase-saas/backend.tfbackend <<EOF
+          bucket    = "$R2_TFSTATE_BUCKET"
+          key       = "supabase-saas/terraform.tfstate"
+          endpoints = { s3 = "https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com" }
+          EOF
+          pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase-saas init -backend-config=backend.tfbackend -input=false
+          if [ "${{ inputs.apply }}" = "true" ]; then
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase-saas apply -auto-approve -input=false
+          else
+            pnpm --filter @niqostudio/infra exec terraform -chdir=stacks/supabase-saas plan -input=false
+          fi

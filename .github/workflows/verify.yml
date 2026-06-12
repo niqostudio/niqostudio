@@ -1,0 +1,226 @@
+name: verify
+
+# 検証の単一入口（秘密ゼロ＝fork PR でも安全）。PR / push(main) は変更モジュールだけ、dispatch は全部を検証する。
+# 本番側の dry-run（terraform plan / migration status）と反映は release.yml（秘密・承認ゲートが要るため分離）。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # 変更モジュールの判定。PR は base との diff、push は event.before との diff、dispatch は全対象。
+  detect:
+    if: github.repository == 'niqostudio/niqostudio'
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.diff.outputs.core }}
+      saas: ${{ steps.diff.outputs.saas }}
+      studio: ${{ steps.diff.outputs.studio }}
+      website: ${{ steps.diff.outputs.website }}
+      infra: ${{ steps.diff.outputs.infra }}
+      docs: ${{ steps.diff.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          core=false; saas=false; studio=false; website=false; infra=false; docs=false
+          range=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            range="origin/${{ github.base_ref }}...HEAD"
+          elif [ "${{ github.event_name }}" = "push" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
+            range="${{ github.event.before }}..HEAD"
+          fi
+          if [ -z "$range" ]; then
+            echo "差分の基準が無いため全モジュールを検証します"
+            core=true; saas=true; studio=true; website=true; infra=true; docs=true
+          else
+            files=$(git diff --name-only $range)
+            printf '%s\n' "$files"
+            while IFS= read -r f; do
+              case "$f" in core/migrations/*|studio/migrations/*|packages/db-types/src/database.ts) core=true ;; esac
+              case "$f" in saas-platform/*|packages/db-types/src/saas-database.ts|infra/supabase-saas/supabase/config.toml) saas=true ;; esac
+              case "$f" in studio/*|packages/*) studio=true ;; esac
+              # core の migration は website の一時 Supabase 検証（PR）にも効く。
+              case "$f" in website/*|packages/*|config.*.json|core/*) website=true ;; esac
+              case "$f" in infra/*|config.*.json) infra=true ;; esac
+              case "$f" in docs/*|mkdocs.yml) docs=true ;; esac
+              case "$f" in .github/workflows/*) core=true; saas=true; studio=true; website=true; infra=true; docs=true ;; esac
+            done <<< "$files"
+          fi
+          for k in core saas studio website infra docs; do
+            eval "echo $k=\$$k" >> "$GITHUB_OUTPUT"
+          done
+
+  # core / studio：(1) 適用済み migration の改竄防止、(2) migrations と生成型のドリフト検知。
+  db_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.core == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: 既存 migration の変更/削除がないか（前進専用）
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            range="origin/${{ github.base_ref }}...HEAD"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            range="${{ github.event.before }}..HEAD"
+          else
+            echo "dispatch は差分基準が無いため skip"; exit 0
+          fi
+          changed=$(git diff --diff-filter=MD --name-only $range -- 'core/migrations/*.sql' 'studio/migrations/*.sql')
+          if [ -n "$changed" ]; then
+            echo "::error::適用済み migration の変更/削除は禁止です（前進 migration を追加してください）:"
+            echo "$changed"
+            exit 1
+          fi
+          echo "OK: 既存 migration は不変"
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: local supabase 起動（DB のみ・PostgREST は不要）
+        # このジョブは DB＋dbmate＋gen types(--local=pg 直接) だけ。PostgREST は起動時に
+        # 露出スキーマ（core/studio）の存在を要求するが、それらは後段の dbmate で作るため除外する。
+        run: pnpm --filter @niqostudio/infra exec supabase start -x postgrest
+      - name: dbmate で core スキーマを適用
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable"
+        run: pnpm exec dbmate --migrations-dir core/migrations --migrations-table core_migrations --no-dump-schema up
+      - name: migrations から型を生成
+        run: pnpm db:types
+      - name: ドリフト検知（差分があれば fail）
+        run: git diff --exit-code -- packages/db-types/src/database.ts
+
+  # saas-platform：db_check と同型（対象は identity / billing）。
+  saas_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.saas == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: 既存 migration の変更/削除がないか（前進専用）
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            range="origin/${{ github.base_ref }}...HEAD"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            range="${{ github.event.before }}..HEAD"
+          else
+            echo "dispatch は差分基準が無いため skip"; exit 0
+          fi
+          changed=$(git diff --diff-filter=MD --name-only $range -- 'saas-platform/migrations/*.sql')
+          if [ -n "$changed" ]; then
+            echo "::error::適用済み migration の変更/削除は禁止です（前進 migration を追加してください）:"
+            echo "$changed"
+            exit 1
+          fi
+          echo "OK: 既存 migration は不変"
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter niqostudio-mono --filter @niqostudio/infra
+      - name: local supabase 起動（saas スタック・PostgREST は不要）
+        run: pnpm --filter @niqostudio/infra exec supabase --workdir supabase-saas start -x postgrest
+      - name: dbmate で identity スキーマを適用
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:55322/postgres?sslmode=disable"
+        run: pnpm exec dbmate --migrations-dir saas-platform/migrations --migrations-table saas_platform_migrations --no-dump-schema up
+      - name: migrations から型を生成
+        run: pnpm db:types:saas
+      - name: ドリフト検知（差分があれば fail）
+        run: git diff --exit-code -- packages/db-types/src/saas-database.ts
+
+  # studio の純検証（型＋テスト）。db-types の生成型は committed・テストは純ロジックで DB/secret 不要。
+  studio_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.studio == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/studio...
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  # website の build 検証（手順の正本は website.yml。PR は一時 Supabase で migration＋seed を当てて検証）。
+  website_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.website == 'true' }}
+    uses: ./.github/workflows/website.yml
+    with:
+      deploy: false
+    secrets: inherit
+
+  # infra の fmt / validate ＋ README が terraform-docs 生成結果と一致するか。秘密不要（state / API に触れない）。
+  infra_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.infra == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # terraform バイナリは @jahed/terraform が初回実行時に取得（HashiCorp 署名＋checksum 検証）。
+      - run: pnpm install --frozen-lockfile --filter @niqostudio/infra
+      - name: fmt
+        working-directory: infra
+        run: pnpm --filter @niqostudio/infra exec terraform fmt -recursive -check -diff
+      - name: validate（backend 無し init＝リモート state / API に触れない）
+        working-directory: infra
+        run: |
+          for dir in stacks/*/; do
+            echo "== validate $dir =="
+            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" init -backend=false -input=false
+            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" validate
+          done
+      - name: terraform-docs check（差分があれば fail → ローカルで scripts/gen-docs を実行してコミット）
+        uses: terraform-docs/gh-actions@v1
+        with:
+          working-dir: infra/modules/cloudflare-dns-records,infra/modules/cloudflare-email-routing,infra/modules/cloudflare-redirect,infra/stacks/niqostudio-com,infra/stacks/niqo-studio,infra/stacks/supabase,infra/stacks/supabase-saas,infra/stacks/stripe
+          config-file: infra/.terraform-docs.yml
+          output-file: README.md
+          output-method: inject
+          fail-on-diff: true
+
+  # docs の build 検証（デプロイは release.yml の docs job）。
+  docs_check:
+    needs: detect
+    if: ${{ needs.detect.outputs.docs == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - run: pip install mkdocs-material
+      - run: mkdocs build --strict
