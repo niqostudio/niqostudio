@@ -195,14 +195,8 @@ jobs:
       - name: fmt
         working-directory: infra
         run: pnpm --filter @niqostudio/infra exec terraform fmt -recursive -check -diff
-      - name: validate（backend 無し init＝リモート state / API に触れない）
-        working-directory: infra
-        run: |
-          for dir in stacks/*/; do
-            echo "== validate $dir =="
-            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" init -backend=false -input=false
-            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" validate
-          done
+      # init は .terraform.lock.hcl に実行プラットフォームのハッシュを追記しうるため、
+      # 作業ツリーの差分で fail する docs check を init より先に行う。
       - name: terraform-docs check（差分があれば fail → ローカルで scripts/gen-docs を実行してコミット）
         uses: terraform-docs/gh-actions@v1
         with:
@@ -211,6 +205,14 @@ jobs:
           output-file: README.md
           output-method: inject
           fail-on-diff: true
+      - name: validate（backend 無し init＝リモート state / API に触れない）
+        working-directory: infra
+        run: |
+          for dir in stacks/*/; do
+            echo "== validate $dir =="
+            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" init -backend=false -input=false
+            pnpm --filter @niqostudio/infra exec terraform -chdir="$dir" validate
+          done
 
   # docs の build 検証（デプロイは release.yml の docs job）。
   docs_check:
