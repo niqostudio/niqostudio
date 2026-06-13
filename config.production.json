@@ -3,7 +3,7 @@
   "saas": {
     "auth": {
       "site_url": "https://niqostudio.com/en",
-      "additional_redirect_urls": [],
+      "additional_redirect_urls": ["https://shipscan.app", "https://shipscan.app/**"],
       "password_min_length": 8,
       "email": {
         "smtp": {
