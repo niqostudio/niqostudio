@@ -19,3 +19,22 @@ export function checkScopeOffer(isSubscription, scope) {
   if (!isSubscription && scope === null) return 'scope_required_for_one_shot';
   return null;
 }
+
+// Authorization の Bearer トークンの分類。'none' | 'apikey' | 'user' を返す。
+// supabase-js の functions.invoke はセッションが無くても publishable / anon キーを Bearer に載せるため、
+// 「ヘッダあり＝identity の主張」とは限らない。api キー形状（sb_* / role が anon・service_role の JWT）は
+// 匿名扱い、それ以外は user JWT の主張として検証対象（検証失敗は 401＝黙って匿名に落とさない）。
+export function classifyAuthToken(token) {
+  if (!token) return 'none';
+  if (token.startsWith('sb_')) return 'apikey';
+  const parts = token.split('.');
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (payload.role === 'anon' || payload.role === 'service_role') return 'apikey';
+    } catch {
+      // payload が読めない＝user 主張として検証に回す（そこで 401 になる）
+    }
+  }
+  return 'user';
+}

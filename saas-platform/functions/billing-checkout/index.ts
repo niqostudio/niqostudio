@@ -1,9 +1,11 @@
 // checkout 作成。匿名（認証不要）だが、registry 突合・origin 允許リスト・整合検証・レート制限で守る。
+// Authorization に user JWT があれば identity 付き（org 確定・決済メール固定）。無効な JWT は 401。
 // POST { product, offer, scope, success_url, cancel_url, locale } -> { url }
 import { json, preflight } from '../_shared/cors.ts';
 import { db } from '../_shared/db.ts';
 import { issuer, originAllowed } from '../_shared/config.ts';
 import { checkScopeOffer } from '../_shared/checkout-rules.mjs';
+import { resolveIdentity } from '../_shared/auth.ts';
 import { stripeProvider } from '../_shared/stripe.ts';
 
 const provider = stripeProvider;
@@ -47,10 +49,15 @@ Deno.serve(async (req) => {
     return json({ error: 'origin_not_allowed' }, 403);
   }
 
+  // 任意 identity（明示的に渡された JWT の失敗は 401＝黙って匿名に落とすと
+  // 「ログインして買ったのに別 org に grant が落ちた」事故が無音になる）。
+  const identity = await resolveIdentity(req);
+  if (identity.kind === 'invalid') return json({ error: 'invalid_token' }, 401);
+
   const sql = db();
   // ① registry 突合＋販売中 offer 解決
   const offers = await sql`
-    select o.key, o.billing_interval
+    select o.key, o.billing_interval, o.access_period_days
     from billing.product_offers o
     join identity.products p on p.id = o.product_id
     where p.code = ${product} and p.status = 'active' and o.key = ${offer} and o.is_active
@@ -82,6 +89,9 @@ Deno.serve(async (req) => {
       successUrl: returnUrl.toString().replace('%7BCHECKOUT_SESSION_ID%7D', '{CHECKOUT_SESSION_ID}'),
       cancelUrl,
       locale,
+      orgId: identity.kind === 'user' ? identity.orgId : null,
+      customerEmail: identity.kind === 'user' ? identity.email : null,
+      accessPeriodDays: isSubscription ? null : (row.access_period_days as number | null),
     });
     return json({ url });
   } catch (e) {

@@ -57,15 +57,17 @@ async function record(args) {
     p_external_invoice_id: null,
     p_period_end: null,
     p_parent_id: null,
+    p_access_period_days: null,
     ...args,
   };
   const { rows } = await c.query(
     `select billing.record_event(
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) as result`,
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) as result`,
     [
       d.p_provider, d.p_event_id, d.p_event_type, d.p_event_at, d.p_org_id, d.p_customer_email,
       d.p_product_code, d.p_offer_key, d.p_scope, d.p_kind, d.p_amount, d.p_currency,
       d.p_external_checkout_id, d.p_external_payment_id, d.p_external_invoice_id, d.p_period_end, d.p_parent_id,
+      d.p_access_period_days,
     ],
   );
   return rows[0].result;
@@ -199,6 +201,52 @@ test('chargeback / dispute: grant が suspended になる', async () => {
   await record({ p_event_id: 'evt_cp', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'purchase', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'purchase', p_external_checkout_id: 'cs_c' });
   await record({ p_event_id: 'evt_cb', p_event_at: '2026-06-13T05:00:00Z', p_org_id: orgId, p_event_type: 'dispute', p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-c', p_kind: 'chargeback', p_external_payment_id: 'pi_c' });
   assert.equal((await grant(orgId, 'proj-c')).status, 'suspended');
+});
+
+test('焼き込み日数: p_access_period_days がマスタ（30日）より優先される', async () => {
+  const { orgId } = await fixtures();
+  await record({
+    p_event_id: 'evt_burn', p_event_type: 'purchase', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId,
+    p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-b', p_kind: 'purchase',
+    p_external_checkout_id: 'cs_burn', p_access_period_days: 7,
+  });
+  // マスタは 30 日だが checkout 焼き込みの 7 日で期限が決まる（購入時点の販売条件で固定）。
+  assert.equal(new Date((await grant(orgId, 'proj-b')).expires_at).toISOString(), '2026-06-20T00:00:00.000Z');
+});
+
+test('焼き込み日数: NULL（旧イベント・匿名経路）は現行マスタ参照のまま', async () => {
+  const { orgId, productId } = await fixtures();
+  // checkout 後にマスタが 30→10 日へ改定されたケース：焼き込みが無ければ現行値（10）が効く。
+  await c.query(`update billing.product_offers set access_period_days=10 where product_id=$1 and key='launch_pass'`, [productId]);
+  await record({
+    p_event_id: 'evt_nofix', p_event_type: 'purchase', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId,
+    p_product_code: 'demo', p_offer_key: 'launch_pass', p_scope: 'proj-n', p_kind: 'purchase',
+    p_external_checkout_id: 'cs_nofix',
+  });
+  assert.equal(new Date((await grant(orgId, 'proj-n')).expires_at).toISOString(), '2026-06-23T00:00:00.000Z');
+});
+
+test('解約: kind=cancellation で grant が cancelled・台帳には書かない', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_sub1', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'invoice.paid', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_amount: 1900, p_period_end: '2026-07-13T00:00:00Z', p_external_invoice_id: 'in_c1' });
+  const r = await record({ p_event_id: 'evt_del', p_event_at: '2026-07-13T00:00:00Z', p_org_id: orgId, p_event_type: 'customer.subscription.deleted', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'cancellation', p_amount: null, p_currency: null });
+  assert.equal(r, 'applied');
+  const g = await grant(orgId, null);
+  assert.equal(g.status, 'cancelled');
+  assert.equal(g.expires_at, null);
+  assert.equal(await count(`select count(*)::int n from billing.purchases where organization_id='${orgId}'`), 1, '台帳は購入の1行のみ（解約は金銭の事実ではない）');
+  assert.equal(await count(`select count(*)::int n from billing.provider_events where event_id='evt_del' and processed_at is not null`), 1, 'イベントは処理済み記録（冪等）');
+});
+
+test('再購読: 解約後の新しい purchase で active に戻る', async () => {
+  const { orgId } = await fixtures();
+  await record({ p_event_id: 'evt_rs1', p_event_at: '2026-06-13T00:00:00Z', p_org_id: orgId, p_event_type: 'invoice.paid', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_amount: 1900, p_period_end: '2026-07-13T00:00:00Z', p_external_invoice_id: 'in_rs1' });
+  await record({ p_event_id: 'evt_rs2', p_event_at: '2026-07-13T00:00:00Z', p_org_id: orgId, p_event_type: 'customer.subscription.deleted', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'cancellation', p_amount: null, p_currency: null });
+  assert.equal((await grant(orgId, null)).status, 'cancelled');
+  await record({ p_event_id: 'evt_rs3', p_event_at: '2026-08-01T00:00:00Z', p_org_id: orgId, p_event_type: 'invoice.paid', p_product_code: 'demo', p_offer_key: 'pro_monthly', p_scope: null, p_kind: 'purchase', p_amount: 1900, p_period_end: '2026-09-01T00:00:00Z', p_external_invoice_id: 'in_rs3' });
+  const g = await grant(orgId, null);
+  assert.equal(g.status, 'active', '新しいイベントなので順序ガードを通って active に戻る');
+  assert.equal(new Date(g.expires_at).toISOString(), '2026-09-01T00:00:00.000Z');
 });
 
 test('無期限の一回課金: access_period_days NULL の offer は expires_at NULL', async () => {

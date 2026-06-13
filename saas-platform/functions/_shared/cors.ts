@@ -3,7 +3,8 @@
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
+  // authorization: identity 付き checkout / portal がブラウザから user JWT を載せるため preflight で許可する。
+  'Access-Control-Allow-Headers': 'content-type, authorization',
 };
 
 export function json(body: unknown, status = 200, extra: Record<string, string> = {}): Response {

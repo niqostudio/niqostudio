@@ -223,6 +223,13 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
   ②success / cancel URL の origin を製品ごとの允許リストで縛る（未登録 origin は拒否）
   ③**IP / origin 単位のレート制限**（カードテスティング・session 量産・Stripe レート消費への防御）
   ④**offer 種別と scope の整合検証**（サブスク offer に scope 付き、対象束縛 offer に scope 欠落、は 400）。
+- **ログイン済み購入（任意・推奨）**：ユーザーの access token を `Authorization: Bearer` に載せて呼ぶと、
+  grant の着地先 org が checkout 時点で確定し、**決済メールもアカウントのメールに固定**される
+  （アカウントと別メールで決済して grant が別の個人 org に落ちる事故を断つ）。ヘッダ無し＝従来の
+  匿名 checkout（決済メールから org を解決）。**ヘッダがあるのに無効（期限切れ・偽造）は 401
+  `invalid_token`**——黙って匿名扱いにしない（「ログインして買ったのに別 org に着地」の無音事故を防ぐ）。
+  supabase-js が自動で載せる publishable / anon キーは「identity の主張なし」として匿名扱いになる。
+  サブスク購入はログイン前提（org 文脈が要る）のため、必ずこのヘッダを付けて呼ぶこと。
 - リクエスト（JSON）：
 
 ```jsonc
@@ -279,6 +286,27 @@ supabase gen types typescript --project-id <ref> --schema identity > src/types/s
   `expires_at`（購入時刻＋この値）と同じマスタから出る＝**表示と enforcement の単一の正本**。
   製品は「30日」をハードコードせず必ずこの値を表示に使う（サブスクは null＝期間は `interval` が表現）。
   価格は checkout 作成時点の現行値で確定する（表示後の改定は次の checkout から反映）。
+
+### 4. 支払い管理・解約 — `POST /functions/v1/billing-portal`
+
+- **ログイン必須**（checkout と違い匿名は通さない）：ユーザーの access token を `Authorization: Bearer` に
+  載せる。無しは 401 `login_required`・無効は 401 `invalid_token`。
+- リクエスト（JSON）：
+
+```jsonc
+{
+  "product": "exampleapp",            // 製品コード（return_url の允許リスト判定に使う）
+  "return_url": "https://…/account"   // portal から戻る先（允許リスト登録済み origin のみ）
+}
+```
+
+- レスポンス：`{ "url": "<PSP の Billing Portal の URL>" }` — 製品はリダイレクトするだけ。
+  **解約・支払い方法の変更・請求書の閲覧はすべて portal 側で完結**する（製品が解約 API を持たない）。
+- 購入歴の無い org は 404 `no_customer`。**製品側の責務：「Manage billing」等の導線を
+  有料 org の設定画面に出す**（特商法ページの「解約方法」にもこの導線を記載する）。
+- **解約の反映**：サブスク終了時に grant が `status='cancelled'` になる（covers() は false に落ちる）。
+  期間途中の解約予約中は期末まで `active` のまま＝期末までの利用は契約どおり。再購読は新しい checkout で行う
+  （grant は同じ行が active に戻る）。
 
 ### 補足
 

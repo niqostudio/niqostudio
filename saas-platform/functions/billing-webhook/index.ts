@@ -1,9 +1,31 @@
-// PSP webhook 受信。署名検証→正規化→（匿名なら get-or-create user で org 確定）→record_event。
+// PSP webhook 受信。署名検証→正規化→org 確定（metadata.org_id 優先・匿名は get-or-create user）→record_event。
 // 冪等・順序ガード・台帳 append・grants 再計算は record_event（SQL）が担う＝ここは薄いアダプタ。
 import { db } from '../_shared/db.ts';
 import { stripeProvider } from '../_shared/stripe.ts';
 
 const provider = stripeProvider;
+
+// metadata の org_id（identity 付き checkout で billing 自身が焼いた値＝信頼できる）を検証して使う。
+// 形式不正・消えた org をそのまま record_event に渡すと FK 違反 → 500 → PSP の再送ループになるため、
+// 存在しなければ null を返して email 解決へフォールバックする。
+async function orgFromMetadata(orgId: string | null): Promise<string | null> {
+  if (!orgId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId)) return null;
+  const sql = db();
+  const rows = await sql`select id from identity.organizations where id = ${orgId}`;
+  return rows[0]?.id ?? null;
+}
+
+// PSP customer → org（購入時に保存した link）。subscription 系イベント（customer.subscription.deleted 等）は
+// email を持たないため、metadata に org が無い旧サブスクはこの経路で解決する。
+async function orgFromCustomerLink(provider_: string, externalCustomerId: string | null): Promise<string | null> {
+  if (!externalCustomerId) return null;
+  const sql = db();
+  const rows = await sql`
+    select organization_id from billing.customer_links
+    where provider = ${provider_} and external_customer_id = ${externalCustomerId} and is_active
+    limit 1`;
+  return rows[0]?.organization_id ?? null;
+}
 
 // email から既存ユーザーの org を引く。無ければ Supabase Admin API で user を作る
 // （サインアップトリガが個人 org/grant を生成）→ その org を返す。匿名 checkout の provisioning。
@@ -64,7 +86,10 @@ Deno.serve(async (req) => {
   // 扱わないイベント（kind=null）は 200 で受けて終わり（Stripe の再送を止める）。
   if (!ev.kind) return new Response('ignored', { status: 200 });
 
-  const orgId = await resolveOrgId(ev.customerEmail, ev.productCode);
+  const orgId =
+    (await orgFromMetadata(ev.orgId)) ??
+    (await orgFromCustomerLink(ev.provider, ev.externalCustomerId)) ??
+    (await resolveOrgId(ev.customerEmail, ev.productCode));
   const sql = db();
   try {
     const [{ record_event: result }] = await sql`
@@ -72,7 +97,8 @@ Deno.serve(async (req) => {
         ${ev.provider}, ${ev.eventId}, ${ev.type}, ${ev.eventAt},
         ${orgId}, ${ev.customerEmail}, ${ev.productCode}, ${ev.offerKey}, ${ev.scope},
         ${ev.kind}, ${ev.amount}, ${ev.currency},
-        ${ev.externalCheckoutId}, ${ev.externalPaymentId}, ${ev.externalInvoiceId}, ${ev.periodEnd}, null)`;
+        ${ev.externalCheckoutId}, ${ev.externalPaymentId}, ${ev.externalInvoiceId}, ${ev.periodEnd}, null,
+        ${ev.accessPeriodDays})`;
     // customer link（サブスク用）を保存。
     if (orgId && ev.externalCustomerId) {
       await sql`

@@ -14,10 +14,11 @@
 | 関数 | 役割 |
 | --- | --- |
 | `billing-prices` | 公開。現行版 offer 一覧（製品の /pricing が読む） |
-| `billing-checkout` | 匿名。registry 突合・origin 允許・整合・レート制限 → PSP の checkout URL |
+| `billing-checkout` | 匿名＋任意 identity（user JWT で org 確定・決済メール固定。無効 JWT は 401）。registry 突合・origin 允許・整合・レート制限 → PSP の checkout URL |
 | `billing-return` | success_url の中継。session 検証 → レシート発行 → 製品へ `#receipt=` で 302 |
-| `billing-webhook` | PSP→billing。署名検証 → 正規化 →（匿名は get-or-create user）→ record_event |
+| `billing-webhook` | PSP→billing。署名検証 → 正規化 → org 確定（metadata 優先・匿名は get-or-create user）→ record_event |
 | `billing-keys` | レシート検証用 JWKS（Ed25519・kid 付き・auth の JWKS とは別系統） |
+| `billing-portal` | ログイン必須。org の customer link → PSP Billing Portal の URL（解約・支払い方法・請求書のセルフサービス） |
 
 ## 必要な secret / env（関数）
 
@@ -84,11 +85,15 @@ supabase secrets set --project-ref <saas-ref> \
    商品は事前に studio で core に登録（is_saas・offers）しておく。
 3. **webhook 登録（手動・whsec を state に残さない規約）**：Stripe ダッシュボードで endpoint
    `https://<saas-ref>.supabase.co/functions/v1/billing-webhook` を登録 →
-   `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` を購読 →
+   `checkout.session.completed` / `invoice.paid` / `charge.refunded` / `charge.dispute.created` /
+   `customer.subscription.deleted` を購読 →
    署名シークレット `whsec_` を `supabase secrets set STRIPE_WEBHOOK_SECRET=...` で投入。
 4. **製品 origin**：`config.<env>.json` の `saas.billing.allowed_origins` に追加 → `release`（apply）で反映
    （saas job が config から `BILLING_ALLOWED_ORIGINS` を自動投入）。
    `BILLING_PUBLIC_URL` は本番不要（`SUPABASE_URL` が公開 URL）。
+5. **Billing Portal 設定（手動・初回のみ）**：Stripe ダッシュボード → Settings → Billing → Customer portal で
+   構成を保存する（解約の可否・即時/期末・表示項目はここが正本）。未保存だと `billing-portal` の
+   セッション発行が失敗する。
 
 > 可用性結合：billing 停止＝全製品で販売停止。free tier の一時停止が販売も塞ぐため、実ユーザーが付いたら
 > 有料化を前倒し（[ADR 0008](../adr/0008-saas-billing-centralized.md)）。

@@ -27,6 +27,33 @@ test('checkout.session.completed（一回課金）: 金額・metadata・checkout
   assert.equal(n.offerKey, 'launch_pass');
   assert.equal(n.scope, 'proj-a');
   assert.equal(n.eventAt, expectedAt);
+  assert.equal(n.orgId, null, 'metadata に無ければ null（匿名）');
+  assert.equal(n.accessPeriodDays, null);
+});
+
+test('checkout.session.completed（identity 付き）: org_id と access_period_days を metadata から拾う', () => {
+  const n = normalizeStripeEvent({
+    id: 'evt_id1', type: 'checkout.session.completed', created: at,
+    data: { object: {
+      id: 'cs_id', mode: 'payment', amount_total: 900, currency: 'usd',
+      customer_details: { email: 'a@x.com' },
+      metadata: { product: 'demo-app', offer: 'launch_pass', scope: 'proj-a', org_id: 'org-uuid-1', access_period_days: '30' },
+    } },
+  });
+  assert.equal(n.orgId, 'org-uuid-1');
+  assert.equal(n.accessPeriodDays, 30, '文字列 metadata → 数値');
+});
+
+test('access_period_days: 不正値（非整数・0・負・空）は null に落とす', () => {
+  const mk = (v) => normalizeStripeEvent({
+    id: 'evt_bad', type: 'checkout.session.completed', created: at,
+    data: { object: { id: 'cs_b', mode: 'payment', metadata: { product: 'p', offer: 'o', access_period_days: v } } },
+  }).accessPeriodDays;
+  assert.equal(mk('abc'), null);
+  assert.equal(mk('0'), null);
+  assert.equal(mk('-5'), null);
+  assert.equal(mk('1.5'), null);
+  assert.equal(mk(''), null);
 });
 
 test('checkout.session.completed（mode=subscription）: kind は付与しない（invoice で確定）', () => {
@@ -44,7 +71,7 @@ test('invoice.paid（初回）: kind=purchase・period.end が期限になる', 
     data: { object: {
       id: 'in_1', billing_reason: 'subscription_create', amount_paid: 1900, currency: 'usd',
       customer: 'cus_2', customer_email: 'b@x.com', payment_intent: 'pi_2',
-      subscription_details: { metadata: { product: 'demo-app', offer: 'pro_monthly', scope: '' } },
+      subscription_details: { metadata: { product: 'demo-app', offer: 'pro_monthly', scope: '', org_id: 'org-uuid-2' } },
       lines: { data: [{ period: { end: periodEnd } }] },
     } },
   });
@@ -53,6 +80,7 @@ test('invoice.paid（初回）: kind=purchase・period.end が期限になる', 
   assert.equal(n.externalInvoiceId, 'in_1');
   assert.equal(n.scope, null, '空 scope は null');
   assert.equal(n.periodEnd, new Date(periodEnd * 1000).toISOString());
+  assert.equal(n.orgId, 'org-uuid-2', 'サブスクは subscription metadata の org_id（更新時も identity が効く）');
 });
 
 test('invoice.paid（複数明細）: proration 行に惑わされず最大 period.end を採る', () => {
@@ -99,6 +127,24 @@ test('charge.dispute.created: kind=dispute', () => {
   });
   assert.equal(n.kind, 'dispute');
   assert.equal(n.amount, 900);
+});
+
+test('customer.subscription.deleted: kind=cancellation・metadata と customer を拾う（金額は持たない）', () => {
+  const n = normalizeStripeEvent({
+    id: 'evt_del', type: 'customer.subscription.deleted', created: at,
+    data: { object: {
+      id: 'sub_1', customer: 'cus_9',
+      metadata: { product: 'demo-app', offer: 'pro_monthly', scope: '', org_id: 'org-uuid-3' },
+    } },
+  });
+  assert.equal(n.kind, 'cancellation');
+  assert.equal(n.externalCustomerId, 'cus_9');
+  assert.equal(n.productCode, 'demo-app');
+  assert.equal(n.offerKey, 'pro_monthly');
+  assert.equal(n.scope, null);
+  assert.equal(n.orgId, 'org-uuid-3');
+  assert.equal(n.amount, null, '解約は金銭の事実を持たない');
+  assert.equal(n.customerEmail, null, 'subscription オブジェクトに email は無い（org は metadata/customer link で解決）');
 });
 
 test('未扱いイベント: kind=null（記録のみ）', () => {
