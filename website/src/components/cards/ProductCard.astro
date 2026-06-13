@@ -11,7 +11,13 @@ interface Props {
 const { product } = Astro.props;
 ---
 
-<Card href={product.url ?? undefined} class="flex flex-col h-full p-5">
+{/* 製品リンクは外部サイト（製品ドメイン）なので別タブで開き、サイト内の回遊を切らない。 */}
+<Card
+  href={product.url ?? undefined}
+  target={product.url ? '_blank' : undefined}
+  rel={product.url ? 'noopener' : undefined}
+  class="flex flex-col h-full p-5"
+>
   {
     product.ogImage && (
       <img
