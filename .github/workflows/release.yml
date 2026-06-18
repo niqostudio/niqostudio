@@ -206,7 +206,7 @@ jobs:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: node scripts/saas-products-export.mjs
       - if: ${{ steps.gate.outputs.enabled == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: products
           path: infra/stacks/stripe/products.auto.tfvars.json
@@ -243,7 +243,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile --filter niqostudio
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: products
           path: infra/stacks/stripe
