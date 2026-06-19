@@ -25,5 +25,6 @@ terraform {
 }
 
 # api_token は環境変数 CLOUDFLARE_API_TOKEN で渡す（ここに値を書かない）。
-# トークンは最小権限で発行する: 対象ゾーン限定 + Zone:DNS:Edit / Zone:Email Routing:Edit のみ。
+# トークンは最小権限で発行する: 対象ゾーン限定 + Zone:DNS:Edit / Zone:Email Routing:Edit /
+# Zone Settings:Edit（always_use_https）のみ。
 provider "cloudflare" {}
