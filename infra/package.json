@@ -21,7 +21,7 @@
     "tf:apply": "terraform apply"
   },
   "devDependencies": {
-    "@jahed/terraform": "1.15.5",
+    "@jahed/terraform": "1.15.6",
     "supabase": "^2.105.0"
   },
   "engines": {
