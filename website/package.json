@@ -18,7 +18,7 @@
     "@niqostudio/db-types": "workspace:*",
     "@niqostudio/ui": "workspace:*",
     "@supabase/supabase-js": "^2.108.2",
-    "astro": "^6.4.2",
+    "astro": "^6.4.8",
     "budoux": "^0.8.4",
     "marked": "^18.0.5"
   },
