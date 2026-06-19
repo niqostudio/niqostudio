@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { Font } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
 import Shell from './Shell.astro';
+import SourceCapture from '../components/SourceCapture.astro';
 import { getProfile } from '../lib/content';
 import { SITE, THEME, PAGES } from '../config/site';
 
@@ -101,6 +102,7 @@ const schemas = [orgLd, ...(breadcrumbLd ? [breadcrumbLd] : []), ...extra];
     }
   </head>
   <body class="min-h-screen flex flex-col">
+    <SourceCapture />
     <Shell width={width} cta={cta}>
       <slot />
     </Shell>

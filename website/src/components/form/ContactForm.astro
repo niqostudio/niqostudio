@@ -100,6 +100,23 @@ const sched = INQUIRY_FORM.schedule;
     const status = document.getElementById('contact-status');
     const button = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
+    // 流入元は SourceCapture（全ページ）が初回ランディング時に sessionStorage へ保存する。
+    // ここでは読み出して送信時の本文へ添付するだけ。フォームのあるページ（変換地点）も併記する。
+    const sourceBlock = (): string => {
+      const lines: string[] = [];
+      try {
+        const raw = sessionStorage.getItem('niqo_src');
+        if (raw) {
+          const d = JSON.parse(raw) as { utm?: Record<string, string>; ref?: string; landing?: string };
+          for (const [k, v] of Object.entries(d.utm ?? {})) lines.push(`${k}: ${v}`);
+          if (d.ref) lines.push(`referrer: ${d.ref}`);
+          if (d.landing) lines.push(`landing: ${d.landing}`);
+        }
+      } catch {}
+      lines.push(`form: ${location.pathname}`);
+      return '【流入元】\n' + lines.join('\n');
+    };
+
     // Turnstile は explicit レンダリング（api.js の ?render=explicit）。自動描画を止め二重描画を防ぐ。
     // 既ロードなら即描画（クライアント遷移）、未ロードは api.js の load を待つ（初回ロード）。
     const widget = form.querySelector('.cf-turnstile');
@@ -273,12 +290,12 @@ const sched = INQUIRY_FORM.schedule;
       status.className = 'text-sm text-muted';
 
       try {
-        // 希望日程は本文に書き込まず、送信時にだけ message へ添付する。
+        // 希望日程・流入元は本文に書き込まず、送信時にだけ message へ添付する。
         const fd = new FormData(form);
-        const block = scheduleBlock();
-        if (block) {
+        const extras = [scheduleBlock(), sourceBlock()].filter(Boolean).join('\n\n');
+        if (extras) {
           const msg = (fd.get('message') as string) ?? '';
-          fd.set('message', msg ? `${msg}\n\n${block}` : block);
+          fd.set('message', msg ? `${msg}\n\n${extras}` : extras);
         }
         const res = await fetch('/api/contact', { method: 'POST', body: fd });
         if (!res.ok) throw new Error('failed');
