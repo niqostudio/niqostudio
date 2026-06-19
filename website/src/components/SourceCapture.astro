@@ -1,0 +1,29 @@
+---
+// 流入元（UTM / referrer / 着地パス）を初回ランディング時に sessionStorage へ保存する（first-touch）。
+// サイト内のどのページから入っても拾えるよう、全ページのレイアウトで読み込む。
+// 読み出し・問い合わせ本文への添付は ContactForm 側で行う。
+---
+
+<script>
+  function capture() {
+    try {
+      if (sessionStorage.getItem('niqo_src')) return; // first-touch のみ保持
+      const p = new URLSearchParams(location.search);
+      const utm: Record<string, string> = {};
+      for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+        const v = p.get(k);
+        if (v) utm[k] = v.slice(0, 120);
+      }
+      sessionStorage.setItem(
+        'niqo_src',
+        JSON.stringify({
+          utm,
+          ref: (document.referrer || '').slice(0, 200),
+          landing: (location.pathname + location.search).slice(0, 240),
+        }),
+      );
+    } catch {}
+  }
+  capture(); // 初回フルロード（外部 referrer を確実に拾う）
+  document.addEventListener('astro:page-load', capture); // ClientRouter 遷移
+</script>
