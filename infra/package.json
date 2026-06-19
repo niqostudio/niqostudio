@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@jahed/terraform": "1.15.6",
-    "supabase": "^2.105.0"
+    "supabase": "^2.107.0"
   },
   "engines": {
     "node": ">=24"
