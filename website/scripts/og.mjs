@@ -54,6 +54,7 @@ const pages = {
   services: { en: 'Services', ja: 'サービス' },
   about: { en: 'About', ja: 'プロフィール' },
   contact: { en: 'Contact', ja: 'お問い合わせ' },
+  'ai-automation': { en: 'AI Automation', ja: 'AI業務自動化' },
 };
 
 const loadFont = async (url, weight, name) => ({

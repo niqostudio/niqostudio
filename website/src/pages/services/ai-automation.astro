@@ -1,0 +1,328 @@
+---
+import LpLayout from '../../layouts/LpLayout.astro';
+import LpIcon from '../../components/lp/LpIcon.astro';
+import { ContactForm } from '../../components';
+import { SITE } from '../../config/site';
+
+const title = '「人手が足りない」を、あなた専用のAIで終わらせる';
+const description =
+  '既製のSaaSでは埋まらない“最後の1マイル”を、あなたの業務に合わせて作り、定着させます。中小事業者向けのAI業務自動化をNIQO STUDIOが提供します。';
+
+const pains = [
+  'SaaSを入れたが、結局いつもの人しか使えない',
+  '何を入れればいいのか分からない／種類が多すぎる',
+  '例外が多くて、汎用ツールに自社の業務が乗らない',
+];
+
+const promises = [
+  {
+    icon: 'target',
+    h: '1社専用に作る',
+    p: 'あなたのExcel・メール・既存ツール・例外運用に合わせる。汎用品の寄せ集めではなく、この1社に効く形で組みます。',
+  },
+  {
+    icon: 'route',
+    h: '最後の1マイルを通す',
+    p: '汎用AIは市場にある。足りないのは「実際に使える・現場が回る」状態まで持っていく橋渡しです。',
+  },
+  {
+    icon: 'lifebuoy',
+    h: '作って終わりにしない',
+    p: '導入して放置では定着しません。精度の改善も運用も、月額で継続して伴走します。',
+  },
+] as const;
+
+const solutions = [
+  {
+    icon: 'mail',
+    h: '問い合わせの一次対応',
+    p: 'メール・LINE・フォームの最初の返信をAIが下書き。確認して送るだけ。',
+    metric: '返信の取りこぼし → ゼロへ',
+  },
+  {
+    icon: 'file',
+    h: '見積・請求の作成',
+    p: '過去の案件をもとに見積書・請求書を下書き。転記と計算の手間をなくす。',
+    metric: '1件30分の手作業 → 数分',
+  },
+  {
+    icon: 'clipboard',
+    h: '受発注・在庫の入力',
+    p: 'FAX・メール・紙の注文を読み取ってデータ化。二度手間と転記ミスをなくす。',
+    metric: '手入力 → 自動取り込み',
+  },
+  {
+    icon: 'checklist',
+    h: '議事録・日報',
+    p: '打ち合わせの録音やメモから、議事録とToDoを自動で作成。',
+    metric: '清書の時間 → ほぼゼロ',
+  },
+  {
+    icon: 'reply',
+    h: '定型メールの返信',
+    p: 'よくある問い合わせはテンプレ＋AIで下書き。返信の属人化をなくす。',
+    metric: '担当者依存 → 誰でも即返信',
+  },
+] as const;
+
+const deliverables = [
+  {
+    icon: 'badge',
+    h: '動く自動化一式',
+    p: 'あなたの環境（メール・スプレッドシート・既存ツール）に組み込んだ、すぐ使える状態でお渡しします。',
+  },
+  {
+    icon: 'file',
+    h: '操作マニュアル＋レクチャー',
+    p: 'はじめてでも回せるよう、手順書と使い方レクチャーをセットで。',
+  },
+  {
+    icon: 'route',
+    h: '仕組みの引き継ぎ',
+    p: '何が・どう動いているかを説明します。ブラックボックスにしません。',
+  },
+  {
+    icon: 'lifebuoy',
+    h: '改善・保守（任意）',
+    p: '精度の改善や運用サポートを月額で継続（必要な方のみ）。',
+  },
+] as const;
+
+const pricing = [
+  {
+    name: 'はじめの一歩｜業務AI診断＋PoC',
+    price: '¥50,000',
+    suffix: '〜',
+    desc: '「効くか」を小さく検証。やらない判断も含めてご提案します。',
+    featured: false,
+  },
+  {
+    name: '1業務の自動化',
+    price: '¥300,000',
+    suffix: '〜',
+    desc: '設計・実装・操作マニュアル・引き継ぎ込み。いちばん効く1業務から。',
+    featured: true,
+  },
+  {
+    name: '複数業務・本格運用',
+    price: '¥800,000',
+    suffix: '〜',
+    desc: '複数業務の連携・例外対応・運用設計まで。',
+    featured: false,
+  },
+] as const;
+
+const steps = [
+  { icon: 'message', b: '無料相談', p: '30分・オンライン。課題と進め方をすり合わせます。' },
+  { icon: 'badge', b: '対象業務を決める', p: 'いちばん効く1業務を選び、範囲と費用を固めます。' },
+  { icon: 'wrench', b: '専用構築', p: 'あなたの業務に合わせて設計・実装します。' },
+  { icon: 'trending', b: '定着・保守', p: '改善と運用を月額で継続支援します。' },
+] as const;
+
+const faq = [
+  {
+    q: 'SaaSを入れても定着しませんでした。何が違いますか？',
+    a: '既製のSaaSは万人向けに作られるため、設定や例外処理が利用者側に残ります。NIQO STUDIOは1社専用に設計し、現場が実際に回るところまで通して、運用も継続支援します。',
+  },
+  {
+    q: '何が納品されますか？',
+    a: 'あなたの環境に組み込んだ動く自動化一式、操作マニュアル、使い方レクチャー、仕組みの引き継ぎ説明をお渡しします。改善・保守は任意で月額です。',
+  },
+  {
+    q: '小さな会社でも依頼できますか？',
+    a: '従業員数十名規模の中小事業者を主な対象にしています。1業務だけの自動化から始められます。',
+  },
+];
+
+const serviceLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'AI業務自動化（1社専用）',
+  serviceType: 'AI business automation',
+  description,
+  provider: { '@type': 'ProfessionalService', name: SITE.name },
+  areaServed: 'JP',
+};
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<LpLayout title={title} description={description} structuredData={[serviceLd, faqLd]}>
+  <!-- ヒーロー -->
+  <section class="lp-bleed lp-hero">
+    <div class="lp-inner lp-inner--wide">
+      <h1 class="lp-h1">
+        <span class="chunk">「人手が足りない」を、</span><span class="chunk"><span class="accent">あなた専用のAI</span>で終わらせる。</span>
+      </h1>
+      <p class="lp-lead">
+        <span class="ln">既製のSaaSでは埋まらない“最後の1マイル”を、あなたの業務に合わせて作り、定着させます。</span>
+        <span class="ln">1業務だけの自動化から始められます。</span>
+      </p>
+      <div class="lp-cta-row">
+        <a href="#contact" class="lp-btn lp-btn--primary">無料相談（30分）<LpIcon name="arrow" size={18} /></a>
+        <a href="#how" class="lp-btn lp-btn--ghost">進め方を見る</a>
+      </div>
+      <p class="lp-cta-note">ご相談は無料・オンライン30分。その場で費用は発生しません。</p>
+    </div>
+  </section>
+
+  <!-- 痛点 -->
+  <section class="lp-bleed lp-section lp-section--tint">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">ツールはあるのに、回らない。</h2>
+      <ul class="lp-pain">
+        {pains.map((t) => (
+          <li><LpIcon name="alert" size={22} class="lp-pain-ico" />{t}</li>
+        ))}
+      </ul>
+      <p class="lp-quote"><span class="chunk">足りないのはツールではなく、</span><span class="chunk">“あなたの業務に効かせる人”。</span></p>
+    </div>
+  </section>
+
+  <!-- 約束 -->
+  <section class="lp-bleed lp-section">
+    <div class="lp-inner lp-inner--wide">
+      <span class="lp-eyebrow">NIQO STUDIO のやり方</span>
+      <h2 class="lp-h2" style="margin-top:0.8rem">汎用品では届かないところを、専用に。</h2>
+      <div class="lp-grid">
+        {promises.map((c) => (
+          <article class="lp-card">
+            <span class="lp-ico-badge"><LpIcon name={c.icon} /></span>
+            <h3>{c.h}</h3>
+            <p>{c.p}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 具体的な解決（痛み→after）-->
+  <section class="lp-bleed lp-section lp-section--tint">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">具体的に、こんな手作業をなくします。</h2>
+      <p class="lp-section-lead">よくある対象です。実際は、既製機能の寄せ集めではなく、あなたの業務に合わせて設計します。</p>
+      <div class="lp-cards-center">
+        {solutions.map((c) => (
+          <article class="lp-card">
+            <span class="lp-ico-badge"><LpIcon name={c.icon} /></span>
+            <h3>{c.h}</h3>
+            <p>{c.p}</p>
+            <span class="lp-solve-metric">{c.metric}</span>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 成果物 -->
+  <section class="lp-bleed lp-section">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">何が納品される？</h2>
+      <p class="lp-section-lead">「作って渡して終わり」にしないための、具体的な成果物です。</p>
+      <div class="lp-grid">
+        {deliverables.map((c) => (
+          <article class="lp-card">
+            <span class="lp-ico-badge"><LpIcon name={c.icon} /></span>
+            <h3>{c.h}</h3>
+            <p>{c.p}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 料金の目安 -->
+  <section class="lp-bleed lp-section">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">料金の目安</h2>
+      <p class="lp-section-lead">固定価格の「〜から」でお出しします。1業務だけ・小さく始められます。</p>
+      <div class="lp-grid">
+        {pricing.map((c) => (
+          <article class:list={['lp-card', c.featured && 'lp-card--featured']}>
+            {c.featured && <span class="lp-badge">おすすめ</span>}
+            <h3>{c.name}</h3>
+            <p class="lp-price">{c.price}<span>{c.suffix}</span></p>
+            <p>{c.desc}</p>
+          </article>
+        ))}
+      </div>
+      <p class="lp-price-monthly">定着・保守：<b>¥10,000〜30,000 / 月</b>（任意）</p>
+      <p class="lp-note">※価格は税別。内容・連携範囲により変動します。正確な金額は無料相談でお見積もりします。補助金の活用で実質負担を抑えられる場合があります。</p>
+    </div>
+  </section>
+
+  <!-- 進め方 -->
+  <section id="how" class="lp-bleed lp-section lp-section--tint">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">進め方</h2>
+      <ol class="lp-steps">
+        {steps.map((s) => (
+          <li>
+            <LpIcon name={s.icon} size={22} class="lp-step-ico" />
+            <b>{s.b}</b>
+            <p>{s.p}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- 補助金 -->
+  <section class="lp-bleed lp-section">
+    <div class="lp-inner lp-inner--wide">
+      <div class="lp-subsidy">
+        <div class="lp-subsidy-figure">
+          <span class="lp-subsidy-badge"><LpIcon name="coins" size={26} /></span>
+          <span class="cap">ものづくり補助金</span>
+          <span class="head">受託開発も、<br />補助の対象。</span>
+          <span class="cap">補助率 1/2〜2/3（外注費・システム構築費）</span>
+        </div>
+        <div class="lp-subsidy-body">
+          <span class="lp-eyebrow">補助金も視野に</span>
+          <h2 class="lp-h2" style="margin-top:0.7rem">開発費は、補助金で軽くできる場合があります。</h2>
+          <p class="lp-section-lead">受託・オーダーメイド開発が対象の「ものづくり補助金」の活用も視野に、対象になりやすい構成でご提案します。</p>
+          <ul class="lp-subsidy-points">
+            <li><LpIcon name="check" size={20} />受託開発（外注費・システム構築費）が補助対象</li>
+            <li><LpIcon name="check" size={20} />補助金の対象になりやすい構成でご提案</li>
+            <li><LpIcon name="check" size={20} />申請に使える見積書・仕様書をご用意</li>
+          </ul>
+          <p class="lp-note">※ものづくり補助金は事業計画の作成・審査があり、単価50万円（税抜）以上の設備投資（システム構築費等）が要件です。上限・補助率・対象は公募回・枠・従業員数で変わります。事業計画の作成・申請手続きはお客様／認定支援機関等で行います。</p>
+          <p class="lp-subsidy-source">
+            出典：<a href="https://portal.monodukuri-hojo.jp/" target="_blank" rel="noopener noreferrer">ものづくり補助金 総合サイト</a>／<a href="https://seisansei.smrj.go.jp/subsidy_guide/subsidy_info/manufacturing_subsidy.html" target="_blank" rel="noopener noreferrer">中小機構ガイド</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 最終 CTA（フォームへの導入見出し）-->
+  <section class="lp-bleed lp-section lp-finalcta">
+    <div class="lp-inner lp-inner--wide">
+      <h2 class="lp-h2">まずは無料相談から。</h2>
+      <p>
+        <span class="ln">30分のオンライン相談で、あなたの業務に何が効くかをご提案します。</span>
+        <span class="ln">1業務だけの相談でも大丈夫です。下のフォームからどうぞ。</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- 問い合わせ（LP内に内包・本体の契約フローには遷移させない）-->
+  <section id="contact" class="lp-bleed lp-section lp-contact">
+    <div class="lp-inner">
+      <p class="lp-section-lead">
+        <span class="ln">いまの困りごとを一言添えてお送りください。日程候補も選べます。</span>
+        <span class="ln">ご相談は無料・その場で費用は発生しません。</span>
+      </p>
+      <div class="lp-formwrap">
+        <ContactForm />
+      </div>
+    </div>
+  </section>
+</LpLayout>

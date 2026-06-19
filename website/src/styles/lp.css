@@ -1,0 +1,535 @@
+/* /lp/* キャンペーン LP 専用のデザイン。公開サイト本体（global.css / @niqostudio/ui トークン）
+   とは独立した系統で、ライト基調・大タイポ・全幅・流体レスポンシブを取る。
+   NIQO への糸は色（緑 accent / gold）と Wordmark だけに留め、ブレークポイントや
+   タイポスケールは本体に合わせない。値はこのファイル内の --lp-* に閉じる（外へ漏らさない）。 */
+
+.lp {
+  /* 色は NIQO の値を借りるが、トークンは LP 内に閉じる */
+  --lp-bg: #faf9f8;
+  --lp-surface: #ffffff;
+  --lp-fg: #1c1917;
+  --lp-muted: #57534e;
+  --lp-border: #e7e3df;
+  --lp-green: #15803d;
+  --lp-green-dark: #116534;
+  --lp-gold: #dcb441;
+  --lp-gold-soft: #fbf4da;
+  --lp-dark: #1a1917;
+  --lp-cream: #faf9f7;
+
+  /* 流体タイポ（ビューポート追従。本体のブレークポイントには合わせない） */
+  --lp-h1: clamp(2.4rem, 6.4vw, 5.1rem);
+  --lp-h2: clamp(1.7rem, 3.6vw, 2.9rem);
+  --lp-h3: clamp(1.15rem, 1.6vw, 1.4rem);
+  --lp-lead: clamp(1.05rem, 1.5vw, 1.35rem);
+
+  --lp-container: min(1180px, 92vw);
+  --lp-container-wide: min(1360px, 94vw);
+  --lp-pad-y: clamp(3.5rem, 8vw, 7rem);
+
+  background: var(--lp-bg);
+  color: var(--lp-fg);
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 0.6vw + 0.9rem, 1.125rem);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 全幅セクション。色帯はセクション側で背景を指定し、内側だけ container で絞る */
+.lp-bleed {
+  width: 100%;
+}
+.lp-inner {
+  max-width: var(--lp-container);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 2rem);
+}
+.lp-inner--wide {
+  max-width: var(--lp-container-wide);
+}
+.lp-section {
+  padding-block: var(--lp-pad-y);
+}
+.lp-section--tint {
+  background: var(--lp-surface);
+}
+
+/* ── ヘッダー / フッター（細い） ───────────────────────── */
+.lp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.1rem;
+}
+.lp-wordmark {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  color: var(--lp-fg);
+  text-decoration: none;
+}
+.lp-header-cta {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--lp-green);
+  text-decoration: none;
+}
+.lp-header-cta:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.lp-footer {
+  border-top: 1px solid var(--lp-border);
+  padding-block: 2.5rem;
+  color: var(--lp-muted);
+  font-size: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.lp-footer a {
+  color: var(--lp-muted);
+  text-decoration: none;
+}
+.lp-footer a:hover {
+  color: var(--lp-fg);
+}
+.lp-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+/* ── タイポ ─────────────────────────────────────────── */
+.lp-eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lp-green);
+}
+.lp-h1 {
+  font-size: var(--lp-h1);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-block: 1.1rem 0;
+  max-width: 20ch;
+}
+/* PC 幅では文節（chunk）を一行に保ち、語の途中で割らない。狭い画面では自然折り返し。
+   見出し・引用で共用する。 */
+.chunk {
+  white-space: normal;
+}
+@media (min-width: 760px) {
+  .chunk {
+    white-space: nowrap;
+  }
+}
+/* 文ごとに改行（短い2文を確実に2行に）。狭い画面では各文が自然折り返し。 */
+.ln {
+  display: block;
+}
+.lp-h1 .accent {
+  color: var(--lp-green);
+}
+.lp-h2 {
+  font-size: var(--lp-h2);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+.lp-lead {
+  font-size: var(--lp-lead);
+  color: var(--lp-muted);
+  line-height: 1.7;
+}
+.lp-section-lead {
+  margin-top: 0.9rem;
+  color: var(--lp-muted);
+}
+
+/* ── ヒーロー ───────────────────────────────────────── */
+.lp-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: clamp(3rem, 8vw, 6.5rem) var(--lp-pad-y);
+}
+/* 背景演出：緑/ゴールドのソフトな光 ＋ ドットの地。実画像を入れる場合は
+   .lp-hero に background-image を足すか、ここを差し替える。 */
+.lp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(58% 80% at 88% 8%, color-mix(in srgb, var(--lp-green) 18%, transparent), transparent 60%),
+    radial-gradient(52% 60% at 10% 95%, color-mix(in srgb, var(--lp-gold) 16%, transparent), transparent 60%);
+}
+.lp-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.6;
+  background-image: radial-gradient(color-mix(in srgb, var(--lp-fg) 8%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 72%);
+  mask-image: linear-gradient(to bottom, #000, transparent 72%);
+}
+.lp-hero .lp-lead {
+  margin-top: 1.5rem;
+}
+.lp-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 2.25rem;
+}
+.lp-cta-note {
+  margin-top: 0.9rem;
+  font-size: 0.9rem;
+  color: var(--lp-muted);
+}
+.lp-finalcta .lp-cta-note {
+  color: color-mix(in srgb, var(--lp-cream) 70%, transparent);
+}
+
+/* ── ボタン ─────────────────────────────────────────── */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95em 1.7em;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.lp-btn--primary {
+  background: var(--lp-green);
+  color: var(--lp-cream);
+}
+.lp-btn--primary:hover {
+  background: var(--lp-green-dark);
+}
+.lp-btn--ghost {
+  border-color: var(--lp-border);
+  color: var(--lp-fg);
+}
+.lp-btn--ghost:hover {
+  border-color: var(--lp-fg);
+}
+.lp-btn--gold {
+  background: var(--lp-gold);
+  color: var(--lp-dark);
+}
+.lp-btn--gold:hover {
+  filter: brightness(0.95);
+}
+.lp-btn svg {
+  margin-inline-start: 0.5rem;
+}
+
+/* ── カードグリッド（auto-fit で自前レスポンシブ・本体 bp 非依存）─ */
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+/* 中央寄せの折り返し（5枚を 3+2 で中央に寄せる等）。auto-fit と違い端数列が中央に来る。 */
+.lp-cards-center {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+.lp-cards-center > .lp-card {
+  flex: 1 1 calc(33.333% - 1.5rem);
+  min-width: 260px;
+  max-width: 440px;
+}
+.lp-card {
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: 16px;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+}
+.lp-card h3 {
+  font-size: var(--lp-h3);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.lp-card p {
+  margin-top: 0.7rem;
+  color: var(--lp-muted);
+}
+/* カード先頭のアイコンバッジ（緑の淡い地） */
+.lp-ico-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lp-green) 11%, var(--lp-surface));
+  color: var(--lp-green);
+  margin-bottom: 1.1rem;
+}
+/* 解決カードの before→after メタ行 */
+.lp-solve-metric {
+  display: block;
+  margin-top: 1.1rem;
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--lp-green);
+}
+
+/* ── 痛点リスト ─────────────────────────────────────── */
+.lp-pain {
+  list-style: none;
+  margin-top: clamp(1.75rem, 3vw, 2.5rem);
+  display: grid;
+  gap: 1rem;
+  max-width: 54ch;
+}
+.lp-pain li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+}
+.lp-pain-ico {
+  flex: none;
+  margin-top: 0.2em;
+  color: color-mix(in srgb, var(--lp-gold) 65%, var(--lp-dark));
+}
+.lp-quote {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-inline-start: 1.25rem;
+  border-inline-start: 4px solid var(--lp-green);
+  font-size: clamp(1.3rem, 2.6vw, 2rem);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+/* ── 補助金コールアウト（2パネル：ダーク図版 ＋ 本文）──────── */
+.lp-subsidy {
+  border: 1px solid color-mix(in srgb, var(--lp-gold) 40%, var(--lp-border));
+  border-radius: 24px;
+  overflow: hidden;
+  display: grid;
+}
+@media (min-width: 760px) {
+  .lp-subsidy {
+    grid-template-columns: minmax(240px, 0.85fr) 1.15fr;
+  }
+}
+.lp-subsidy-figure {
+  background: var(--lp-dark);
+  color: var(--lp-cream);
+  padding: clamp(2rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.lp-subsidy-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--lp-gold) 20%, transparent);
+  color: var(--lp-gold);
+  margin-bottom: 0.6rem;
+}
+.lp-subsidy-figure .head {
+  font-size: clamp(1.75rem, 3.8vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--lp-gold);
+}
+.lp-subsidy-figure .cap {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: color-mix(in srgb, var(--lp-cream) 72%, transparent);
+}
+.lp-subsidy-body {
+  background: var(--lp-gold-soft);
+  padding: clamp(1.75rem, 4vw, 3rem);
+}
+.lp-subsidy-points {
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.1rem;
+}
+.lp-subsidy-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.lp-subsidy-points svg {
+  flex: none;
+  margin-top: 0.18em;
+  color: var(--lp-green);
+}
+.lp-note {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--lp-muted);
+}
+.lp-subsidy-source {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--lp-muted);
+}
+.lp-subsidy-source a {
+  color: var(--lp-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── 料金の目安 ─────────────────────────────────────── */
+.lp-price {
+  margin-top: 0.8rem;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--lp-green);
+}
+.lp-price span {
+  font-size: 0.55em;
+  font-weight: 700;
+  color: var(--lp-muted);
+  margin-inline-start: 0.1em;
+}
+/* おすすめプランの強調＋バッジ */
+.lp-card--featured {
+  position: relative;
+  border-color: var(--lp-green);
+  box-shadow: 0 0 0 1px var(--lp-green);
+  background: color-mix(in srgb, var(--lp-green) 5%, var(--lp-surface));
+}
+.lp-badge {
+  position: absolute;
+  top: -0.7rem;
+  inset-inline-start: clamp(1.5rem, 3vw, 2.25rem);
+  background: var(--lp-green);
+  color: var(--lp-cream);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.2em 0.85em;
+  border-radius: 9999px;
+}
+.lp-price-monthly {
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+  font-size: 1.05rem;
+  color: var(--lp-muted);
+}
+.lp-price-monthly b {
+  color: var(--lp-fg);
+}
+
+/* ── 問い合わせ（中央寄せ。フォーム枠は中央のブロック・中身は左揃え）── */
+.lp-contact {
+  text-align: center;
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+}
+.lp-contact .lp-section-lead {
+  margin-inline: auto;
+}
+.lp-formwrap {
+  max-width: 640px;
+  margin-top: clamp(1.75rem, 3vw, 2.5rem);
+  margin-inline: auto;
+  text-align: start;
+}
+
+/* ── 進め方ステップ ─────────────────────────────────── */
+.lp-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-top: clamp(2rem, 4vw, 3rem);
+  counter-reset: step;
+}
+.lp-steps li {
+  counter-increment: step;
+  position: relative;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: 16px;
+  padding: clamp(1.4rem, 3vw, 2rem);
+}
+.lp-step-ico {
+  position: absolute;
+  top: clamp(1.4rem, 3vw, 2rem);
+  inset-inline-end: clamp(1.4rem, 3vw, 2rem);
+  color: color-mix(in srgb, var(--lp-green) 32%, transparent);
+}
+.lp-steps li::before {
+  content: counter(step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 9999px;
+  background: var(--lp-green);
+  color: var(--lp-cream);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.9rem;
+}
+.lp-steps b {
+  display: block;
+  font-size: var(--lp-h3);
+  font-weight: 700;
+}
+.lp-steps p {
+  margin-top: 0.4rem;
+  color: var(--lp-muted);
+  font-size: 0.95rem;
+}
+
+/* ── 最終 CTA（唯一のダーク帯で緩急）──────────────────── */
+.lp-finalcta {
+  background: var(--lp-dark);
+  color: var(--lp-cream);
+  text-align: center;
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.lp-finalcta .lp-h2 {
+  margin-inline: auto;
+  max-width: 24ch;
+}
+.lp-finalcta p {
+  margin-top: 1rem;
+  color: color-mix(in srgb, var(--lp-cream) 75%, transparent);
+  margin-inline: auto;
+}
+.lp-finalcta .lp-cta-row {
+  justify-content: center;
+}
+
