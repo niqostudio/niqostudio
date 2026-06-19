@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import '../styles/lp.css';
 import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import SourceCapture from '../components/SourceCapture.astro';
 import { SITE } from '../config/site';
 
@@ -38,6 +39,8 @@ const schemas = [orgLd, ...structuredData];
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* ContactForm 等のクライアント初期化は astro:page-load 発火に依存するため必須。 */}
+    <ClientRouter />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-noto-jp" />
