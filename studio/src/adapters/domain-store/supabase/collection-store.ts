@@ -77,7 +77,9 @@ export class CoreCollectionStore implements CollectionStore<Fields> {
     const client = this.getClient();
 
     const parent: Record<string, unknown> = { id: record.id };
-    for (const f of s.fields) parent[f.name] = record.fields[f.name] ?? null;
+    // fields にキーが無い列は payload から落とす（DB の default に委ねる）。明示 null だと
+    // default now() 等を上書きしてしまう（部分書き込み＝計測ログ等で measured_at が null になる）。
+    for (const f of s.fields) if (f.name in record.fields) parent[f.name] = record.fields[f.name] ?? null;
     const { error: pe } = await client.from(this.table).upsert(parent);
     if (pe) throw new Error(`${this.table}.upsert(parent) 失敗: ${pe.message}`);
 
