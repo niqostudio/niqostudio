@@ -48,11 +48,12 @@ export default async function MetricsPage({
       howto: asStr(d.howto),
     }));
 
-  // ?project/?product でその被写体の最初の成果物を初期選択。
-  const want = project ? { s: 'projects', id: project } : product ? { s: 'products', id: product } : null;
-  const defaultDeliverable = want
-    ? deliverableOptions.find((o) => o.subject === want.s && o.subjectId === want.id)?.value
-    : undefined;
+  // 被写体（案件/プロダクト）を query から決め、その被写体の成果物だけに絞る（別被写体へ流用しない）。
+  const subjectType: 'projects' | 'products' | null = project ? 'projects' : product ? 'products' : null;
+  const subjectId = project || product || '';
+  const subjectLabel = subjectType === 'projects' ? projName.get(subjectId) : subjectType === 'products' ? prodName.get(subjectId) : '';
+  const subject = subjectType && subjectId ? { type: subjectType, id: subjectId, label: subjectLabel ?? '?' } : null;
+  const subjectDeliverables = subject ? deliverableOptions.filter((o) => o.subject === subject.type && o.subjectId === subject.id) : [];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 p-5 md:p-10">
@@ -60,7 +61,7 @@ export default async function MetricsPage({
         <SectionLabel>メトリクス</SectionLabel>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">メトリクス計測</h1>
       </header>
-      <MetricsTool deliverables={deliverableOptions} definitions={definitions} defaultDeliverable={defaultDeliverable} />
+      <MetricsTool subject={subject} deliverables={subjectDeliverables} definitions={definitions} />
     </div>
   );
 }

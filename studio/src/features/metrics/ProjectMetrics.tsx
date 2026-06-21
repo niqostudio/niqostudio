@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { loadProjectMetrics } from '@/composition/project-metrics';
 import { SectionLabel } from '@/shared/ui/primitives';
 
-// 案件詳細：確定メトリクス＋計測ログを指標ごとに読み取り表示。値があるときだけ出す（騒がしくしない）。
+// 案件詳細：確定メトリクス＋計測ログを指標ごとに読み取り表示。計測が無くてもセクションは出し
+// （在り処を常に示す）、空のときは計測導線を案内する。
 export async function ProjectMetrics({ id }: { id: string }) {
   const rows = await loadProjectMetrics(id);
-  if (rows.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -14,6 +14,9 @@ export async function ProjectMetrics({ id }: { id: string }) {
           計測・編集 ›
         </Link>
       </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">まだ計測がありません。「計測・編集」から旧環境を測定してください。</p>
+      ) : (
       <div className="overflow-hidden rounded-sm border border-border-subtle">
         <table className="w-full text-sm">
           <thead>
@@ -38,6 +41,7 @@ export async function ProjectMetrics({ id }: { id: string }) {
           </tbody>
         </table>
       </div>
+      )}
     </section>
   );
 }

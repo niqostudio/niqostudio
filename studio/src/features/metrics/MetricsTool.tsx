@@ -7,25 +7,27 @@ import { Card, SectionLabel } from '@/shared/ui/primitives';
 import { toast } from '@/features/feedback/toast';
 import { t } from '@/shared/i18n';
 
-type Deliverable = { value: string; label: string; url: string; subject: 'projects' | 'products'; subjectId: string };
+type Deliverable = { value: string; label: string; url: string };
+type Subject = { type: 'projects' | 'products'; id: string; label: string };
 type Def = { key: string; label: string; unit: string; kind: 'technical' | 'business'; auto: boolean; howto: string };
 type Meas = { metricKey: string; phase: string; value: string; at: string };
 
-// 成果物起点のメトリクス計測。旧環境/目標/after の3カラム、URL は旧環境・納品物の2つ、各「測定」で PSI。
-// before は after 無しでも計測可（ログに記録・再訪時にプリフィル＋最新/平均を表示）。反映は core.metrics の下書きへ。
+// 被写体（案件/プロダクト）起点のメトリクス計測。成果物は任意＝既定は「案件全体（成果物なし）」。
+// before は旧環境 URL、after は納品物 URL。各「測定」で PSI。値は被写体（＋任意で成果物）に紐づく。
 export function MetricsTool({
+  subject,
   deliverables,
   definitions,
-  defaultDeliverable,
 }: {
+  subject: Subject | null;
   deliverables: Deliverable[];
   definitions: Def[];
-  defaultDeliverable?: string;
 }) {
-  const [deliverableId, setDeliverableId] = useState(defaultDeliverable ?? deliverables[0]?.value ?? '');
-  const selected = deliverables.find((d) => d.value === deliverableId);
+  // 既定は成果物なし（案件全体）。別プロダクトの成果物へ流用しない。
+  const [deliverableId, setDeliverableId] = useState('');
+  const selectedDeliverable = deliverables.find((d) => d.value === deliverableId);
   const [oldUrl, setOldUrl] = useState('');
-  const [newUrl, setNewUrl] = useState(selected?.url ?? '');
+  const [newUrl, setNewUrl] = useState('');
   const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile');
   const [before, setBefore] = useState<Record<string, string>>({});
   const [target, setTarget] = useState<Record<string, string>>({});
@@ -36,13 +38,12 @@ export function MetricsTool({
   const [busyAfter, setBusyAfter] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 成果物選択時：既存メトリクス＋計測ログを読み、列をプリフィル（メトリクス優先・無ければログの最新）。
+  // 成果物（または案件全体）選択時：既存メトリクス＋計測ログを読み、列をプリフィル。
   useEffect(() => {
-    const d = deliverables.find((x) => x.value === deliverableId);
-    if (!d) return;
-    setNewUrl(d.url);
+    if (!subject) return;
+    setNewUrl(selectedDeliverable?.url ?? '');
     let cancelled = false;
-    loadDeliverableData(d.subject, d.subjectId, d.value)
+    loadDeliverableData(subject.type, subject.id, deliverableId)
       .then((data) => {
         if (cancelled) return;
         const latest = (key: string, phase: string) => {
@@ -69,16 +70,16 @@ export function MetricsTool({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliverableId]);
+  }, [deliverableId, subject?.id]);
 
   const reloadMeasurements = async () => {
-    if (!selected) return;
-    const data = await loadDeliverableData(selected.subject, selected.subjectId, selected.value);
+    if (!subject) return;
+    const data = await loadDeliverableData(subject.type, subject.id, deliverableId);
     setMeasurements(data.measurements);
   };
 
   const measure = async (phase: 'before' | 'after') => {
-    if (!selected) return;
+    if (!subject) return;
     const url = phase === 'before' ? oldUrl : newUrl;
     if (!url.trim()) {
       toast.error('URL を入力してください');
@@ -88,9 +89,9 @@ export function MetricsTool({
     setBusy(true);
     try {
       const r = await measureUrlAction({
-        subject: selected.subject,
-        subjectId: selected.subjectId,
-        deliverableId: selected.value,
+        subject: subject.type,
+        subjectId: subject.id,
+        deliverableId: deliverableId || null,
         phase,
         url,
         strategy,
@@ -111,8 +112,8 @@ export function MetricsTool({
   };
 
   const apply = async () => {
-    if (!selected) {
-      toast.error('成果物を選択してください');
+    if (!subject) {
+      toast.error('被写体がありません');
       return;
     }
     const items: StageItem[] = definitions.map((d) => ({
@@ -120,7 +121,8 @@ export function MetricsTool({
       label: d.label,
       unit: d.unit,
       kind: d.kind,
-      deliverableId: d.kind === 'technical' ? selected.value : null,
+      // technical は選択した成果物（なければ案件レベル＝null）、business は常に案件レベル。
+      deliverableId: d.kind === 'technical' ? deliverableId || null : null,
       before: before[d.key] ?? '',
       target: target[d.key] ?? '',
       after: after[d.key] ?? '',
@@ -131,7 +133,7 @@ export function MetricsTool({
     }
     setSaving(true);
     try {
-      await stageMetricsAction(selected.subject, selected.subjectId, items);
+      await stageMetricsAction(subject.type, subject.id, items);
       await reloadMeasurements();
       toast.success('保存しました');
     } catch (e) {
@@ -173,14 +175,21 @@ export function MetricsTool({
       : undefined;
   const targetVal = target[trendKey] ? Number(target[trendKey]) : undefined;
 
+  if (!subject) {
+    return <Card className="p-6 text-sm text-muted">案件またはプロダクトの詳細から「メトリクスを計測」で開いてください。</Card>;
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {/* 成果物＋2つの URL */}
+      {/* 対象＋成果物（任意）＋2つの URL */}
       <div className="card flex flex-col gap-3 p-4">
+        <p className="text-sm">
+          対象：<span className="font-medium">{subject.label}</span>
+        </p>
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-muted">成果物（案件/プロダクト — 成果物）</span>
+          <span className="text-xs text-muted">成果物（任意・既定は案件全体）</span>
           <select className="field" value={deliverableId} onChange={(e) => setDeliverableId(e.target.value)}>
-            {deliverables.length === 0 && <option value="">（成果物がありません）</option>}
+            <option value="">（案件全体・成果物なし）</option>
             {deliverables.map((d) => (
               <option key={d.value} value={d.value}>
                 {d.label}
@@ -253,7 +262,7 @@ export function MetricsTool({
       </Card>
 
       <div className="flex justify-end">
-        <button type="button" className="btn btn-primary" onClick={apply} disabled={saving || !selected}>
+        <button type="button" className="btn btn-primary" onClick={apply} disabled={saving}>
           メトリクスを保存
         </button>
       </div>

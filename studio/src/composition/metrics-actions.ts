@@ -44,7 +44,7 @@ async function logMeasurement(input: {
 export async function measureUrlAction(input: {
   subject: Subject;
   subjectId: string;
-  deliverableId: string;
+  deliverableId: string | null;
   phase: 'before' | 'after';
   url: string;
   strategy: 'mobile' | 'desktop';
@@ -146,8 +146,10 @@ export async function loadDeliverableData(subject: Subject, subjectId: string, d
       .rows('metric_measurements', ['metric_key', 'phase', 'value', 'measured_at', 'deliverable_id', 'project_id', 'product_id'])
       .catch(() => []),
   ]);
+  // deliverableId 指定時＝その成果物＋被写体直下（business）。未指定（案件全体）＝被写体直下のみ。
   const match = (r: Record<string, unknown>) =>
-    asStr(r.deliverable_id) === deliverableId || (asStr(r.deliverable_id) === '' && asStr(r[subjCol]) === subjectId);
+    (deliverableId !== '' && asStr(r.deliverable_id) === deliverableId) ||
+    (asStr(r.deliverable_id) === '' && asStr(r[subjCol]) === subjectId);
   return {
     metrics: allMetrics
       .filter(match)
