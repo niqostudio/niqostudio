@@ -49,7 +49,10 @@ export async function createRecordAction(collectionId: string, preset?: Fields, 
   const schema = await binding.resolveSchema();
   const id = crypto.randomUUID();
   const fields: Fields = {};
-  for (const d of schema.fields) fields[d.key] = d.key === schema.titleField ? '無題' : null;
+  // title は仮値、その他は型ごとの既定（list→[] / boolean→false / その他→null）。
+  // null 固定だと DEFAULT 付き NOT NULL 列（is_public_name_allowed 等）が publish で落ちる。
+  for (const d of schema.fields)
+    fields[d.key] = d.key === schema.titleField ? '無題' : d.kind === 'list' ? [] : d.kind === 'boolean' ? false : null;
   for (const c of schema.children) fields[c.key] = [];
   // status は NOT NULL の初期状態（最初の状態＝is_initial・例：無料相談）を入れる（null のまま作らない）。
   const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
