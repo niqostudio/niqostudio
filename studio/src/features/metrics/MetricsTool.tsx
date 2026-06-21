@@ -133,7 +133,7 @@ export function MetricsTool({
     try {
       await stageMetricsAction(selected.subject, selected.subjectId, items);
       await reloadMeasurements();
-      toast.success('下書きに反映しました');
+      toast.success('保存しました');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('error'));
     } finally {
@@ -254,7 +254,7 @@ export function MetricsTool({
 
       <div className="flex justify-end">
         <button type="button" className="btn btn-primary" onClick={apply} disabled={saving || !selected}>
-          反映（下書きに追加）
+          メトリクスを保存
         </button>
       </div>
 

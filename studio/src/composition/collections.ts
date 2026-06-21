@@ -205,7 +205,12 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   invoices: JapaneseYen,
   work_logs: Clock,
 };
-for (const [id, b] of Object.entries(COLLECTIONS)) b.meta.icon = ICONS[id];
+// 反映モデル：内部運用データは direct（即 core）、公開サイトが読むコンテンツは staged（下書き→公開）。
+const DIRECT = new Set(['clients', 'contacts', 'projects', 'inquiries', 'meetings', 'invoices', 'work_logs', 'metric_definitions', 'ndas']);
+for (const [id, b] of Object.entries(COLLECTIONS)) {
+  b.meta.icon = ICONS[id];
+  b.meta.mode = DIRECT.has(id) ? 'direct' : 'staged';
+}
 
 // collection id → 汎用 binding。各 collection の F は UI では Fields として扱う。
 export function getCollection(id: string): CollectionBinding<Fields> | undefined {

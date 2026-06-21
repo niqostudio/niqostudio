@@ -20,20 +20,21 @@ async function workingSourceId(binding: CollectionBinding<Fields>, recordId: str
   return record?.sourceId ?? null;
 }
 
-async function saveDraft(
+const today = () => new Date().toISOString().slice(0, 10);
+
+// 編集を確定する。direct＝即 core 正本へ、staged＝下書きへ（公開は後段）。版は両モードで追記する。
+async function commit(
   binding: CollectionBinding<Fields>,
   recordId: string,
   fields: Fields,
   sourceId: string | null,
   origin: string,
 ): Promise<void> {
-  await binding.drafts.save({
-    id: recordId,
-    fields,
-    draftState: 'draft',
-    sourceId,
-    updatedAt: new Date().toISOString().slice(0, 10),
-  });
+  if (binding.meta.mode === 'direct') {
+    await binding.store.upsert({ id: recordId, fields, draftState: 'published', sourceId, updatedAt: today() });
+  } else {
+    await binding.drafts.save({ id: recordId, fields, draftState: 'draft', sourceId, updatedAt: today() });
+  }
   await binding.versions?.append(recordId, fields, origin);
 }
 
@@ -49,10 +50,15 @@ export async function createRecordAction(collectionId: string, preset?: Fields, 
   const schema = await binding.resolveSchema();
   const id = crypto.randomUUID();
   const fields: Fields = {};
-  // title は仮値、その他は型ごとの既定（list→[] / boolean→false / その他→null）。
-  // null 固定だと DEFAULT 付き NOT NULL 列（is_public_name_allowed 等）が publish で落ちる。
-  for (const d of schema.fields)
-    fields[d.key] = d.key === schema.titleField ? '無題' : d.kind === 'list' ? [] : d.kind === 'boolean' ? false : null;
+  // direct は作成＝即 core 挿入なので必須（NOT NULL かつ default 無し＝required）列を埋める必要がある。
+  // title は仮値、list/boolean は型既定、required な値はプレースホルダ。default 付き列は省略して
+  // DB 既定に委ねる（明示 null で default を潰さない）。required な FK は preset（createVia）が入れる。
+  for (const d of schema.fields) {
+    if (d.key === schema.titleField) fields[d.key] = '無題';
+    else if (d.kind === 'list') fields[d.key] = [];
+    else if (d.kind === 'boolean') fields[d.key] = false;
+    else if (d.required) fields[d.key] = d.kind === 'number' ? 0 : d.kind === 'date' ? today() : '';
+  }
   for (const c of schema.children) fields[c.key] = [];
   // status は NOT NULL の初期状態（最初の状態＝is_initial・例：無料相談）を入れる（null のまま作らない）。
   const statusDesc = schema.statusField ? schema.fields.find((f) => f.key === schema.statusField) : undefined;
@@ -67,7 +73,7 @@ export async function createRecordAction(collectionId: string, preset?: Fields, 
     if (initial) fields[statusDesc.key] = initial;
   }
   if (preset) Object.assign(fields, preset);
-  await saveDraft(binding, id, fields, null, 'create');
+  await commit(binding, id, fields, null, 'create');
   redirect(path(collectionId, id));
 }
 
@@ -81,7 +87,7 @@ export async function advanceStatusAction(collectionId: string, recordId: string
   const working = draft ?? (await binding.store.get(recordId));
   if (!working) return;
   const fields = { ...(working.fields as Fields), [field]: toStatus };
-  await saveDraft(binding, recordId, fields, working.sourceId, 'manual');
+  await commit(binding, recordId, fields, working.sourceId, 'manual');
   revalidatePath(path(collectionId, recordId));
   revalidatePath(path(collectionId));
 }
@@ -93,7 +99,7 @@ export async function setFieldAction(collectionId: string, recordId: string, key
   const working = draft ?? (await binding.store.get(recordId));
   if (!working) return;
   const fields = { ...(working.fields as Fields), [key]: value };
-  await saveDraft(binding, recordId, fields, working.sourceId, 'manual');
+  await commit(binding, recordId, fields, working.sourceId, 'manual');
   revalidatePath(path(collectionId));
   revalidatePath(path(collectionId, recordId));
 }
@@ -105,7 +111,7 @@ export async function setFieldsAction(collectionId: string, recordId: string, pa
   const working = draft ?? (await binding.store.get(recordId));
   if (!working) return;
   const fields = { ...(working.fields as Fields), ...patch };
-  await saveDraft(binding, recordId, fields, working.sourceId, 'manual');
+  await commit(binding, recordId, fields, working.sourceId, 'manual');
   revalidatePath(path(collectionId));
   revalidatePath(path(collectionId, recordId));
 }
@@ -114,7 +120,7 @@ export async function setFieldsAction(collectionId: string, recordId: string, pa
 export async function saveDraftJson(collectionId: string, recordId: string, fieldsJson: string): Promise<void> {
   const binding = need(collectionId);
   const sourceId = await workingSourceId(binding, recordId);
-  await saveDraft(binding, recordId, JSON.parse(fieldsJson) as Fields, sourceId, 'manual');
+  await commit(binding, recordId, JSON.parse(fieldsJson) as Fields, sourceId, 'manual');
   revalidatePath(path(collectionId, recordId));
 }
 
@@ -171,7 +177,7 @@ export async function restoreVersionAction(collectionId: string, recordId: strin
   const binding = need(collectionId);
   const version = await binding.versions?.get(versionId);
   if (!version) return;
-  await saveDraft(binding, recordId, version.fields as Fields, await workingSourceId(binding, recordId), 'revert');
+  await commit(binding, recordId, version.fields as Fields, await workingSourceId(binding, recordId), 'revert');
   revalidatePath(path(collectionId, recordId));
 }
 

@@ -44,6 +44,9 @@ export interface CollectionMeta {
   createHref?: string;
   // singleton（profile 等の固定1行）。一覧に新規ボタンを出さない。
   singleton?: boolean;
+  // 反映モデル。direct＝編集が即 core 正本（下書き無し・公開操作なし）。
+  // staged＝下書き→公開（公開サイトが読むコンテンツ向け・既定）。
+  mode?: 'direct' | 'staged';
 }
 
 // collection の配線。SoR store（確定の正本）と staging store（下書き）を別 seam で持つ。

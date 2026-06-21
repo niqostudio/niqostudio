@@ -113,7 +113,12 @@ export async function stageMetricsAction(subject: Subject, subjectId: string, it
     else rows.push(row);
   }
   fields.metrics = rows;
-  await binding.drafts.save({ id: subjectId, fields, draftState: 'draft', sourceId: working.sourceId, updatedAt: today() });
+  // 被写体の反映モデルに従う（direct＝即 core / staged＝下書き）。
+  if (binding.meta.mode === 'direct') {
+    await binding.store.upsert({ id: subjectId, fields, draftState: 'published', sourceId: working.sourceId, updatedAt: today() });
+  } else {
+    await binding.drafts.save({ id: subjectId, fields, draftState: 'draft', sourceId: working.sourceId, updatedAt: today() });
+  }
   await binding.versions?.append(subjectId, fields, 'manual');
 
   await Promise.all(
