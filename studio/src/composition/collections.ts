@@ -30,6 +30,7 @@ import { createInvoiceFromProject } from './invoice-actions';
 import { NdaDetail } from './details/nda';
 import { InquiryReply } from './details/InquiryReply';
 import { ProjectWorklogSummary } from '@/features/worklog/ProjectWorklogSummary';
+import { ProjectMetrics } from '@/features/metrics/ProjectMetrics';
 import { ProjectMeetings } from '@/features/meetings/ProjectMeetings';
 import { ClientMeetings } from '@/features/meetings/ClientMeetings';
 import { InquiryMeetings } from '@/features/meetings/InquiryMeetings';
@@ -84,7 +85,7 @@ const projects: CollectionBinding<Fields> = {
   history: new CoreProjectStatusHistory(),
   workflow: new CoreProjectWorkflow(),
   sources: new CoreProjectSourceRegistry(),
-  detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices],
+  detailExtras: [ProjectWorklogSummary, ProjectMeetings, ProjectInvoices, ProjectMetrics],
   recordActions: [
     { id: 'meeting', label: '打ち合わせを作成', icon: Users, run: createMeetingFromProject },
     { id: 'invoice', label: '請求を作成', icon: JapaneseYen, run: createInvoiceFromProject },
