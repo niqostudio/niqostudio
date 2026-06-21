@@ -13,6 +13,7 @@ import {
   saveDraftJson,
   deriveRecordAction,
   discardDraftAction,
+  deleteRecordAction,
   restoreVersionAction,
   addSourceAction,
   removeSourceAction,
@@ -224,6 +225,17 @@ export default function RecordPaneEditor(props: {
                 {t('discardDraft')}
               </button>
             )}
+
+            <button
+              className="self-start text-sm text-error hover:underline"
+              disabled={busy}
+              onClick={() => {
+                if (!window.confirm(t('deleteRecordConfirm'))) return;
+                run(() => deleteRecordAction(collectionId, recordId));
+              }}
+            >
+              {t('deleteRecord')}
+            </button>
           </div>
         </div>
       </div>

@@ -57,6 +57,8 @@ const MESSAGES = {
   restore: '戻す',
   discardDraft: '下書きを破棄',
   discardDraftConfirm: '下書きを破棄しますか？公開済みの内容に戻ります（未公開の新規レコードは削除されます）。',
+  deleteRecord: 'レコードを削除',
+  deleteRecordConfirm: 'このレコードを完全に削除しますか？正本・下書き・履歴がすべて消え、元に戻せません。',
   close: '閉じる',
   add: '追加',
   none: '（なし）',

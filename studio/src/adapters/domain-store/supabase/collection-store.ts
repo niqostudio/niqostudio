@@ -97,4 +97,23 @@ export class CoreCollectionStore implements CollectionStore<Fields> {
       if (de) throw new Error(`${c.table}.delete(child) 失敗: ${de.message}`);
     }
   }
+
+  // 正本ごと削除。採用した子を先に消してから親を消す（owned child の FK 違反を避ける）。
+  // 外部テーブルから参照されている行は FK 違反で失敗する＝呼び出し側で surface する。
+  async delete(id: string): Promise<void> {
+    const s = await coreStructure(this.table, this.config);
+    const names = await this.childrenOf();
+    const children = s.childTables.filter((c) => names.includes(c.table));
+    const client = this.getClient();
+
+    for (const c of children) {
+      const fk = c.fields.find((f) => f.refTable === this.table)?.name;
+      if (!fk) continue;
+      const { error: ce } = await client.from(c.table).delete().eq(fk, id);
+      if (ce) throw new Error(`${c.table}.delete(child) 失敗: ${ce.message}`);
+    }
+
+    const { error } = await client.from(this.table).delete().eq('id', id);
+    if (error) throw new Error(`${this.table}.delete 失敗: ${error.message}`);
+  }
 }

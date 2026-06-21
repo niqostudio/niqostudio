@@ -21,6 +21,8 @@ export interface VersionStore<F> {
   append(recordId: string, fields: F, origin: string): Promise<void>;
   listForRecord(recordId: string): Promise<RecordVersion<F>[]>;
   get(versionId: string): Promise<RecordVersion<F> | null>;
+  // record 削除時に版の履歴も掃除する（孤児を残さない）。
+  removeForRecord(recordId: string): Promise<void>;
 }
 
 // 最近の活動（collection 横断）。studio が記録した版イベント（作成/編集/derive/publish 等）の時系列。

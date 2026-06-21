@@ -7,6 +7,8 @@ export interface CollectionStore<F> {
   list(): Promise<CollectionRecord<F>[]>;
   get(id: string): Promise<CollectionRecord<F> | null>;
   upsert(record: CollectionRecord<F>): Promise<void>;
+  // 正本ごと削除（採用した子も巻き取る）。外部から参照されている行は FK 違反で失敗する。
+  delete(id: string): Promise<void>;
 }
 
 // 集計（ダッシュボード KPI 等）。filter 省略＝全件、指定＝column IN values の件数。

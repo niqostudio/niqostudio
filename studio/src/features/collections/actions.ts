@@ -125,6 +125,17 @@ export async function discardDraftAction(collectionId: string, recordId: string)
   revalidatePath(path(collectionId, recordId));
 }
 
+// レコードを完全に削除（正本＋下書き＋版）。元に戻せない hard delete。削除後は一覧へ戻す。
+// 正本→下書き→版の順で、正本削除が FK 等で失敗したら下書き/版を残す（中途半端に消さない）。
+export async function deleteRecordAction(collectionId: string, recordId: string): Promise<void> {
+  const binding = need(collectionId);
+  await binding.store.delete(recordId);
+  await binding.drafts.remove(recordId);
+  await binding.versions?.removeForRecord(recordId);
+  revalidatePath(path(collectionId));
+  redirect(path(collectionId));
+}
+
 // publish＝下書きを接続先（core）正本へ反映。版に origin=publish を残し、反映後は下書きを消す。
 export async function publishAction(collectionId: string, recordId: string): Promise<void> {
   const binding = need(collectionId);

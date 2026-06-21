@@ -59,6 +59,16 @@ export class StudioVersionStore<F> implements VersionStore<F> {
     return (data ?? []).map((r) => this.toVersion(r as VersionRow));
   }
 
+  async removeForRecord(recordId: string): Promise<void> {
+    const { error } = await this.getClient()
+      .from('record_versions')
+      .delete()
+      .eq('tenant_id', this.tenantId)
+      .eq('collection', this.collection)
+      .eq('record_id', recordId);
+    if (error) throwQueryError('版の削除（studio.record_versions）', error);
+  }
+
   async get(versionId: string): Promise<RecordVersion<F> | null> {
     const { data, error } = await this.getClient()
       .from('record_versions')
