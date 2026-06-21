@@ -120,7 +120,14 @@ export async function setFieldsAction(collectionId: string, recordId: string, pa
 export async function saveDraftJson(collectionId: string, recordId: string, fieldsJson: string): Promise<void> {
   const binding = need(collectionId);
   const sourceId = await workingSourceId(binding, recordId);
-  await commit(binding, recordId, JSON.parse(fieldsJson) as Fields, sourceId, 'manual');
+  const fields = JSON.parse(fieldsJson) as Fields;
+  // status はワークフロー専用（advanceStatusAction が管理）。汎用保存で書き戻すと、画面読込後に
+  // 進めた status を古い値で上書きして遷移トリガに弾かれるため、保存対象から除外する。
+  if (binding.workflow) {
+    const schema = await binding.resolveSchema();
+    if (schema.statusField) delete fields[schema.statusField];
+  }
+  await commit(binding, recordId, fields, sourceId, 'manual');
   revalidatePath(path(collectionId, recordId));
 }
 
@@ -177,7 +184,13 @@ export async function restoreVersionAction(collectionId: string, recordId: strin
   const binding = need(collectionId);
   const version = await binding.versions?.get(versionId);
   if (!version) return;
-  await commit(binding, recordId, version.fields as Fields, await workingSourceId(binding, recordId), 'revert');
+  const fields = { ...(version.fields as Fields) };
+  // status はワークフロー専用。版の復元でも古い status を書き戻さない（遷移トリガ対策）。
+  if (binding.workflow) {
+    const schema = await binding.resolveSchema();
+    if (schema.statusField) delete fields[schema.statusField];
+  }
+  await commit(binding, recordId, fields, await workingSourceId(binding, recordId), 'revert');
   revalidatePath(path(collectionId, recordId));
 }
 
