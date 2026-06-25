@@ -24,7 +24,7 @@ jobs:
       infra: ${{ steps.diff.outputs.infra }}
       docs: ${{ steps.diff.outputs.docs }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: diff
@@ -64,7 +64,7 @@ jobs:
     if: ${{ needs.detect.outputs.core == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: 既存 migration の変更/削除がないか（前進専用）
@@ -110,7 +110,7 @@ jobs:
     if: ${{ needs.detect.outputs.saas == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: 既存 migration の変更/削除がないか（前進専用）
@@ -157,7 +157,7 @@ jobs:
       run:
         working-directory: studio
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -183,7 +183,7 @@ jobs:
     if: ${{ needs.detect.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -220,7 +220,7 @@ jobs:
     if: ${{ needs.detect.outputs.docs == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"

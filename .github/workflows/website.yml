@@ -28,7 +28,7 @@ jobs:
       # Turnstile の site key（公開・未設定ならウィジェット非表示で検証 skip）。secret は deploy 側で投入。
       PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -97,7 +97,7 @@ jobs:
     environment: website-production
     steps:
       # .nvmrc と packageManager(pnpm) 解決のため checkout する（成果物自体は artifact から取る）。
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
