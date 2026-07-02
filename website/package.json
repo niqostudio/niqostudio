@@ -17,7 +17,7 @@
     "@astrojs/sitemap": "^3.7.3",
     "@niqostudio/db-types": "workspace:*",
     "@niqostudio/ui": "workspace:*",
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "^2.110.0",
     "astro": "^6.4.8",
     "budoux": "^0.8.4",
     "marked": "^18.0.5"
@@ -25,11 +25,11 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@resvg/resvg-js": "^2.6.2",
-    "@tailwindcss/vite": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.2",
     "satori": "^0.26.0",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
-    "wrangler": "^4.101.0"
+    "wrangler": "^4.106.0"
   },
   "engines": {
     "node": ">=24"

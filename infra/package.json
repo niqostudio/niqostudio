@@ -21,8 +21,8 @@
     "tf:apply": "terraform apply"
   },
   "devDependencies": {
-    "@jahed/terraform": "1.15.6",
-    "supabase": "^2.107.0"
+    "@jahed/terraform": "1.15.7",
+    "supabase": "^2.109.0"
   },
   "engines": {
     "node": ">=24"
